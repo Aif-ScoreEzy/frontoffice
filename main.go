@@ -2,7 +2,7 @@ package main
 
 import (
 	"front-office/config"
-	"front-office/config/database"
+	database "front-office/config/database"
 	"log"
 	"os"
 	"time"
@@ -19,6 +19,7 @@ func main() {
 	config.LoadEnv()
 
 	database.ConnectPostgres()
+	database.Migrate()
 
 	log.Fatal(app.Listen(":" + os.Getenv("APP_PORT")))
 }
