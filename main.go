@@ -19,7 +19,9 @@ func main() {
 	config.LoadEnv()
 
 	database.ConnectPostgres()
-	database.Migrate()
+	config.Migrate()
+
+	config.SetupRoutes(app)
 
 	log.Fatal(app.Listen(":" + os.Getenv("APP_PORT")))
 }
