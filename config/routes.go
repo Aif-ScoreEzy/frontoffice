@@ -10,4 +10,5 @@ func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
 	api.Post("/role", role.CreateRole)
+	api.Get("/role/:id", role.GetRoleByID)
 }
