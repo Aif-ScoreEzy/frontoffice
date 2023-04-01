@@ -49,3 +49,29 @@ func GetRoleByID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func UpdateRole(c *fiber.Ctx) error {
+	request := c.Locals("request").(*RoleRequest)
+	id := c.Params("id")
+
+	_, err := GetRoleByIDSvc(id)
+	if err != nil && err.Error() == "record not found" {
+		resp := helper.ResponseFailed("Data is not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	result, err := UpdateRoleByIDSvc(*request, id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to update a role",
+		result,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}

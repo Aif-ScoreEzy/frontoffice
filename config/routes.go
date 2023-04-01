@@ -12,4 +12,5 @@ func SetupRoutes(app *fiber.App) {
 
 	api.Post("/role", middleware.IsRoleRequestValid, role.CreateRole)
 	api.Get("/role/:id", role.GetRoleByID)
+	api.Put("/role/:id", middleware.IsRoleRequestValid, role.UpdateRole)
 }
