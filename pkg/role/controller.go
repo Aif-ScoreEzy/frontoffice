@@ -1,25 +1,27 @@
 package role
 
 import (
+	"front-office/helper"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func CreateRole(c *fiber.Ctx) error {
-	var roleRequest RoleRequest
+	request := c.Locals("request").(*RoleRequest)
 
-	if err := c.BodyParser(&roleRequest); err != nil {
-		return err
+	role, err := CreateRoleSvc(*request)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	if errCreateRole := CreateRoleSvc(roleRequest); errCreateRole != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": errCreateRole.Error(),
-		})
-	}
+	resp := helper.ResponseSuccess(
+		"Succeed to create a role",
+		role,
+	)
 
-	return c.JSON(fiber.Map{
-		"message": "Success",
-	})
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func GetRoleByID(c *fiber.Ctx) error {
@@ -27,18 +29,23 @@ func GetRoleByID(c *fiber.Ctx) error {
 
 	result, err := GetRoleByIDSvc(id)
 	if err != nil && err.Error() == "record not found" {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Data is not found",
-		})
+		resp := helper.ResponseFailed("Data is not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	} else if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
 	dataRespose := RoleResponse{
 		Name: result.Name,
 	}
 
-	return c.Status(200).JSON(dataRespose)
+	resp := helper.ResponseSuccess(
+		"Succeed to get a role by ID",
+		dataRespose,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }

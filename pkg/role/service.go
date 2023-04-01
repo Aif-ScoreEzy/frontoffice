@@ -2,26 +2,21 @@ package role
 
 import (
 	"github.com/google/uuid"
-	"github.com/usepzaka/validator"
 )
 
-func CreateRoleSvc(roleRequest RoleRequest) error {
-	if errValid := validator.ValidateStruct(roleRequest); errValid != nil {
-		return errValid
-	}
-
+func CreateRoleSvc(roleRequest RoleRequest) (Role, error) {
 	roleID := uuid.NewString()
 	dataRole := Role{
 		ID:   roleID,
 		Name: roleRequest.Name,
 	}
 
-	_, err := Create(dataRole)
+	role, err := Create(dataRole)
 	if err != nil {
-		return err
+		return role, err
 	}
 
-	return nil
+	return role, nil
 }
 
 func GetRoleByIDSvc(id string) (Role, error) {

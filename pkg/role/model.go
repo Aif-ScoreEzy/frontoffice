@@ -1,17 +1,25 @@
 package role
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Role struct {
-	ID        string    `gorm:"primarykey"`
-	Name      string    `gorm:"not null"`
-	CreatedAt time.Time `gorm:"not null;default:current_timestamp"`
-	UpdatedAt time.Time `gorm:"not null;default:current_timestamp"`
-	DeletedAt time.Time `gorm:"index;default:null"`
+	ID        string         `gorm:"primarykey"`
+	Name      string         `gorm:"not null"`
+	CreatedAt time.Time      `gorm:"not null;default:current_timestamp"`
+	UpdatedAt time.Time      `gorm:"not null;default:current_timestamp"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type RoleRequest struct {
-	Name string `json:"name" validate:"required~Name cannot be empty"`
+	ID        string    `json:"-"`
+	Name      string    `json:"name" validate:"required~Name cannot be empty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at" `
 }
 
 type RoleResponse struct {

@@ -4,8 +4,8 @@ import (
 	"front-office/config/database"
 )
 
-func Create(roleReq Role) (RoleResponse, error) {
-	var role RoleResponse
+func Create(roleReq Role) (Role, error) {
+	var role Role
 
 	result := database.DBConn.Debug().Create(&roleReq)
 
