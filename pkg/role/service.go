@@ -29,7 +29,7 @@ func GetRoleByIDSvc(id string) (Role, error) {
 }
 
 func UpdateRoleByIDSvc(roleReq RoleRequest, id string) (Role, error) {
-	result, err := Update(roleReq, id)
+	result, err := UpdateByID(roleReq, id)
 	if err != nil {
 		return result, err
 	}

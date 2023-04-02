@@ -49,3 +49,29 @@ func GetRoleByID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func UpdatePermissionByID(c *fiber.Ctx) error {
+	req := c.Locals("request").(*PermissionRequest)
+	id := c.Params("id")
+
+	_, err := GetPermissionByIDSvc(id)
+	if err != nil && err.Error() == "record not found" {
+		resp := helper.ResponseFailed("Data is not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	result, err := UpdatePermissionByIDSvc(*req, id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to update a permission",
+		result,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}

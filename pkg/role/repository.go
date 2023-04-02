@@ -22,11 +22,11 @@ func FindOneByID(id string) (Role, error) {
 	return role, nil
 }
 
-func Update(roleReq RoleRequest, id string) (Role, error) {
+func UpdateByID(req RoleRequest, id string) (Role, error) {
 	var role Role
 
 	result := database.DBConn.Debug().Model(&role).
-		Where("id = ?", id).Updates(roleReq)
+		Where("id = ?", id).Updates(req)
 	if result.Error != nil {
 		return role, result.Error
 	}

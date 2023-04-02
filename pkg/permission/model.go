@@ -15,7 +15,11 @@ type Permission struct {
 }
 
 type PermissionRequest struct {
-	Name string `json:"name" validate:"required~Name cannot be empty"`
+	ID        string    `json:"-"`
+	Name      string    `json:"name" validate:"required~Name cannot be empty"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
+	DeletedAt time.Time `json:"-"`
 }
 
 type PermissionResponse struct {
