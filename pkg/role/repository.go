@@ -9,7 +9,7 @@ func Create(roleReq Role) (Role, error) {
 
 	result := database.DBConn.Debug().Create(&roleReq)
 
-	database.DBConn.Debug().Model(&Role{}).Where("id = ?", roleReq.ID).Find(&role)
+	database.DBConn.First(&role, "id = ?", roleReq.ID)
 
 	return role, result.Error
 }
@@ -36,4 +36,12 @@ func Update(roleReq RoleRequest, id string) (Role, error) {
 	database.DBConn.First(&role, "id = ?", id)
 
 	return role, nil
+}
+
+func Delete(id string) error {
+	var role Role
+
+	result := database.DBConn.Debug().Where("id = ?", id).Delete(&role)
+
+	return result.Error
 }

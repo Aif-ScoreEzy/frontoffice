@@ -36,3 +36,12 @@ func UpdateRoleByIDSvc(roleReq RoleRequest, id string) (Role, error) {
 
 	return result, nil
 }
+
+func DeleteRoleByIDSvc(id string) error {
+	err := Delete(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

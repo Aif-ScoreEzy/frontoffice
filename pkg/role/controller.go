@@ -75,3 +75,27 @@ func UpdateRole(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func DeleteRole(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	_, err := GetRoleByIDSvc(id)
+	if err != nil && err.Error() == "record not found" {
+		resp := helper.ResponseFailed("Data is not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	if err := DeleteRoleByIDSvc(id); err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to delete a role",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
