@@ -16,3 +16,12 @@ func CreatePermissionSvc(permissionReq PermissionRequest) (Permission, error) {
 
 	return result, err
 }
+
+func GetPermissionByIDSvc(id string) (Permission, error) {
+	result, err := FindOneByID(id)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}

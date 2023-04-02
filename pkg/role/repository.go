@@ -4,12 +4,10 @@ import (
 	"front-office/config/database"
 )
 
-func Create(roleReq Role) (Role, error) {
-	var role Role
+func Create(role Role) (Role, error) {
+	result := database.DBConn.Debug().Create(&role)
 
-	result := database.DBConn.Debug().Create(&roleReq)
-
-	database.DBConn.First(&role, "id = ?", roleReq.ID)
+	database.DBConn.First(&role, "id = ?", role.ID)
 
 	return role, result.Error
 }
