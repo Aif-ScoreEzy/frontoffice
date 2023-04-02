@@ -1,4 +1,4 @@
-package role
+package permission
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Role struct {
+type Permission struct {
 	ID        string         `gorm:"primarykey"`
 	Name      string         `gorm:"not null"`
 	CreatedAt time.Time      `gorm:"not null;default:current_timestamp"`
@@ -14,11 +14,11 @@ type Role struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-type RoleRequest struct {
+type PermissionRequest struct {
 	Name string `json:"name" validate:"required~Name cannot be empty"`
 }
 
-type RoleResponse struct {
+type PermissionResponse struct {
 	ID        string    `json:"-"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"-"`
