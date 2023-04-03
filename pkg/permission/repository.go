@@ -35,3 +35,11 @@ func UpdateByID(req PermissionRequest, id string) (Permission, error) {
 
 	return permission, nil
 }
+
+func Delete(id string) error {
+	var permission Permission
+
+	result := database.DBConn.Debug().Where("id = ?", id).Delete(&permission)
+
+	return result.Error
+}

@@ -19,5 +19,5 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/permission", middleware.IsPermissionRequestValid, permission.CreatePermission)
 	api.Get("/permission/:id", permission.GetRoleByID)
 	api.Put("/permission/:id", middleware.IsPermissionRequestValid, permission.UpdatePermissionByID)
-
+	api.Delete("/permission/:id", permission.DeletePermissionByID)
 }

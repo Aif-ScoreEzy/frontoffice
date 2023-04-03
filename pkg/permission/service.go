@@ -36,3 +36,12 @@ func UpdatePermissionByIDSvc(req PermissionRequest, id string) (Permission, erro
 
 	return result, nil
 }
+
+func DeletePermissionByIDSvc(id string) error {
+	err := Delete(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
