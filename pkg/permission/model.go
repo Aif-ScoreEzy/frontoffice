@@ -7,11 +7,11 @@ import (
 )
 
 type Permission struct {
-	ID        string         `gorm:"primarykey"`
-	Name      string         `gorm:"not null"`
-	CreatedAt time.Time      `gorm:"not null;default:current_timestamp"`
-	UpdatedAt time.Time      `gorm:"not null;default:current_timestamp"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID        string         `gorm:"primarykey" json:"id"`
+	Name      string         `gorm:"not null" json:"name"`
+	CreatedAt time.Time      `gorm:"not null;default:current_timestamp" json:"-"`
+	UpdatedAt time.Time      `gorm:"not null;default:current_timestamp" json:"-"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type PermissionRequest struct {
@@ -23,9 +23,9 @@ type PermissionRequest struct {
 }
 
 type PermissionResponse struct {
-	ID        string    `json:"-"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
-	DeletedAt time.Time `json:"-"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `json:"-"`
 }

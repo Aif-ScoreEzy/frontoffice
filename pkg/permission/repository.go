@@ -1,6 +1,7 @@
 package permission
 
 import (
+	"errors"
 	"front-office/config/database"
 )
 
@@ -17,6 +18,16 @@ func FindOneByID(id string) (Permission, error) {
 	result := database.DBConn.First(&permission, "id = ?", id)
 	if result.Error != nil {
 		return permission, result.Error
+	}
+
+	return permission, nil
+}
+
+func FindOneByName(name string) (Permission, error) {
+	var permission Permission
+	result := database.DBConn.First(&permission, "name = ?", name)
+	if result.RowsAffected != 0 {
+		return permission, errors.New("Permission with the same name already exists")
 	}
 
 	return permission, nil

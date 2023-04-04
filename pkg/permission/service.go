@@ -28,6 +28,15 @@ func GetPermissionByIDSvc(id string) (Permission, error) {
 	return result, nil
 }
 
+func GetPermissionByNameSvc(name string) (Permission, error) {
+	result, err := FindOneByName(name)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
 func UpdatePermissionByIDSvc(req PermissionRequest, id string) (Permission, error) {
 	result, err := UpdateByID(req, id)
 	if err != nil {

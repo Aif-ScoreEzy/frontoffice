@@ -7,9 +7,16 @@ import (
 )
 
 func CreatePermission(c *fiber.Ctx) error {
-	request := c.Locals("request").(*PermissionRequest)
+	req := c.Locals("request").(*PermissionRequest)
 
-	permission, err := CreatePermissionSvc(*request)
+	_, err := GetPermissionByNameSvc(req.Name)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	permission, err := CreatePermissionSvc(*req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -39,6 +46,7 @@ func GetRoleByID(c *fiber.Ctx) error {
 	}
 
 	dataRespose := PermissionResponse{
+		ID:   result.ID,
 		Name: result.Name,
 	}
 
@@ -59,6 +67,13 @@ func UpdatePermissionByID(c *fiber.Ctx) error {
 		resp := helper.ResponseFailed("Data is not found")
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	_, err = GetPermissionByNameSvc(req.Name)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	result, err := UpdatePermissionByIDSvc(*req, id)

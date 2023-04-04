@@ -9,11 +9,22 @@ import (
 func CreateRole(c *fiber.Ctx) error {
 	request := c.Locals("request").(*RoleRequest)
 
-	role, err := CreateRoleSvc(*request)
+	_, err := GetRoleByNameSvc(request.Name)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	role, err := CreateRoleSvc(*request)
+	if err != nil && err.Error() == "record not found" {
+		resp := helper.ResponseFailed("Data is not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	} else if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -27,7 +38,7 @@ func CreateRole(c *fiber.Ctx) error {
 func GetRoleByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	result, err := GetRoleByIDSvc(id)
+	role, err := GetRoleByIDSvc(id)
 	if err != nil && err.Error() == "record not found" {
 		resp := helper.ResponseFailed("Data is not found")
 
@@ -39,7 +50,9 @@ func GetRoleByID(c *fiber.Ctx) error {
 	}
 
 	dataRespose := RoleResponse{
-		Name: result.Name,
+		ID:          role.ID,
+		Name:        role.Name,
+		Permissions: role.Permissions,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -51,7 +64,7 @@ func GetRoleByID(c *fiber.Ctx) error {
 }
 
 func UpdateRole(c *fiber.Ctx) error {
-	request := c.Locals("request").(*RoleRequest)
+	req := c.Locals("request").(*RoleRequest)
 	id := c.Params("id")
 
 	_, err := GetRoleByIDSvc(id)
@@ -61,16 +74,29 @@ func UpdateRole(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	result, err := UpdateRoleByIDSvc(*request, id)
+	_, err = GetRoleByNameSvc(req.Name)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	result, err := UpdateRoleByIDSvc(*req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
+	dataRespose := RoleResponse{
+		ID:          result.ID,
+		Name:        result.Name,
+		Permissions: result.Permissions,
+	}
+
 	resp := helper.ResponseSuccess(
 		"Success to update a role",
-		result,
+		dataRespose,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
