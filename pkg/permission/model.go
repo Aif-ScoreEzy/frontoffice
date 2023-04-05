@@ -21,11 +21,3 @@ type PermissionRequest struct {
 	UpdatedAt time.Time `json:"-"`
 	DeletedAt time.Time `json:"-"`
 }
-
-type PermissionResponse struct {
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	CreatedAt time.Time      `json:"-"`
-	UpdatedAt time.Time      `json:"-"`
-	DeletedAt gorm.DeletedAt `json:"-"`
-}

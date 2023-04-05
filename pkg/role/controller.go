@@ -35,6 +35,22 @@ func CreateRole(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func GetAllRoles(c *fiber.Ctx) error {
+	roles, err := GetAllRolesSvc()
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get all roles",
+		roles,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func GetRoleByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -49,15 +65,9 @@ func GetRoleByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	dataRespose := RoleResponse{
-		ID:          role.ID,
-		Name:        role.Name,
-		Permissions: role.Permissions,
-	}
-
 	resp := helper.ResponseSuccess(
 		"Succeed to get a role by ID",
-		dataRespose,
+		role,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -81,22 +91,16 @@ func UpdateRole(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	result, err := UpdateRoleByIDSvc(*req, id)
+	role, err := UpdateRoleByIDSvc(*req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	dataRespose := RoleResponse{
-		ID:          result.ID,
-		Name:        result.Name,
-		Permissions: result.Permissions,
-	}
-
 	resp := helper.ResponseSuccess(
 		"Success to update a role",
-		dataRespose,
+		role,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

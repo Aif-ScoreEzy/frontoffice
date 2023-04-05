@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateRoleSvc(req RoleRequest) (RoleResponse, error) {
+func CreateRoleSvc(req RoleRequest) (Role, error) {
 	roleID := uuid.NewString()
 	dataReq := Role{
 		ID:          roleID,
@@ -12,28 +12,30 @@ func CreateRoleSvc(req RoleRequest) (RoleResponse, error) {
 		Permissions: req.Permissions,
 	}
 
-	var dataRole RoleResponse
 	role, err := Create(dataReq)
 	if err != nil {
-		return dataRole, err
+		return role, err
 	}
 
-	dataRole = RoleResponse{
-		ID:          role.ID,
-		Name:        role.Name,
-		Permissions: role.Permissions,
+	return role, nil
+}
+
+func GetAllRolesSvc() ([]Role, error) {
+	roles, err := FindAll()
+	if err != nil {
+		return roles, err
 	}
 
-	return dataRole, nil
+	return roles, nil
 }
 
 func GetRoleByIDSvc(id string) (Role, error) {
-	result, err := FindOneByID(id)
+	role, err := FindOneByID(id)
 	if err != nil {
-		return result, err
+		return role, err
 	}
 
-	return result, nil
+	return role, nil
 }
 
 func GetRoleByNameSvc(name string) (Role, error) {
@@ -45,25 +47,18 @@ func GetRoleByNameSvc(name string) (Role, error) {
 	return result, nil
 }
 
-func UpdateRoleByIDSvc(req RoleRequest, id string) (RoleResponse, error) {
+func UpdateRoleByIDSvc(req RoleRequest, id string) (Role, error) {
 	dataReq := Role{
 		Name:        req.Name,
 		Permissions: req.Permissions,
 	}
 
-	var dataRole RoleResponse
 	role, err := UpdateByID(dataReq, id)
 	if err != nil {
-		return dataRole, err
+		return role, err
 	}
 
-	dataRole = RoleResponse{
-		ID:          role.ID,
-		Name:        role.Name,
-		Permissions: role.Permissions,
-	}
-
-	return dataRole, nil
+	return role, nil
 }
 
 func DeleteRoleByIDSvc(id string) error {

@@ -14,6 +14,17 @@ func Create(role Role) (Role, error) {
 	return role, result.Error
 }
 
+func FindAll() ([]Role, error) {
+	var roles []Role
+
+	result := database.DBConn.Preload("Permissions").Find(&roles)
+	if result.Error != nil {
+		return roles, result.Error
+	}
+
+	return roles, nil
+}
+
 func FindOneByID(id string) (Role, error) {
 	var role Role
 

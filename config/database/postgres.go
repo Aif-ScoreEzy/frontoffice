@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -25,6 +24,6 @@ func ConnectPostgres() error {
 	}
 
 	DBConn = database
-	fmt.Println("Successfully connect to the database")
+	log.Println("🚀 Connected Successfully to the Database")
 	return nil
 }
