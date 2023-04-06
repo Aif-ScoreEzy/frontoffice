@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"front-office/config/database"
 	"front-office/pkg/company"
 
@@ -14,6 +13,12 @@ func (user User) FindOneByEmail() User {
 	return user
 }
 
+func (user User) FindOneByUsername() User {
+	database.DBConn.Preload("Role").First(&user, "username = ?", user.Username)
+
+	return user
+}
+
 func Create(company company.Company, user User) (User, error) {
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
@@ -21,7 +26,6 @@ func Create(company company.Company, user User) (User, error) {
 		}
 
 		user.CompanyID = company.ID
-		fmt.Println(company.ID, user.CompanyID)
 
 		if err := tx.Create(&user).Error; err != nil {
 			return err

@@ -6,15 +6,10 @@ import (
 	"front-office/pkg/company"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterUserSvc(req RegisterUserRequest) (User, error) {
-	var user User
-	isEmailExist := GetUserByEmailSvc(req.Email)
-	if isEmailExist {
-		return user, errors.New("Email already exists")
-	}
-
 	companyID := uuid.NewString()
 	dataCompany := company.Company{
 		ID:              companyID,
@@ -47,11 +42,38 @@ func RegisterUserSvc(req RegisterUserRequest) (User, error) {
 	return user, nil
 }
 
-func GetUserByEmailSvc(email string) bool {
+func IsEmailExistSvc(email string) bool {
 	user := User{
 		Email: email,
 	}
 
 	result := user.FindOneByEmail()
 	return result.ID != ""
+}
+
+func IsUsernameExistSvc(username string) (bool, User) {
+	user := User{
+		Username: username,
+	}
+
+	result := user.FindOneByUsername()
+
+	return result.ID != "", result
+}
+
+func LoginSvc(req UserLoginRequest, user User) (string, error) {
+	err := bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.Password),
+	)
+	if err != nil {
+		return "", errors.New("password is incorrect")
+	}
+
+	token, err := helper.GenerateToken(user.ID)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
