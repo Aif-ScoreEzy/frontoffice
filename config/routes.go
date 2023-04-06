@@ -12,16 +12,17 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
-	api.Post("/role", middleware.IsRoleRequestValid, role.CreateRole)
-	api.Get("/roles", role.GetAllRoles)
-	api.Get("/role/:id", role.GetRoleByID)
-	api.Put("/role/:id", middleware.IsRoleRequestValid, role.UpdateRole)
-	api.Delete("/role/:id", role.DeleteRole)
+	api.Post("/role", middleware.Auth(), middleware.IsRoleRequestValid, role.CreateRole)
+	api.Get("/roles", middleware.Auth(), role.GetAllRoles)
+	api.Get("/role/:id", middleware.Auth(), role.GetRoleByID)
+	api.Put("/role/:id", middleware.Auth(), middleware.IsRoleRequestValid, role.UpdateRole)
+	api.Delete("/role/:id", middleware.Auth(), role.DeleteRole)
 
-	api.Post("/permission", middleware.IsPermissionRequestValid, permission.CreatePermission)
-	api.Get("/permission/:id", permission.GetRoleByID)
-	api.Put("/permission/:id", middleware.IsPermissionRequestValid, permission.UpdatePermissionByID)
-	api.Delete("/permission/:id", permission.DeletePermissionByID)
+	api.Post("/permission", middleware.Auth(), middleware.IsPermissionRequestValid, permission.CreatePermission)
+	api.Get("/permission/:id", middleware.Auth(), permission.GetRoleByID)
+	api.Put("/permission/:id", middleware.Auth(), middleware.IsPermissionRequestValid, permission.UpdatePermissionByID)
+	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
 
 	api.Post("/register", middleware.IsRegisterUserRequestValid, user.Register)
+	api.Post("/login", middleware.IsLoginRequestValid, user.Login)
 }
