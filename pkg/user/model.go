@@ -11,9 +11,9 @@ import (
 
 type User struct {
 	ID        string          `json:"id"`
-	Name      string          `json:"name" validate:"required,alphaspace, min(3)"`
+	Name      string          `json:"name"`
 	Username  string          `json:"username" gorm:"unique"`
-	Email     string          `json:"email" gorm:"unique" validate:"required,email"`
+	Email     string          `json:"email" gorm:"unique"`
 	Password  string          `json:"password"`
 	Phone     string          `json:"phone"`
 	Key       string          `json:"key"`
@@ -29,9 +29,9 @@ type User struct {
 
 type RegisterUserRequest struct {
 	Name            string `json:"name" validate:"required~Name cannot be empty"`
-	Email           string `json:"email" gorm:"unique" validate:"required~Email cannot be empty"`
+	Email           string `json:"email" gorm:"unique" validate:"required~Email cannot be empty, email~Only email pattern are allowed"`
 	Password        string `json:"password" validate:"required~Password cannot be empty, length(8)~Password must have at least 8 characters"`
-	Username        string `json:"username" gorm:"unique" validate:"required~Username cannot be empty"`
+	Username        string `json:"username" gorm:"unique" validate:"required~Username cannot be empty, alphanum~Only alphabet and numeric values are allowed for username"`
 	Phone           string `string:"phone" validate:"required~Phone cannot be empty, phone"`
 	CompanyName     string `json:"company_name"`
 	CompanyAddress  string `json:"company_address"`
@@ -40,6 +40,20 @@ type RegisterUserRequest struct {
 	IndustryID      string `json:"industry_id"`
 	PaymentScheme   string `json:"payment_scheme"`
 	RoleID          string `json:"role_id" validate:"required~Role cannot be empty"`
+}
+
+type UserLoginRequest struct {
+	Username string `json:"username" validate:"required~Username cannot be empty"`
+	Password string `json:"password" validate:"required~Password cannot be empty"`
+}
+
+type UserLoginResponse struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	CompanyID string `json:"company_id"`
+	Role      string `json:"role_id"`
+	Key       string `json:"key"`
+	Token     string `json:"access_token"`
 }
 
 func (user *User) SetPassword(password string) {
