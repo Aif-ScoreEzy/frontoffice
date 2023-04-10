@@ -29,10 +29,14 @@ func GetAllRolesSvc() ([]Role, error) {
 	return roles, nil
 }
 
-func GetRoleByIDSvc(id string) (Role, error) {
-	role, err := FindOneByID(id)
+func IsRoleIDExistSvc(id string) (Role, error) {
+	role := Role{
+		ID: id,
+	}
+
+	result, err := FindOneByID(role)
 	if err != nil {
-		return role, err
+		return result, err
 	}
 
 	return role, nil

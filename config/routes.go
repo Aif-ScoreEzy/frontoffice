@@ -25,4 +25,5 @@ func SetupRoutes(app *fiber.App) {
 
 	api.Post("/register", middleware.IsRegisterUserRequestValid, user.Register)
 	api.Post("/login", middleware.IsLoginRequestValid, user.Login)
+	api.Put("/user/:id", middleware.Auth(), middleware.IsUpdateUserRequestValid, user.UpdateUserByID)
 }

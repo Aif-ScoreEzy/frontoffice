@@ -2,7 +2,10 @@ package role
 
 import (
 	"errors"
+	"fmt"
 	"front-office/config/database"
+
+	"gorm.io/gorm"
 )
 
 func Create(role Role) (Role, error) {
@@ -25,12 +28,14 @@ func FindAll() ([]Role, error) {
 	return roles, nil
 }
 
-func FindOneByID(id string) (Role, error) {
-	var role Role
+func FindOneByID(role Role) (Role, error) {
+	err := database.DBConn.Preload("Permissions").First(&role).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return role, fmt.Errorf("Role with ID %s not found", role.ID)
+		}
 
-	result := database.DBConn.Preload("Permissions").First(&role, "id = ?", id)
-	if result.Error != nil {
-		return role, result.Error
+		return role, fmt.Errorf("Failed to find role with ID %s: %v", role.ID, err)
 	}
 
 	return role, nil

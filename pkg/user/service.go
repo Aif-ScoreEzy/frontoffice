@@ -42,13 +42,13 @@ func RegisterUserSvc(req RegisterUserRequest) (User, error) {
 	return user, nil
 }
 
-func IsEmailExistSvc(email string) bool {
+func IsEmailExistSvc(email string) (bool, User) {
 	user := User{
 		Email: email,
 	}
 
 	result := user.FindOneByEmail()
-	return result.ID != ""
+	return result.ID != "", result
 }
 
 func IsUsernameExistSvc(username string) (bool, User) {
@@ -59,6 +59,16 @@ func IsUsernameExistSvc(username string) (bool, User) {
 	result := user.FindOneByUsername()
 
 	return result.ID != "", result
+}
+
+func IsUserIDExistSvc(id string) (User, error) {
+	user := User{
+		ID: id,
+	}
+
+	result, err := user.FindOneByID()
+
+	return result, err
 }
 
 func LoginSvc(req UserLoginRequest, user User) (string, error) {
@@ -76,4 +86,22 @@ func LoginSvc(req UserLoginRequest, user User) (string, error) {
 	}
 
 	return token, nil
+}
+
+func UpdateUserByIDSvc(req UpdateUserRequest, id string) (User, error) {
+	dataReq := User{
+		Name:      req.Name,
+		Username:  req.Username,
+		Email:     req.Email,
+		Phone:     req.Phone,
+		CompanyID: req.CompanyID,
+		RoleID:    req.RoleID,
+	}
+
+	user, err := UpdateOneByID(dataReq, id)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }

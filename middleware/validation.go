@@ -85,3 +85,22 @@ func IsLoginRequestValid(c *fiber.Ctx) error {
 
 	return c.Next()
 }
+
+func IsUpdateUserRequestValid(c *fiber.Ctx) error {
+	request := &user.UpdateUserRequest{}
+	if err := c.BodyParser(&request); err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	if errValid := validator.ValidateStruct(request); errValid != nil {
+		resp := helper.ResponseFailed(errValid.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	c.Locals("request", request)
+
+	return c.Next()
+}

@@ -54,15 +54,11 @@ func GetAllRoles(c *fiber.Ctx) error {
 func GetRoleByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	role, err := GetRoleByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
-
-		return c.Status(fiber.StatusNotFound).JSON(resp)
-	} else if err != nil {
+	role, err := IsRoleIDExistSvc(id)
+	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -77,11 +73,11 @@ func UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RoleRequest)
 	id := c.Params("id")
 
-	_, err := GetRoleByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
+	_, err := IsRoleIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusNotFound).JSON(resp)
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	_, err = GetRoleByNameSvc(req.Name)
@@ -109,11 +105,11 @@ func UpdateRole(c *fiber.Ctx) error {
 func DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := GetRoleByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
+	_, err := IsRoleIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusNotFound).JSON(resp)
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	if err := DeleteRoleByIDSvc(id); err != nil {

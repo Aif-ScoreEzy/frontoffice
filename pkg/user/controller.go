@@ -1,7 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"front-office/helper"
+	"front-office/pkg/company"
+	"front-office/pkg/role"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -16,7 +19,7 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	isEmailExist := IsEmailExistSvc(req.Email)
+	isEmailExist, _ := IsEmailExistSvc(req.Email)
 	if isEmailExist {
 		resp := helper.ResponseFailed("Email already exists")
 
@@ -30,9 +33,21 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
+	dataResponse := RegisterUserResponse{
+		ID:       user.ID,
+		Name:     user.Name,
+		Username: user.Username,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Active:   user.Active,
+		Key:      user.Key,
+		Company:  user.Company,
+		Role:     user.Role,
+	}
+
 	resp := helper.ResponseSuccess(
 		"Success to register",
-		user,
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -42,6 +57,7 @@ func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
 	isUsernameExist, user := IsUsernameExistSvc(req.Username)
+	fmt.Println(isUsernameExist)
 	if !isUsernameExist {
 		resp := helper.ResponseFailed("Username or password is incorrect")
 
@@ -71,6 +87,65 @@ func Login(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"Success to login",
 		data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func UpdateUserByID(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateUserRequest)
+	id := c.Params("id")
+
+	_, err := IsUserIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	isEmailExist, _ := IsEmailExistSvc(req.Email)
+	if isEmailExist {
+		resp := helper.ResponseFailed("Email already exists")
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	_, err = company.IsCompanyIDExistSvc(req.CompanyID)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	_, err = role.IsRoleIDExistSvc(req.RoleID)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	user, err := UpdateUserByIDSvc(*req, id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	dataResponse := RegisterUserResponse{
+		ID:       user.ID,
+		Name:     user.Name,
+		Username: user.Username,
+		Email:    user.Email,
+		Phone:    user.Phone,
+		Active:   user.Active,
+		Key:      user.Key,
+		Company:  user.Company,
+		Role:     user.Role,
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to update user",
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

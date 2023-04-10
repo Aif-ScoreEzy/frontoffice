@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"front-office/config/database"
 	"front-office/pkg/company"
 
@@ -17,6 +18,19 @@ func (user User) FindOneByUsername() User {
 	database.DBConn.Preload("Role").First(&user, "username = ?", user.Username)
 
 	return user
+}
+
+func (user User) FindOneByID() (User, error) {
+	err := database.DBConn.Preload("Role").First(&user, "id = ?", user.ID).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return user, fmt.Errorf("User with ID %s not found", user.ID)
+		}
+
+		return user, fmt.Errorf("Failed to find user with ID %s: %v", user.ID, err)
+	}
+
+	return user, nil
 }
 
 func Create(company company.Company, user User) (User, error) {
@@ -41,4 +55,17 @@ func Create(company company.Company, user User) (User, error) {
 	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").Preload("Role.Permissions").First(&user)
 
 	return user, errTx
+}
+
+func UpdateOneByID(req User, id string) (User, error) {
+	var user User
+	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "id = ?", id)
+
+	result := database.DBConn.Debug().Model(&user).
+		Where("id = ?", id).Updates(req)
+	if result.Error != nil {
+		return user, result.Error
+	}
+
+	return user, nil
 }

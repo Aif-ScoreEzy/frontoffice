@@ -18,9 +18,9 @@ type User struct {
 	Phone     string          `json:"phone"`
 	Key       string          `json:"key"`
 	Active    bool            `json:"active"`
-	CompanyID string          `json:"-"`
+	CompanyID string          `json:"company_id"`
 	Company   company.Company `json:"company" gorm:"foreignKey:CompanyID"`
-	RoleID    string          `json:"-"`
+	RoleID    string          `json:"role_id"`
 	Role      role.Role       `json:"role" gorm:"foreignKey:RoleID"`
 	CreatedAt time.Time       `json:"-"`
 	UpdatedAt time.Time       `json:"-"`
@@ -42,6 +42,24 @@ type RegisterUserRequest struct {
 	RoleID          string `json:"role_id" validate:"required~Role cannot be empty"`
 }
 
+type RegisterUserResponse struct {
+	ID        string          `json:"id"`
+	Name      string          `json:"name"`
+	Username  string          `json:"username" gorm:"unique"`
+	Email     string          `json:"email" gorm:"unique"`
+	Password  string          `json:"-"`
+	Phone     string          `json:"phone"`
+	Key       string          `json:"key"`
+	Active    bool            `json:"active"`
+	CompanyID string          `json:"-"`
+	Company   company.Company `json:"company" gorm:"foreignKey:CompanyID"`
+	RoleID    string          `json:"-"`
+	Role      role.Role       `json:"role" gorm:"foreignKey:RoleID"`
+	CreatedAt time.Time       `json:"-"`
+	UpdatedAt time.Time       `json:"-"`
+	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
+}
+
 type UserLoginRequest struct {
 	Username string `json:"username" validate:"required~Username cannot be empty"`
 	Password string `json:"password" validate:"required~Password cannot be empty"`
@@ -54,6 +72,15 @@ type UserLoginResponse struct {
 	Role      string `json:"role_id"`
 	Key       string `json:"key"`
 	Token     string `json:"access_token"`
+}
+
+type UpdateUserRequest struct {
+	Name      string `json:"name" validate:"required~Name cannot be empty"`
+	Username  string `json:"username" gorm:"unique" validate:"required~Username cannot be empty, alphanum~Only alphabet and numeric values are allowed for username"`
+	Email     string `json:"email" gorm:"unique" validate:"required~Email cannot be empty, email~Only email pattern are allowed"`
+	Phone     string `string:"phone" validate:"required~Phone cannot be empty, phone"`
+	RoleID    string `json:"role_id" validate:"required~Role cannot be empty"`
+	CompanyID string `json:"company_id" validate:"required~Company cannot be empty"`
 }
 
 func (user *User) SetPassword(password string) {
