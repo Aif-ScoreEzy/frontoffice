@@ -39,7 +39,7 @@ func IsRoleIDExistSvc(id string) (Role, error) {
 		return result, err
 	}
 
-	return role, nil
+	return result, nil
 }
 
 func GetRoleByNameSvc(name string) (Role, error) {

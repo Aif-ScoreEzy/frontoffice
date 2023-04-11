@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
@@ -57,7 +56,6 @@ func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
 	isUsernameExist, user := IsUsernameExistSvc(req.Username)
-	fmt.Println(isUsernameExist)
 	if !isUsernameExist {
 		resp := helper.ResponseFailed("Username or password is incorrect")
 
@@ -99,6 +97,13 @@ func UpdateUserByID(c *fiber.Ctx) error {
 	_, err := IsUserIDExistSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	isUsernameExist, _ := IsUsernameExistSvc(req.Username)
+	if isUsernameExist {
+		resp := helper.ResponseFailed("Username already exists")
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}

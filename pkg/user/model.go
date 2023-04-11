@@ -75,12 +75,12 @@ type UserLoginResponse struct {
 }
 
 type UpdateUserRequest struct {
-	Name      string `json:"name" validate:"required~Name cannot be empty"`
-	Username  string `json:"username" gorm:"unique" validate:"required~Username cannot be empty, alphanum~Only alphabet and numeric values are allowed for username"`
-	Email     string `json:"email" gorm:"unique" validate:"required~Email cannot be empty, email~Only email pattern are allowed"`
-	Phone     string `string:"phone" validate:"required~Phone cannot be empty, phone"`
-	RoleID    string `json:"role_id" validate:"required~Role cannot be empty"`
-	CompanyID string `json:"company_id" validate:"required~Company cannot be empty"`
+	Name      string `json:"name"`
+	Username  string `json:"username" gorm:"unique" validate:"alphanum~Only alphabet and numeric values are allowed for username"`
+	Email     string `json:"email" gorm:"unique" validate:"email~Only email pattern are allowed"`
+	Phone     string `string:"phone" validate:"phone"`
+	RoleID    string `json:"role_id"`
+	CompanyID string `json:"company_id"`
 }
 
 func (user *User) SetPassword(password string) {
