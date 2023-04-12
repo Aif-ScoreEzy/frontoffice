@@ -10,6 +10,8 @@ import (
 )
 
 func RegisterUserSvc(req RegisterUserRequest) (User, error) {
+	var user User
+
 	companyID := uuid.NewString()
 	dataCompany := company.Company{
 		ID:              companyID,

@@ -40,6 +40,7 @@ func Create(company company.Company, user User) (User, error) {
 		}
 
 		user.CompanyID = company.ID
+		fmt.Println(company.ID, user.CompanyID)
 
 		if err := tx.Create(&user).Error; err != nil {
 			return err
