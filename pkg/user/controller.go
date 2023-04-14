@@ -32,7 +32,7 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	dataResponse := RegisterUserResponse{
+	dataResponse := UserResponse{
 		ID:       user.ID,
 		Name:     user.Name,
 		Username: user.Username,
@@ -77,7 +77,7 @@ func Login(c *fiber.Ctx) error {
 		Username:  user.Username,
 		Email:     user.Email,
 		CompanyID: user.CompanyID,
-		Role:      user.RoleID,
+		RoleID:    user.RoleID,
 		Key:       user.Key,
 		Token:     token,
 	}
@@ -90,19 +90,75 @@ func Login(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func SetActive(c *fiber.Ctx) error {
+func ActivateUser(c *fiber.Ctx) error {
 	key := c.Params("key")
 
-	user, err := UpdateUserByKeySvc(key)
+	isUserExist, _ := IsUserKeyExistSvc(key)
+	if !isUserExist {
+		resp := helper.ResponseFailed("User not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	user, err := ActivateUserByKeySvc(key)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
+	dataResponse := UserUpdateResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Username:  user.Username,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		Active:    user.Active,
+		Key:       user.Key,
+		CompanyID: user.CompanyID,
+		RoleID:    user.RoleID,
+	}
+
 	resp := helper.ResponseSuccess(
 		"success in activating the user",
-		user,
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func DeactiveUser(c *fiber.Ctx) error {
+	email := c.Params("email")
+
+	isEmailExist, _ := IsEmailExistSvc(email)
+	if !isEmailExist {
+		resp := helper.ResponseFailed("User not found")
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	user, err := DeactivateUserByEmailSvc(email)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	dataResponse := UserUpdateResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Username:  user.Username,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		Active:    user.Active,
+		Key:       user.Key,
+		CompanyID: user.CompanyID,
+		RoleID:    user.RoleID,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success in deactivating the user",
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -154,16 +210,16 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	dataResponse := RegisterUserResponse{
-		ID:       user.ID,
-		Name:     user.Name,
-		Username: user.Username,
-		Email:    user.Email,
-		Phone:    user.Phone,
-		Active:   user.Active,
-		Key:      user.Key,
-		Company:  user.Company,
-		Role:     user.Role,
+	dataResponse := UserUpdateResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Username:  user.Username,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		Active:    user.Active,
+		Key:       user.Key,
+		CompanyID: user.CompanyID,
+		RoleID:    user.RoleID,
 	}
 
 	resp := helper.ResponseSuccess(

@@ -42,7 +42,7 @@ type RegisterUserRequest struct {
 	RoleID          string `json:"role_id" validate:"required~Role cannot be empty"`
 }
 
-type RegisterUserResponse struct {
+type UserResponse struct {
 	ID        string          `json:"id"`
 	Name      string          `json:"name"`
 	Username  string          `json:"username"`
@@ -69,7 +69,7 @@ type UserLoginResponse struct {
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	CompanyID string `json:"company_id"`
-	Role      string `json:"role_id"`
+	RoleID    string `json:"role_id"`
 	Key       string `json:"key"`
 	Token     string `json:"access_token"`
 }
@@ -81,6 +81,19 @@ type UpdateUserRequest struct {
 	Phone     string `string:"phone" validate:"phone"`
 	RoleID    string `json:"role_id"`
 	CompanyID string `json:"company_id"`
+}
+
+type UserUpdateResponse struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"-"`
+	Phone     string `json:"phone"`
+	Key       string `json:"key"`
+	Active    bool   `json:"active"`
+	CompanyID string `json:"company_id"`
+	RoleID    string `json:"role_id"`
 }
 
 func (user *User) SetPassword(password string) {

@@ -61,6 +61,16 @@ func IsUsernameExistSvc(username string) (bool, User) {
 	return result.ID != "", result
 }
 
+func IsUserKeyExistSvc(key string) (bool, User) {
+	user := User{
+		Key: key,
+	}
+
+	result := user.FindOneByKey()
+
+	return result.ID != "", result
+}
+
 func IsUserIDExistSvc(id string) (User, error) {
 	user := User{
 		ID: id,
@@ -88,12 +98,21 @@ func LoginSvc(req UserLoginRequest, user User) (string, error) {
 	return token, nil
 }
 
-func UpdateUserByKeySvc(key string) (User, error) {
+func ActivateUserByKeySvc(key string) (User, error) {
 	req := User{
 		Active: true,
 	}
 
 	user, err := UpdateOneByKey(req, key)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func DeactivateUserByEmailSvc(email string) (User, error) {
+	user, err := DeactiveOneByEmail(email)
 	if err != nil {
 		return user, err
 	}

@@ -20,6 +20,12 @@ func (user User) FindOneByUsername() User {
 	return user
 }
 
+func (user User) FindOneByKey() User {
+	database.DBConn.Preload("Role").First(&user, "key = ?", user.Key)
+
+	return user
+}
+
 func (user User) FindOneByID() (User, error) {
 	err := database.DBConn.Preload("Role").First(&user, "id = ?", user.ID).Error
 	if err != nil {
@@ -58,7 +64,7 @@ func Create(company company.Company, user User) (User, error) {
 
 func UpdateOneByID(req User, id string) (User, error) {
 	var user User
-	database.DBConn.Debug().Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "id = ?", id)
+	database.DBConn.Debug().First(&user, "id = ?", id)
 
 	result := database.DBConn.Debug().Model(&user).
 		Where("id = ?", id).Updates(req)
@@ -71,9 +77,21 @@ func UpdateOneByID(req User, id string) (User, error) {
 
 func UpdateOneByKey(req User, key string) (User, error) {
 	var user User
-	database.DBConn.Debug().Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "key = ?", key)
+	database.DBConn.Debug().First(&user, "key = ?", key)
 
 	err := database.DBConn.Debug().Model(&user).Updates(req).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func DeactiveOneByEmail(email string) (User, error) {
+	var user User
+	database.DBConn.Debug().First(&user, "email = ?", email)
+
+	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
 	if err != nil {
 		return user, err
 	}
