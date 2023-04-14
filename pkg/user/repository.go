@@ -40,8 +40,6 @@ func Create(company company.Company, user User) (User, error) {
 		}
 
 		user.CompanyID = company.ID
-		fmt.Println(company.ID, user.CompanyID)
-
 		if err := tx.Create(&user).Error; err != nil {
 			return err
 		}
@@ -60,12 +58,24 @@ func Create(company company.Company, user User) (User, error) {
 
 func UpdateOneByID(req User, id string) (User, error) {
 	var user User
-	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "id = ?", id)
+	database.DBConn.Debug().Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "id = ?", id)
 
 	result := database.DBConn.Debug().Model(&user).
 		Where("id = ?", id).Updates(req)
 	if result.Error != nil {
 		return user, result.Error
+	}
+
+	return user, nil
+}
+
+func UpdateOneByKey(req User, key string) (User, error) {
+	var user User
+	database.DBConn.Debug().Preload("Company").Preload("Company.Industry").Preload("Role").First(&user, "key = ?", key)
+
+	err := database.DBConn.Debug().Model(&user).Updates(req).Error
+	if err != nil {
+		return user, err
 	}
 
 	return user, nil

@@ -10,8 +10,6 @@ import (
 )
 
 func RegisterUserSvc(req RegisterUserRequest) (User, error) {
-	var user User
-
 	companyID := uuid.NewString()
 	dataCompany := company.Company{
 		ID:              companyID,
@@ -88,6 +86,19 @@ func LoginSvc(req UserLoginRequest, user User) (string, error) {
 	}
 
 	return token, nil
+}
+
+func UpdateUserByKeySvc(key string) (User, error) {
+	req := User{
+		Active: true,
+	}
+
+	user, err := UpdateOneByKey(req, key)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func UpdateUserByIDSvc(req UpdateUserRequest, id string) (User, error) {

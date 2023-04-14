@@ -90,6 +90,24 @@ func Login(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func SetActive(c *fiber.Ctx) error {
+	key := c.Params("key")
+
+	user, err := UpdateUserByKeySvc(key)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success in activating the user",
+		user,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func UpdateUserByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	id := c.Params("id")
