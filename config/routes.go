@@ -4,6 +4,7 @@ import (
 	"front-office/middleware"
 	"front-office/pkg/company"
 	"front-office/pkg/permission"
+	"front-office/pkg/product"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
 
@@ -31,4 +32,6 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
+
+	api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
 }
