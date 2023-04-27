@@ -31,18 +31,14 @@ func CreatePermission(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func GetRoleByID(c *fiber.Ctx) error {
+func GetPermissionByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	permission, err := GetPermissionByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
-
-		return c.Status(fiber.StatusNotFound).JSON(resp)
-	} else if err != nil {
+	permission, err := IsPermissionExistSvc(id)
+	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -57,9 +53,9 @@ func UpdatePermissionByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PermissionRequest)
 	id := c.Params("id")
 
-	_, err := GetPermissionByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
+	_, err := IsPermissionExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
@@ -89,9 +85,9 @@ func UpdatePermissionByID(c *fiber.Ctx) error {
 func DeletePermissionByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := GetPermissionByIDSvc(id)
-	if err != nil && err.Error() == "record not found" {
-		resp := helper.ResponseFailed("Data is not found")
+	_, err := IsPermissionExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
