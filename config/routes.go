@@ -12,7 +12,7 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	api := app.Group("/api")
+	api := app.Group("/api/fo")
 
 	api.Post("/role", middleware.Auth(), middleware.IsRequestValid(role.RoleRequest{}), role.CreateRole)
 	api.Get("/roles", middleware.Auth(), role.GetAllRoles)
@@ -21,7 +21,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Delete("/role/:id", middleware.Auth(), role.DeleteRole)
 
 	api.Post("/permission", middleware.Auth(), middleware.IsRequestValid(permission.PermissionRequest{}), permission.CreatePermission)
-	api.Get("/permission/:id", middleware.Auth(), permission.GetRoleByID)
+	api.Get("/permission/:id", middleware.Auth(), permission.GetPermissionByID)
 	api.Put("/permission/:id", middleware.Auth(), middleware.IsRequestValid(permission.PermissionRequest{}), permission.UpdatePermissionByID)
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
 
@@ -34,4 +34,5 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 
 	api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
+	api.Get("/products", middleware.Auth(), product.GetAllProducts)
 }

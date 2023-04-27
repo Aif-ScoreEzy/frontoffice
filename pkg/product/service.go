@@ -23,3 +23,12 @@ func CreateProductSvc(req ProductRequest) (Product, error) {
 
 	return product, nil
 }
+
+func GetAllProductsSvc() ([]Product, error) {
+	products, err := FindAll()
+	if err != nil {
+		return products, err
+	}
+
+	return products, nil
+}

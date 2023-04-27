@@ -12,3 +12,14 @@ func Create(product Product) (Product, error) {
 
 	return product, nil
 }
+
+func FindAll() ([]Product, error) {
+	var products []Product
+
+	result := database.DBConn.Debug().Find(&products)
+	if result.Error != nil {
+		return products, result.Error
+	}
+
+	return products, nil
+}

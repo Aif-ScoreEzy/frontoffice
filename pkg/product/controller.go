@@ -31,3 +31,19 @@ func CreateProduct(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func GetAllProducts(c *fiber.Ctx) error {
+	products, err := GetAllProductsSvc()
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to get all products",
+		products,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}

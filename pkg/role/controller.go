@@ -2,6 +2,7 @@ package role
 
 import (
 	"front-office/helper"
+	"front-office/pkg/permission"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,6 +15,15 @@ func CreateRole(c *fiber.Ctx) error {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	for _, permissionData := range request.Permissions {
+		_, err := permission.IsPermissionExistSvc(permissionData.ID)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
 	}
 
 	role, err := CreateRoleSvc(*request)
