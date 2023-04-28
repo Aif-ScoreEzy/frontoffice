@@ -32,3 +32,16 @@ func GetAllProductsSvc() ([]Product, error) {
 
 	return products, nil
 }
+
+func IsProductIDExistSvc(id string) (Product, error) {
+	product := Product{
+		ID: id,
+	}
+
+	result, err := FindOneByID(product)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}

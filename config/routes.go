@@ -35,4 +35,5 @@ func SetupRoutes(app *fiber.App) {
 
 	api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
 	api.Get("/products", middleware.Auth(), product.GetAllProducts)
+	api.Get("/product/:id", middleware.Auth(), product.GetProductByID)
 }

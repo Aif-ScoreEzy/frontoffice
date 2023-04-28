@@ -29,7 +29,7 @@ func FindAll() ([]Role, error) {
 }
 
 func FindOneByID(role Role) (Role, error) {
-	err := database.DBConn.Preload("Permissions").First(&role).Error
+	err := database.DBConn.Debug().Preload("Permissions").First(&role).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return role, fmt.Errorf("Role with ID %s not found", role.ID)
@@ -43,7 +43,7 @@ func FindOneByID(role Role) (Role, error) {
 
 func FindOneByName(name string) (Role, error) {
 	var role Role
-	result := database.DBConn.First(&role, "name = ?", name)
+	result := database.DBConn.Debug().First(&role, "name = ?", name)
 	if result.RowsAffected != 0 {
 		return role, errors.New("Role with the same name already exists")
 	}

@@ -47,3 +47,25 @@ func GetAllProducts(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func GetProductByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	product, err := IsProductIDExistSvc(id)
+	if product.Name == "" {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	} else if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get a role by ID",
+		product,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
