@@ -53,3 +53,10 @@ func UpdateOneByID(req Product, id string) (Product, error) {
 
 	return product, nil
 }
+
+func DeleteOneByID(id string) error {
+	var product Product
+	err := database.DBConn.Debug().Where("id = ?", id).Delete(&product).Error
+
+	return err
+}

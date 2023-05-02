@@ -78,7 +78,7 @@ func UpdateProductByID(c *fiber.Ctx) error {
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
 	product, err := UpdateProductByIDSvc(*req, id)
@@ -99,6 +99,31 @@ func UpdateProductByID(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"Success to update product",
 		dataResp,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func DeleteProductByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	_, err := IsProductIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	err = DeleteProductByIDSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to delete product",
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

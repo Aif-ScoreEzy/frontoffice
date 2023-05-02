@@ -66,8 +66,7 @@ func UpdateByID(req Role, id string) (Role, error) {
 
 func Delete(id string) error {
 	var role Role
+	err := database.DBConn.Debug().Where("id = ?", id).Delete(&role).Error
 
-	result := database.DBConn.Debug().Where("id = ?", id).Delete(&role)
-
-	return result.Error
+	return err
 }

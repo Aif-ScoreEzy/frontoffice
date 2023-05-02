@@ -68,7 +68,7 @@ func GetRoleByID(c *fiber.Ctx) error {
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -87,7 +87,7 @@ func UpdateRole(c *fiber.Ctx) error {
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
 	_, err = GetRoleByNameSvc(req.Name)
@@ -119,7 +119,7 @@ func DeleteRole(c *fiber.Ctx) error {
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
 	if err := DeleteRoleByIDSvc(id); err != nil {

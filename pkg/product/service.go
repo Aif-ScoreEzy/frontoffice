@@ -61,3 +61,12 @@ func UpdateProductByIDSvc(req UpdateProductRequest, id string) (Product, error) 
 
 	return product, nil
 }
+
+func DeleteProductByIDSvc(id string) error {
+	err := DeleteOneByID(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
