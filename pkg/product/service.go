@@ -45,3 +45,19 @@ func IsProductIDExistSvc(id string) (Product, error) {
 
 	return result, nil
 }
+
+func UpdateProductByIDSvc(req UpdateProductRequest, id string) (Product, error) {
+	dataReq := Product{
+		Name:    req.Name,
+		Slug:    slug.Make(req.Name),
+		Version: req.Version,
+		Url:     req.Url,
+	}
+
+	product, err := UpdateOneByID(dataReq, id)
+	if err != nil {
+		return product, err
+	}
+
+	return product, nil
+}

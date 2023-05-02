@@ -4,8 +4,8 @@ import "time"
 
 type Product struct {
 	ID        string    `gorm:"primarykey" json:"id"`
-	Slug      string    `gorm:"not null" json:"slug"`
 	Name      string    `gorm:"not null" json:"name"`
+	Slug      string    `gorm:"not null" json:"slug"`
 	Version   string    `json:"version"`
 	Url       string    `json:"url"`
 	Key       string    `json:"key"`
@@ -19,6 +19,14 @@ type ProductRequest struct {
 	Version string `json:"version"`
 	Url     string `json:"url"`
 	Key     string `json:"key"`
+}
+
+type UpdateProductRequest struct {
+	Name    string `json:"name"`
+	Slug    string `json:"-"`
+	Version string `json:"version"`
+	Url     string `json:"url"`
+	Key     string `json:"-"`
 }
 
 type ProductResponse struct {

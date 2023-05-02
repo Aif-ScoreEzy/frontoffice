@@ -41,3 +41,15 @@ func FindOneByID(product Product) (Product, error) {
 
 	return product, nil
 }
+
+func UpdateOneByID(req Product, id string) (Product, error) {
+	var product Product
+	database.DBConn.Debug().First(&product, "id = ?", id)
+
+	err := database.DBConn.Debug().Model(&product).Where("id = ?", id).Updates(req).Error
+	if err != nil {
+		return product, err
+	}
+
+	return product, nil
+}

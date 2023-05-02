@@ -66,10 +66,10 @@ func UpdateOneByID(req User, id string) (User, error) {
 	var user User
 	database.DBConn.Debug().First(&user, "id = ?", id)
 
-	result := database.DBConn.Debug().Model(&user).
-		Where("id = ?", id).Updates(req)
-	if result.Error != nil {
-		return user, result.Error
+	err := database.DBConn.Debug().Model(&user).
+		Where("id = ?", id).Updates(req).Error
+	if err != nil {
+		return user, err
 	}
 
 	return user, nil

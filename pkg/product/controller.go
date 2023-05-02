@@ -69,3 +69,37 @@ func GetProductByID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func UpdateProductByID(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateProductRequest)
+	id := c.Params("id")
+
+	_, err := IsProductIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	product, err := UpdateProductByIDSvc(*req, id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	dataResp := ProductResponse{
+		Name:    product.Name,
+		Slug:    product.Slug,
+		Version: product.Version,
+		Url:     product.Url,
+		Key:     product.Key,
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to update product",
+		dataResp,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
