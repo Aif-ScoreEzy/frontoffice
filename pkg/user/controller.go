@@ -55,16 +55,16 @@ func Register(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	isUsernameExist, user := IsUsernameExistSvc(req.Username)
-	if !isUsernameExist {
-		resp := helper.ResponseFailed("Username or password is incorrect")
+	isEmailExist, user := IsEmailExistSvc(req.Email)
+	if !isEmailExist {
+		resp := helper.ResponseFailed("Email or password is incorrect")
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	token, err := LoginSvc(*req, user)
 	if err != nil && err.Error() == "password is incorrect" {
-		resp := helper.ResponseFailed("Username or password is incorrect")
+		resp := helper.ResponseFailed("Email or password is incorrect")
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	} else if err != nil {

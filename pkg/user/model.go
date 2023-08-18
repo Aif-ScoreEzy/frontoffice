@@ -61,7 +61,7 @@ type UserResponse struct {
 }
 
 type UserLoginRequest struct {
-	Username string `json:"username" validate:"required~Username cannot be empty"`
+	Email    string `json:"email" validate:"required~Email cannot be empty"`
 	Password string `json:"password" validate:"required~Password cannot be empty"`
 }
 

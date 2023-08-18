@@ -28,7 +28,7 @@ func CreatePermission(c *fiber.Ctx) error {
 		permission,
 	)
 
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
 func GetPermissionByID(c *fiber.Ctx) error {

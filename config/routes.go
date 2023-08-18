@@ -25,7 +25,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/permission/:id", middleware.Auth(), middleware.IsRequestValid(permission.PermissionRequest{}), permission.UpdatePermissionByID)
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
 
-	api.Put("company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
+	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
 
 	api.Post("/register", middleware.IsRequestValid(user.RegisterUserRequest{}), user.Register)
 	api.Post("/login", middleware.IsRequestValid(user.UserLoginRequest{}), user.Login)
@@ -37,5 +37,5 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/products", middleware.Auth(), product.GetAllProducts)
 	api.Get("/product/:id", middleware.Auth(), product.GetProductByID)
 	api.Put("/product/:id", middleware.Auth(), middleware.IsRequestValid(product.UpdateProductRequest{}), product.UpdateProductByID)
-	api.Delete("product/:id", middleware.Auth(), product.DeleteProductByID)
+	api.Delete("/product/:id", middleware.Auth(), product.DeleteProductByID)
 }
