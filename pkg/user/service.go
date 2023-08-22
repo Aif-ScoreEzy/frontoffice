@@ -137,3 +137,12 @@ func UpdateUserByIDSvc(req UpdateUserRequest, id string) (User, error) {
 
 	return user, nil
 }
+
+func GetAllUsersSvc() ([]User, error) {
+	users, err := FindAll()
+	if err != nil {
+		return users, err
+	}
+
+	return users, nil
+}

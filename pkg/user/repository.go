@@ -98,3 +98,14 @@ func DeactiveOneByEmail(email string) (User, error) {
 
 	return user, nil
 }
+
+func FindAll() ([]User, error) {
+	var users []User
+
+	result := database.DBConn.Debug().Preload("Role").Find(&users)
+	if result.Error != nil {
+		return users, result.Error
+	}
+
+	return users, nil
+}

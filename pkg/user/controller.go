@@ -229,3 +229,19 @@ func UpdateUserByID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func GetAllUsers(c *fiber.Ctx) error {
+	users, err := GetAllUsersSvc()
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get all users",
+		users,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
