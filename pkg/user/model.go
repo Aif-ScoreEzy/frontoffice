@@ -66,6 +66,8 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	CompanyID string `json:"company_id"`

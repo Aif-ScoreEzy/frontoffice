@@ -33,6 +33,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 	api.Get("/users", middleware.Auth(), user.GetAllUsers)
+	api.Get("/user/:id", middleware.Auth(), user.GetUserByID)
 
 	api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
 	api.Get("/products", middleware.Auth(), product.GetAllProducts)
