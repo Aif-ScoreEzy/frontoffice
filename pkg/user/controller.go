@@ -74,6 +74,8 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	data := UserLoginResponse{
+		ID:        user.ID,
+		Name:      user.Name,
 		Username:  user.Username,
 		Email:     user.Email,
 		CompanyID: user.CompanyID,
@@ -241,6 +243,24 @@ func GetAllUsers(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"Succeed to get all users",
 		users,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func GetUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	user, err := IsUserIDExistSvc(id)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusNotFound).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get a user by ID",
+		user,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
