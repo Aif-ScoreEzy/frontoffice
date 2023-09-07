@@ -1,45 +1,53 @@
 package user
 
 import (
-	"fmt"
 	"front-office/config/database"
 	"front-office/pkg/company"
 
 	"gorm.io/gorm"
 )
 
-func (user User) FindOneByEmail() User {
-	database.DBConn.First(&user, "email = ?", user.Email)
-
-	return user
-}
-
-func (user User) FindOneByUsername() User {
-	database.DBConn.Preload("Role").First(&user, "username = ?", user.Username)
-
-	return user
-}
-
-func (user User) FindOneByKey() User {
-	database.DBConn.Preload("Role").First(&user, "key = ?", user.Key)
-
-	return user
-}
-
-func (user User) FindOneByID() (User, error) {
-	err := database.DBConn.Preload("Role").First(&user, "id = ?", user.ID).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return user, fmt.Errorf("User with ID %s not found", user.ID)
-		}
-
-		return user, fmt.Errorf("Failed to find user with ID %s: %v", user.ID, err)
+func FindOneByEmail(email string) (*User, error) {
+	var user *User
+	tx := database.DBConn.Debug().First(&user, "email = ?", email)
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 
 	return user, nil
 }
 
-func Create(company company.Company, user User) (User, error) {
+func FindOneByUsername(username string) (*User, error) {
+	var user *User
+	tx := database.DBConn.Debug().Preload("Role").First(&user, "username = ?", username)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return user, nil
+}
+
+func FindOneByKey(key string) (*User, error) {
+	var user *User
+	tx := database.DBConn.Debug().Preload("Role").First(&user, "key = ?", key)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return user, nil
+}
+
+func FindOneByID(id string) (*User, error) {
+	var user *User
+	err := database.DBConn.Preload("Role").First(&user, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func Create(company *company.Company, user *User) (*User, error) {
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
@@ -62,8 +70,8 @@ func Create(company company.Company, user User) (User, error) {
 	return user, errTx
 }
 
-func UpdateOneByID(req User, id string) (User, error) {
-	var user User
+func UpdateOneByID(req *User, id string) (*User, error) {
+	var user *User
 	database.DBConn.Debug().First(&user, "id = ?", id)
 
 	err := database.DBConn.Debug().Model(&user).
@@ -75,11 +83,11 @@ func UpdateOneByID(req User, id string) (User, error) {
 	return user, nil
 }
 
-func UpdateOneByKey(req User, key string) (User, error) {
-	var user User
+func UpdateOneByKey(key string) (*User, error) {
+	var user *User
 	database.DBConn.Debug().First(&user, "key = ?", key)
 
-	err := database.DBConn.Debug().Model(&user).Updates(req).Error
+	err := database.DBConn.Debug().Model(&user).Update("active", true).Error
 	if err != nil {
 		return user, err
 	}
@@ -87,8 +95,8 @@ func UpdateOneByKey(req User, key string) (User, error) {
 	return user, nil
 }
 
-func DeactiveOneByEmail(email string) (User, error) {
-	var user User
+func DeactiveOneByEmail(email string) (*User, error) {
+	var user *User
 	database.DBConn.Debug().First(&user, "email = ?", email)
 
 	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
@@ -99,8 +107,8 @@ func DeactiveOneByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func FindAll() ([]User, error) {
-	var users []User
+func FindAll() ([]*User, error) {
+	var users []*User
 
 	result := database.DBConn.Debug().Preload("Role").Find(&users)
 	if result.Error != nil {

@@ -30,7 +30,7 @@ func main() {
 		AllowCredentials: true,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 	}))
-	config.SetupRoutes(app)
+
 	config.SetupRoutes(app)
 
 	log.Fatal(app.Listen(":" + os.Getenv("APP_PORT")))

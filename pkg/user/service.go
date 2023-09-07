@@ -9,9 +9,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterUserSvc(req RegisterUserRequest) (User, error) {
+func RegisterUserSvc(req RegisterUserRequest) (*User, error) {
 	companyID := uuid.NewString()
-	dataCompany := company.Company{
+	dataCompany := &company.Company{
 		ID:              companyID,
 		CompanyName:     req.CompanyName,
 		CompanyAddress:  req.CompanyAddress,
@@ -22,7 +22,7 @@ func RegisterUserSvc(req RegisterUserRequest) (User, error) {
 	}
 
 	userID := uuid.NewString()
-	dataUser := User{
+	dataUser := &User{
 		ID:       userID,
 		Name:     req.Name,
 		Username: req.Username,
@@ -42,46 +42,43 @@ func RegisterUserSvc(req RegisterUserRequest) (User, error) {
 	return user, nil
 }
 
-func IsEmailExistSvc(email string) (bool, User) {
-	user := User{
-		Email: email,
+func FindUserByEmailSvc(email string) (*User, error) {
+	user, err := FindOneByEmail(email)
+	if err != nil {
+		return nil, err
 	}
 
-	result := user.FindOneByEmail()
-	return result.ID != "", result
+	return user, nil
 }
 
-func IsUsernameExistSvc(username string) (bool, User) {
-	user := User{
-		Username: username,
+func FindUserByUsernameSvc(username string) (*User, error) {
+	user, err := FindOneByUsername(username)
+	if err != nil {
+		return nil, err
 	}
 
-	result := user.FindOneByUsername()
-
-	return result.ID != "", result
+	return user, nil
 }
 
-func IsUserKeyExistSvc(key string) (bool, User) {
-	user := User{
-		Key: key,
+func FindUserByKeySvc(key string) (*User, error) {
+	user, err := FindOneByKey(key)
+	if err != nil {
+		return nil, err
 	}
 
-	result := user.FindOneByKey()
-
-	return result.ID != "", result
+	return user, nil
 }
 
-func IsUserIDExistSvc(id string) (User, error) {
-	user := User{
-		ID: id,
+func FindUserByIDSvc(id string) (*User, error) {
+	user, err := FindOneByID(id)
+	if err != nil {
+		return nil, err
 	}
 
-	result, err := user.FindOneByID()
-
-	return result, err
+	return user, err
 }
 
-func LoginSvc(req UserLoginRequest, user User) (string, error) {
+func LoginSvc(req *UserLoginRequest, user *User) (string, error) {
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
 		[]byte(req.Password),
@@ -98,12 +95,8 @@ func LoginSvc(req UserLoginRequest, user User) (string, error) {
 	return token, nil
 }
 
-func ActivateUserByKeySvc(key string) (User, error) {
-	req := User{
-		Active: true,
-	}
-
-	user, err := UpdateOneByKey(req, key)
+func ActivateUserByKeySvc(key string) (*User, error) {
+	user, err := UpdateOneByKey(key)
 	if err != nil {
 		return user, err
 	}
@@ -111,7 +104,7 @@ func ActivateUserByKeySvc(key string) (User, error) {
 	return user, nil
 }
 
-func DeactivateUserByEmailSvc(email string) (User, error) {
+func DeactivateUserByEmailSvc(email string) (*User, error) {
 	user, err := DeactiveOneByEmail(email)
 	if err != nil {
 		return user, err
@@ -120,8 +113,8 @@ func DeactivateUserByEmailSvc(email string) (User, error) {
 	return user, nil
 }
 
-func UpdateUserByIDSvc(req UpdateUserRequest, id string) (User, error) {
-	dataReq := User{
+func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
+	dataReq := &User{
 		Name:      req.Name,
 		Username:  req.Username,
 		Email:     req.Email,
@@ -138,7 +131,7 @@ func UpdateUserByIDSvc(req UpdateUserRequest, id string) (User, error) {
 	return user, nil
 }
 
-func GetAllUsersSvc() ([]User, error) {
+func GetAllUsersSvc() ([]*User, error) {
 	users, err := FindAll()
 	if err != nil {
 		return users, err
