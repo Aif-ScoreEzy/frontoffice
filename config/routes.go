@@ -28,6 +28,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
 
 	api.Post("/register", middleware.IsRequestValid(user.RegisterUserRequest{}), user.Register)
+	api.Post("/send-email-verification", middleware.IsRequestValid(user.SendEmailVerificationRequest{}), user.SendEmailVerification)
 	api.Post("/login", middleware.IsRequestValid(user.UserLoginRequest{}), user.Login)
 	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)

@@ -10,21 +10,22 @@ import (
 )
 
 type User struct {
-	ID        string          `gorm:"primarykey" json:"id"`
-	Name      string          `gorm:"not null" json:"name"`
-	Username  string          `gorm:"unique" json:"username"`
-	Email     string          `gorm:"unique" json:"email"`
-	Password  string          `gorm:"not null" json:"password"`
-	Phone     string          `gorm:"not null" json:"phone"`
-	Key       string          `gorm:"not null" json:"key"`
-	Active    bool            `json:"active"`
-	CompanyID string          `gorm:"not null" json:"company_id"`
-	Company   company.Company `gorm:"foreignKey:CompanyID" json:"company"`
-	RoleID    string          `gorm:"not null" json:"role_id"`
-	Role      role.Role       `gorm:"foreignKey:RoleID" json:"role"`
-	CreatedAt time.Time       `json:"-"`
-	UpdatedAt time.Time       `json:"-"`
-	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
+	ID         string          `gorm:"primarykey" json:"id"`
+	Name       string          `gorm:"not null" json:"name"`
+	Username   string          `gorm:"unique" json:"username"`
+	Email      string          `gorm:"unique" json:"email"`
+	Password   string          `gorm:"not null" json:"password"`
+	Phone      string          `gorm:"not null" json:"phone"`
+	Key        string          `gorm:"not null" json:"key"`
+	Active     bool            `json:"active"`
+	IsVerified bool            `json:"is_verified"`
+	CompanyID  string          `gorm:"not null" json:"company_id"`
+	Company    company.Company `gorm:"foreignKey:CompanyID" json:"company"`
+	RoleID     string          `gorm:"not null" json:"role_id"`
+	Role       role.Role       `gorm:"foreignKey:RoleID" json:"role"`
+	CreatedAt  time.Time       `json:"-"`
+	UpdatedAt  time.Time       `json:"-"`
+	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
 type RegisterUserRequest struct {
@@ -43,21 +44,26 @@ type RegisterUserRequest struct {
 }
 
 type UserResponse struct {
-	ID        string          `json:"id"`
-	Name      string          `json:"name"`
-	Username  string          `json:"username"`
-	Email     string          `json:"email"`
-	Password  string          `json:"-"`
-	Phone     string          `json:"phone"`
-	Key       string          `json:"key"`
-	Active    bool            `json:"active"`
-	CompanyID string          `json:"-"`
-	Company   company.Company `json:"company"`
-	RoleID    string          `json:"-"`
-	Role      role.Role       `json:"role"`
-	CreatedAt time.Time       `json:"-"`
-	UpdatedAt time.Time       `json:"-"`
-	DeletedAt gorm.DeletedAt  `gorm:"index" json:"-"`
+	ID         string          `json:"id"`
+	Name       string          `json:"name"`
+	Username   string          `json:"username"`
+	Email      string          `json:"email"`
+	Password   string          `json:"-"`
+	Phone      string          `json:"phone"`
+	Key        string          `json:"key"`
+	Active     bool            `json:"active"`
+	IsVerified bool            `json:"is_verified"`
+	CompanyID  string          `json:"-"`
+	Company    company.Company `json:"company"`
+	RoleID     string          `json:"-"`
+	Role       role.Role       `json:"role"`
+	CreatedAt  time.Time       `json:"-"`
+	UpdatedAt  time.Time       `json:"-"`
+	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
+}
+
+type SendEmailVerificationRequest struct {
+	Email string `json:"email" validate:"required~Email cannot be empty"`
 }
 
 type UserLoginRequest struct {

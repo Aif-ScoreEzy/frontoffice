@@ -2,8 +2,12 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"front-office/helper"
 	"front-office/pkg/company"
+	"front-office/utility/mailjet"
+	"os"
+	"strconv"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -23,13 +27,14 @@ func RegisterUserSvc(req RegisterUserRequest) (*User, error) {
 
 	userID := uuid.NewString()
 	dataUser := &User{
-		ID:       userID,
-		Name:     req.Name,
-		Username: req.Username,
-		Email:    req.Email,
-		Phone:    req.Phone,
-		Key:      helper.GenerateAPIKey(),
-		RoleID:   req.RoleID,
+		ID:         userID,
+		Name:       req.Name,
+		Username:   req.Username,
+		Email:      req.Email,
+		Phone:      req.Phone,
+		Key:        helper.GenerateAPIKey(),
+		IsVerified: false,
+		RoleID:     req.RoleID,
 	}
 
 	dataUser.SetPassword(req.Password)
@@ -79,6 +84,8 @@ func FindUserByIDSvc(id string) (*User, error) {
 }
 
 func LoginSvc(req *UserLoginRequest, user *User) (string, error) {
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EXPIRES_MINUTES"))
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
 		[]byte(req.Password),
@@ -87,12 +94,34 @@ func LoginSvc(req *UserLoginRequest, user *User) (string, error) {
 		return "", errors.New("password is incorrect")
 	}
 
-	token, err := helper.GenerateToken(user.ID)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
 	if err != nil {
 		return "", err
 	}
 
 	return token, nil
+}
+
+func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *User) error {
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES"))
+	baseURL := os.Getenv("BASE_URL")
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
+	if err != nil {
+		return err
+	}
+
+	variables := map[string]interface{}{
+		"link": fmt.Sprintf("%v/verify/%v", baseURL, token),
+	}
+
+	err = mailjet.CreateMailjet(req.Email, "Email Verification", 5075167, variables)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func ActivateUserByKeySvc(key string) (*User, error) {

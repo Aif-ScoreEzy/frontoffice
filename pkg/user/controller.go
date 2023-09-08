@@ -53,6 +53,31 @@ func Register(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func SendEmailVerification(c *fiber.Ctx) error {
+	req := c.Locals("request").(*SendEmailVerificationRequest)
+
+	user, _ := FindUserByEmailSvc(req.Email)
+	if user == nil {
+		resp := helper.ResponseFailed("User not found")
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	err := SendEmailVerificationSvc(req, user)
+	if err != nil {
+		resp := helper.ResponseFailed("Something goes to wrong. Please try again")
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"The verification link has been sent to your email address",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
