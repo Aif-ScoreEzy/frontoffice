@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gosimple/slug v1.13.1
 	github.com/joho/godotenv v1.5.1
+	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
 	github.com/usepzaka/validator v1.0.6
 	golang.org/x/crypto v0.7.0
 	gorm.io/driver/postgres v1.5.0
