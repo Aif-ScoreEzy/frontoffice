@@ -1,20 +1,17 @@
 package helper
 
 import (
-	"os"
-	"strconv"
-	"strings"
+	"errors"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
 
 func GenerateToken(
+	secret string,
+	minutesToExpired int,
 	userID string,
 ) (string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EXPIRES_MINUTES"))
 	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
 
 	claims := jwt.MapClaims{}
@@ -31,53 +28,28 @@ func GenerateToken(
 	return t, nil
 }
 
-type TokenMetadata struct {
-	Expires int64
-	UserID  string
-}
+func ExtractClaimsFromJWT(token, secret string) (*jwt.MapClaims, error) {
+	claims := &jwt.MapClaims{}
 
-func ExtractTokenMetadata(c *fiber.Ctx) (*TokenMetadata, error) {
-	token, err := verifyToken(c)
+	_, err := jwt.ParseWithClaims(token, claims, func(requestToken *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		expires := int64(claims["exp"].(float64))
-		userID := claims["userID"].(string)
-
-		return &TokenMetadata{
-			Expires: expires,
-			UserID:  userID,
-		}, nil
-	}
-
-	return nil, err
+	return claims, nil
 }
 
-func extractToken(c *fiber.Ctx) string {
-	beareraToken := c.Get("Authorization")
-
-	onlyToken := strings.Split(beareraToken, " ")
-	if len(onlyToken) == 2 {
-		return onlyToken[1]
+func ExtractUserIDFromClaims(claims *jwt.MapClaims) (string, error) {
+	x, found := (*claims)["userID"]
+	if found {
+		if _, ok := x.(string); !ok {
+			return "", errors.New("value can't be coerced to string")
+		}
+	} else {
+		return "", errors.New("key doesn't exist")
 	}
 
-	return ""
-}
-
-func verifyToken(c *fiber.Ctx) (*jwt.Token, error) {
-	tokenString := extractToken(c)
-
-	token, err := jwt.Parse(tokenString, jwtKeyFunc)
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
-}
-
-func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
-	return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+	return (*claims)["userID"].(string), nil
 }

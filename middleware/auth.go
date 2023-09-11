@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"fmt"
 	"front-office/helper"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	jwtMiddleware "github.com/gofiber/jwt/v3"
@@ -27,4 +29,45 @@ func jwtError(c *fiber.Ctx, err error) error {
 	resp := helper.ResponseFailed(err.Error())
 
 	return c.Status(fiber.StatusUnauthorized).JSON(resp)
+}
+
+func SetHeaderAuth(c *fiber.Ctx) error {
+	token := c.Params("token")
+	c.Request().Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	return c.Next()
+}
+
+func GetUserIDFromJWT() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		secret := os.Getenv("JWT_SECRET_KEY")
+		authHeader := c.Get("Authorization")
+
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 {
+			resp := helper.ResponseFailed("Invalid token")
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
+		token := bearerToken[1]
+
+		claims, err := helper.ExtractClaimsFromJWT(token, secret)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
+		userID, err := helper.ExtractUserIDFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
+		c.Locals("userID", userID)
+
+		return c.Next()
+	}
 }
