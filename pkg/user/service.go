@@ -46,6 +46,39 @@ func RegisterUserSvc(req *RegisterUserRequest) (*User, error) {
 	return user, nil
 }
 
+func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, error) {
+	userID := uuid.NewString()
+	dataUser := &User{
+		ID:         userID,
+		Name:       req.Name,
+		Email:      req.Email,
+		Key:        helper.GenerateAPIKey(),
+		RoleID:     req.RoleID,
+		IsVerified: true,
+		CompanyID:  loggedUser.CompanyID,
+	}
+
+	password := helper.GeneratePassword()
+	dataUser.Password = SetPassword(password)
+
+	user, err := CreateMember(dataUser)
+	if err != nil {
+		return user, err
+	}
+
+	variables := map[string]interface{}{
+		"email":    req.Email,
+		"password": password,
+	}
+
+	err = mailjet.CreateMailjet(req.Email, "Successful Registration", 5082139, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func FindUserByEmailSvc(email string) (*User, error) {
 	user, err := FindOneByEmail(email)
 	if err != nil {
