@@ -121,7 +121,7 @@ func RegisterMember(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"We sent an email with the credentials for login to "+user.Email,
+		"We sent an email with the credentials for login to "+req.Email,
 		nil,
 	)
 
