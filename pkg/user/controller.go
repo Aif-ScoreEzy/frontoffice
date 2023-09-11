@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
@@ -11,22 +12,14 @@ import (
 func Register(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterUserRequest)
 
-	user, _ := FindUserByUsernameSvc(req.Username)
-	if user != nil {
-
-		resp := helper.ResponseFailed("Username already exists")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	user, _ = FindUserByEmailSvc(req.Email)
+	user, _ := FindUserByEmailSvc(req.Email)
 	if user != nil {
 		resp := helper.ResponseFailed("Email already exists")
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, err := RegisterUserSvc(*req)
+	user, err := RegisterUserSvc(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -34,15 +27,13 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	dataResponse := UserResponse{
-		ID:       user.ID,
-		Name:     user.Name,
-		Username: user.Username,
-		Email:    user.Email,
-		Phone:    user.Phone,
-		Active:   user.Active,
-		Key:      user.Key,
-		Company:  user.Company,
-		Role:     user.Role,
+		ID:      user.ID,
+		Name:    user.Name,
+		Email:   user.Email,
+		Phone:   user.Phone,
+		Active:  user.Active,
+		Company: user.Company,
+		Role:    user.Role,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -78,6 +69,31 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func VerifyUser(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	user, _ := FindOneByID(userID)
+	if user.IsVerified {
+		resp := helper.ResponseFailed("The email has already verified")
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	_, err := VerifyUserSvc(userID)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Your email has been verified",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
@@ -102,11 +118,9 @@ func Login(c *fiber.Ctx) error {
 	data := UserLoginResponse{
 		ID:        user.ID,
 		Name:      user.Name,
-		Username:  user.Username,
 		Email:     user.Email,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
-		Key:       user.Key,
 		Token:     token,
 	}
 
@@ -138,11 +152,9 @@ func ActivateUser(c *fiber.Ctx) error {
 	dataResponse := UserUpdateResponse{
 		ID:        user.ID,
 		Name:      user.Name,
-		Username:  user.Username,
 		Email:     user.Email,
 		Phone:     user.Phone,
 		Active:    user.Active,
-		Key:       user.Key,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
 	}
@@ -175,11 +187,9 @@ func DeactiveUser(c *fiber.Ctx) error {
 	dataResponse := UserUpdateResponse{
 		ID:        user.ID,
 		Name:      user.Name,
-		Username:  user.Username,
 		Email:     user.Email,
 		Phone:     user.Phone,
 		Active:    user.Active,
-		Key:       user.Key,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
 	}
@@ -203,14 +213,7 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, _ := FindUserByUsernameSvc(req.Username)
-	if user != nil {
-		resp := helper.ResponseFailed("Username already exists")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	user, _ = FindUserByEmailSvc(req.Email)
+	user, _ := FindUserByEmailSvc(req.Email)
 	if user != nil {
 		resp := helper.ResponseFailed("Email already exists")
 
@@ -241,11 +244,9 @@ func UpdateUserByID(c *fiber.Ctx) error {
 	dataResponse := UserUpdateResponse{
 		ID:        user.ID,
 		Name:      user.Name,
-		Username:  user.Username,
 		Email:     user.Email,
 		Phone:     user.Phone,
 		Active:    user.Active,
-		Key:       user.Key,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
 	}

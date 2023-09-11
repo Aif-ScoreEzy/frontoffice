@@ -24,7 +24,6 @@ func UpdateOneByID(req Company, id string) (Company, error) {
 	var company Company
 	database.DBConn.First(&company, "id = ?", id)
 
-	fmt.Println("====", req)
 	err := database.DBConn.Debug().Model(&company).Updates(req).Error
 	if err != nil {
 		return company, err

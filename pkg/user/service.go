@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterUserSvc(req RegisterUserRequest) (*User, error) {
+func RegisterUserSvc(req *RegisterUserRequest) (*User, error) {
 	companyID := uuid.NewString()
 	dataCompany := &company.Company{
 		ID:              companyID,
@@ -29,7 +29,6 @@ func RegisterUserSvc(req RegisterUserRequest) (*User, error) {
 	dataUser := &User{
 		ID:         userID,
 		Name:       req.Name,
-		Username:   req.Username,
 		Email:      req.Email,
 		Phone:      req.Phone,
 		Key:        helper.GenerateAPIKey(),
@@ -37,7 +36,7 @@ func RegisterUserSvc(req RegisterUserRequest) (*User, error) {
 		RoleID:     req.RoleID,
 	}
 
-	dataUser.SetPassword(req.Password)
+	dataUser.Password = SetPassword(req.Password)
 
 	user, err := Create(dataCompany, dataUser)
 	if err != nil {
@@ -113,7 +112,7 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *User) err
 	}
 
 	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%v/verify/%v", baseURL, token),
+		"link": fmt.Sprintf("%s/verify/%s", baseURL, token),
 	}
 
 	err = mailjet.CreateMailjet(req.Email, "Email Verification", 5075167, variables)
@@ -122,6 +121,19 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *User) err
 	}
 
 	return nil
+}
+
+func VerifyUserSvc(userID string) (*User, error) {
+	req := &User{
+		IsVerified: true,
+	}
+
+	user, err := UpdateOneByID(req, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func ActivateUserByKeySvc(key string) (*User, error) {
@@ -144,8 +156,8 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	dataReq := &User{
-		Name:      req.Name,
-		Username:  req.Username,
+		Name: req.Name,
+		// Username:  req.Username,
 		Email:     req.Email,
 		Phone:     req.Phone,
 		CompanyID: req.CompanyID,
