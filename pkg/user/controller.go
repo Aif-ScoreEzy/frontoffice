@@ -94,6 +94,48 @@ func VerifyUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func RegisterMember(c *fiber.Ctx) error {
+	req := c.Locals("request").(*RegisterMemberRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	loggedUser, _ := FindUserByIDSvc(userID)
+	// Only user with role of admin can register another user
+	if loggedUser.Role.Name != "admin" {
+		resp := helper.ResponseFailed("Request is prohibited")
+
+		return c.Status(fiber.StatusUnauthorized).JSON(resp)
+	}
+
+	user, _ := FindUserByEmailSvc(req.Email)
+	if user != nil {
+		resp := helper.ResponseFailed("Email already exists")
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	user, err := RegisterMemberSvc(req, loggedUser)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	}
+
+	dataResponse := UserResponse{
+		ID:      user.ID,
+		Name:    user.Name,
+		Email:   user.Email,
+		Company: user.Company,
+		Role:    user.Role,
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to register",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 

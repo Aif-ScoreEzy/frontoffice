@@ -70,6 +70,17 @@ func Create(company *company.Company, user *User) (*User, error) {
 	return user, errTx
 }
 
+func CreateMember(user *User) (*User, error) {
+	err := database.DBConn.Debug().Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	database.DBConn.Debug().Preload("Company").Preload("Role").Preload("Role.Permissions").First(&user)
+
+	return user, nil
+}
+
 func UpdateOneByID(req *User, id string) (*User, error) {
 	var user *User
 	database.DBConn.Debug().First(&user, "id = ?", id)
