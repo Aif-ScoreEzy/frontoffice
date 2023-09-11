@@ -113,24 +113,16 @@ func RegisterMember(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, err := RegisterMemberSvc(req, loggedUser)
+	_, err := RegisterMemberSvc(req, loggedUser)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	dataResponse := UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Company: user.Company,
-		Role:    user.Role,
-	}
-
 	resp := helper.ResponseSuccess(
-		"Success to register",
-		dataResponse,
+		"We sent an email with the credentials for login to "+user.Email,
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
