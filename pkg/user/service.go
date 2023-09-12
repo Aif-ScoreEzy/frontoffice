@@ -14,6 +14,11 @@ import (
 )
 
 func RegisterUserSvc(req *RegisterUserRequest) (*User, error) {
+	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
+	if !isPasswordStrength {
+		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
 	companyID := uuid.NewString()
 	dataCompany := &company.Company{
 		ID:              companyID,
@@ -192,13 +197,13 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *User) err
 }
 
 func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
-	if req.Password != req.ConfirmPassword {
-		return nil, errors.New("please ensure that password and confirm password fields match exactly")
-	}
-
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
-		return nil, errors.New("password must be at least 8 characters long and contain a combination of uppercase, lowercase, number, and symbol")
+		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
+	if req.Password != req.ConfirmPassword {
+		return nil, errors.New("please ensure that password and confirm password fields match exactly")
 	}
 
 	data := &User{

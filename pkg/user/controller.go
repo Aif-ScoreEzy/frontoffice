@@ -130,7 +130,7 @@ func PasswordReset(c *fiber.Ctx) error {
 		switch err.Error() {
 		case "please ensure that password and confirm password fields match exactly":
 			statusCode = fiber.StatusBadRequest
-		case "password must be at least 8 characters long and contain a combination of uppercase, lowercase, number, and symbol":
+		case "password must contain a combination of uppercase, lowercase, number, and symbol":
 			statusCode = fiber.StatusBadRequest
 		default:
 			statusCode = fiber.StatusInternalServerError
