@@ -32,6 +32,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/send-email-verification", middleware.IsRequestValid(user.SendEmailVerificationRequest{}), user.SendEmailVerification)
 	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), user.VerifyUser)
 	api.Post("/request-password-reset", middleware.IsRequestValid(user.RequestPasswordResetRequest{}), user.RequestPasswordReset)
+	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.PasswordResetRequest{}), user.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(user.UserLoginRequest{}), user.Login)
 	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)

@@ -191,6 +191,28 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *User) err
 	return nil
 }
 
+func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
+	if req.Password != req.ConfirmPassword {
+		return nil, errors.New("please ensure that password and confirm password fields match exactly")
+	}
+
+	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
+	if !isPasswordStrength {
+		return nil, errors.New("password must be at least 8 characters long and contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
+	data := &User{
+		Password: SetPassword(req.Password),
+	}
+
+	user, err := UpdateOneByID(data, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func ActivateUserByKeySvc(key string) (*User, error) {
 	user, err := UpdateOneByKey(key)
 	if err != nil {

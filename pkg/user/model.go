@@ -67,6 +67,11 @@ type RequestPasswordResetRequest struct {
 	Email string `json:"email" validate:"required~Email cannot be empty"`
 }
 
+type PasswordResetRequest struct {
+	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
+	ConfirmPassword string `json:"confirm_password" validate:"required~Confirm password cannot be empty"`
+}
+
 type RegisterMemberRequest struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`

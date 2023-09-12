@@ -119,6 +119,35 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func PasswordReset(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	req := c.Locals("request").(*PasswordResetRequest)
+
+	_, err := PasswordResetSvc(userID, req)
+	if err != nil {
+		var statusCode int
+
+		switch err.Error() {
+		case "please ensure that password and confirm password fields match exactly":
+			statusCode = fiber.StatusBadRequest
+		case "password must be at least 8 characters long and contain a combination of uppercase, lowercase, number, and symbol":
+			statusCode = fiber.StatusBadRequest
+		default:
+			statusCode = fiber.StatusInternalServerError
+		}
+
+		resp := helper.ResponseFailed(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Successful password reset",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterMemberRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
