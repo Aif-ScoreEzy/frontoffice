@@ -31,7 +31,7 @@ type User struct {
 type RegisterUserRequest struct {
 	Name            string `json:"name" validate:"required~Name cannot be empty"`
 	Email           string `json:"email" validate:"required~Email cannot be empty, email~Only email pattern are allowed"`
-	Password        string `json:"password" validate:"required~Password cannot be empty, length(8)~Password must have at least 8 characters"`
+	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
 	Phone           string `string:"phone" validate:"required~Phone cannot be empty, phone"`
 	CompanyName     string `json:"company_name"`
 	CompanyAddress  string `json:"company_address"`
@@ -61,6 +61,15 @@ type UserResponse struct {
 
 type SendEmailVerificationRequest struct {
 	Email string `json:"email" validate:"required~Email cannot be empty"`
+}
+
+type RequestPasswordResetRequest struct {
+	Email string `json:"email" validate:"required~Email cannot be empty"`
+}
+
+type PasswordResetRequest struct {
+	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
+	ConfirmPassword string `json:"confirm_password" validate:"required~Confirm password cannot be empty"`
 }
 
 type RegisterMemberRequest struct {

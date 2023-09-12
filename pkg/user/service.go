@@ -14,6 +14,11 @@ import (
 )
 
 func RegisterUserSvc(req *RegisterUserRequest) (*User, error) {
+	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
+	if !isPasswordStrength {
+		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
 	companyID := uuid.NewString()
 	dataCompany := &company.Company{
 		ID:              companyID,
@@ -162,6 +167,50 @@ func VerifyUserSvc(userID string) (*User, error) {
 	}
 
 	user, err := UpdateOneByID(req, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *User) error {
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
+	baseURL := os.Getenv("BASE_URL")
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
+	if err != nil {
+		return err
+	}
+
+	variables := map[string]interface{}{
+		"link": fmt.Sprintf("%s/password-reset/%s", baseURL, token),
+	}
+
+	err = mailjet.CreateMailjet(req.Email, "Reset Password", 5085661, variables)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
+	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
+	if !isPasswordStrength {
+		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
+	if req.Password != req.ConfirmPassword {
+		return nil, errors.New("please ensure that password and confirm password fields match exactly")
+	}
+
+	data := &User{
+		Password: SetPassword(req.Password),
+	}
+
+	user, err := UpdateOneByID(data, userID)
 	if err != nil {
 		return nil, err
 	}
