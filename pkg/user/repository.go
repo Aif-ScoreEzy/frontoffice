@@ -9,19 +9,10 @@ import (
 
 func FindOneByEmail(email string) (*User, error) {
 	var user *User
-	tx := database.DBConn.Debug().First(&user, "email = ?", email)
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
 
-	return user, nil
-}
-
-func FindOneByUsername(username string) (*User, error) {
-	var user *User
-	tx := database.DBConn.Debug().Preload("Role").First(&user, "username = ?", username)
-	if tx.Error != nil {
-		return nil, tx.Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "email = ?", email).Error
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil
@@ -29,9 +20,10 @@ func FindOneByUsername(username string) (*User, error) {
 
 func FindOneByKey(key string) (*User, error) {
 	var user *User
-	tx := database.DBConn.Debug().Preload("Role").First(&user, "key = ?", key)
-	if tx.Error != nil {
-		return nil, tx.Error
+
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "key = ?", key).Error
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil
@@ -39,7 +31,8 @@ func FindOneByKey(key string) (*User, error) {
 
 func FindOneByID(id string) (*User, error) {
 	var user *User
-	err := database.DBConn.Preload("Role").First(&user, "id = ?", id).Error
+
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +76,6 @@ func CreateMember(user *User) (*User, error) {
 
 func UpdateOneByID(req *User, id string) (*User, error) {
 	var user *User
-	database.DBConn.Debug().First(&user, "id = ?", id)
 
 	err := database.DBConn.Debug().Model(&user).
 		Where("id = ?", id).Updates(req).Error
@@ -96,7 +88,6 @@ func UpdateOneByID(req *User, id string) (*User, error) {
 
 func UpdateOneByKey(key string) (*User, error) {
 	var user *User
-	database.DBConn.Debug().First(&user, "key = ?", key)
 
 	err := database.DBConn.Debug().Model(&user).Update("active", true).Error
 	if err != nil {
@@ -108,7 +99,6 @@ func UpdateOneByKey(key string) (*User, error) {
 
 func DeactiveOneByEmail(email string) (*User, error) {
 	var user *User
-	database.DBConn.Debug().First(&user, "email = ?", email)
 
 	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
 	if err != nil {

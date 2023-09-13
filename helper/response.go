@@ -1,5 +1,7 @@
 package helper
 
+import "front-office/constant"
+
 type BaseResponseSuccess struct {
 	Message string      `json:"message"`
 	Success bool        `json:"success"`
@@ -27,22 +29,26 @@ func ResponseFailed(message string) BaseResponseFailed {
 	}
 }
 
-const (
-	InvalidPassword   = "password must contain a combination of uppercase, lowercase, number, and symbol"
-	IncorrectPassword = "password is incorrect"
-	PasswordMismatch  = "please ensure that password and confirm password fields match exactly"
-)
-
-func GetError(err error) (int, interface{}) {
+func GetError(errorMessage string) (int, interface{}) {
 	var statusCode int
 
-	switch err.Error() {
-	case IncorrectPassword, PasswordMismatch, InvalidPassword:
+	switch errorMessage {
+	case constant.AlreadyVerified,
+		constant.DataAlreadyExist,
+		constant.IncorrectPassword,
+		constant.InvalidEmailOrPassword,
+		constant.InvalidPassword,
+		constant.ConfirmNewPasswordMismatch,
+		constant.ConfirmPasswordMismatch:
 		statusCode = 400
+	case constant.RequestProhibited:
+		statusCode = 401
+	case constant.DataNotFound:
+		statusCode = 404
 	default:
 		statusCode = 500
 	}
 
-	resp := ResponseFailed(err.Error())
+	resp := ResponseFailed(errorMessage)
 	return statusCode, resp
 }

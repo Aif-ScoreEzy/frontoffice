@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"fmt"
+	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/utility/mailjet"
@@ -16,7 +17,7 @@ import (
 func RegisterUserSvc(req *RegisterUserRequest) (*User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
-		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+		return nil, errors.New(constant.InvalidPassword)
 	}
 
 	companyID := uuid.NewString()
@@ -93,15 +94,6 @@ func FindUserByEmailSvc(email string) (*User, error) {
 	return user, nil
 }
 
-func FindUserByUsernameSvc(username string) (*User, error) {
-	user, err := FindOneByUsername(username)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
 func FindUserByKeySvc(key string) (*User, error) {
 	user, err := FindOneByKey(key)
 	if err != nil {
@@ -128,7 +120,7 @@ func LoginSvc(req *UserLoginRequest, user *User) (string, error) {
 		[]byte(req.Password),
 	)
 	if err != nil {
-		return "", errors.New("password is incorrect")
+		return "", errors.New(constant.InvalidEmailOrPassword)
 	}
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
@@ -199,11 +191,11 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *User) err
 func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
-		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+		return nil, errors.New(constant.InvalidPassword)
 	}
 
 	if req.Password != req.ConfirmPassword {
-		return nil, errors.New("please ensure that password and confirm password fields match exactly")
+		return nil, errors.New(constant.ConfirmPasswordMismatch)
 	}
 
 	data := &User{
@@ -221,16 +213,16 @@ func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
 func ChangePasswordSvc(userID string, user *User, req *ChangePasswordRequest) (*User, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.CurrentPassword))
 	if err != nil {
-		return nil, errors.New("password is incorrect")
+		return nil, errors.New(constant.IncorrectPassword)
 	}
 
 	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
 	if !isPasswordStrength {
-		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+		return nil, errors.New(constant.InvalidPassword)
 	}
 
 	if req.NewPassword != req.ConfirmNewPassword {
-		return nil, errors.New("please ensure that the new password and confirm password fields match exactly")
+		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
 	}
 
 	data := &User{
@@ -265,8 +257,7 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	dataReq := &User{
-		Name: req.Name,
-		// Username:  req.Username,
+		Name:      req.Name,
 		Email:     req.Email,
 		Phone:     req.Phone,
 		CompanyID: req.CompanyID,

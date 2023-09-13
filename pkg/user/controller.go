@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
@@ -12,17 +13,18 @@ import (
 func Register(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterUserRequest)
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user != nil {
+	user, err := FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user != nil {
 		resp := helper.ResponseFailed("Email already exists")
-
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, err := RegisterUserSvc(req)
+	user, err = RegisterUserSvc(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
-
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
@@ -47,17 +49,18 @@ func Register(c *fiber.Ctx) error {
 func SendEmailVerification(c *fiber.Ctx) error {
 	req := c.Locals("request").(*SendEmailVerificationRequest)
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user == nil {
+	user, err := FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user == nil {
 		resp := helper.ResponseFailed("User not found")
-
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	err := SendEmailVerificationSvc(req, user)
+	err = SendEmailVerificationSvc(req, user)
 	if err != nil {
 		resp := helper.ResponseFailed("Something goes to wrong. Please try again")
-
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
@@ -72,17 +75,18 @@ func SendEmailVerification(c *fiber.Ctx) error {
 func VerifyUser(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
-	user, _ := FindOneByID(userID)
-	if user.IsVerified {
-		resp := helper.ResponseFailed("The email has already verified")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	user, err := FindOneByID(userID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user.IsVerified {
+		statusCode, resp := helper.GetError(constant.AlreadyVerified)
+		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err := VerifyUserSvc(userID)
+	_, err = VerifyUserSvc(userID)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
-
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
@@ -97,18 +101,19 @@ func VerifyUser(c *fiber.Ctx) error {
 func RequestPasswordReset(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RequestPasswordResetRequest)
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user == nil {
-		resp := helper.ResponseFailed("User not found")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	user, err := FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
 	}
 
-	err := SendEmailPasswordResetSvc(req, user)
+	err = SendEmailPasswordResetSvc(req, user)
 	if err != nil {
-		resp := helper.ResponseFailed("Something goes to wrong. Please try again")
-
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -125,7 +130,7 @@ func PasswordReset(c *fiber.Ctx) error {
 
 	_, err := PasswordResetSvc(userID, req)
 	if err != nil {
-		statusCode, resp := helper.GetError(err)
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -141,26 +146,29 @@ func RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterMemberRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
-	loggedUser, _ := FindUserByIDSvc(userID)
+	loggedUser, err := FindUserByIDSvc(userID)
 	// Only user with role of admin can register another user
-	if loggedUser.Role.Name != "admin" {
-		resp := helper.ResponseFailed("Request is prohibited")
-
-		return c.Status(fiber.StatusUnauthorized).JSON(resp)
-	}
-
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user != nil {
-		resp := helper.ResponseFailed("Email already exists")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	_, err := RegisterMemberSvc(req, loggedUser)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if loggedUser.Role.Name != "admin" {
+		statusCode, resp := helper.GetError(constant.RequestProhibited)
+		return c.Status(statusCode).JSON(resp)
+	}
 
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	user, err := FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user != nil {
+		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	_, err = RegisterMemberSvc(req, loggedUser)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -174,22 +182,19 @@ func RegisterMember(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user == nil {
-		resp := helper.ResponseFailed("Email or password is incorrect")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	user, err := FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if user == nil {
+		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	token, err := LoginSvc(req, user)
-	if err != nil && err.Error() == "password is incorrect" {
-		resp := helper.ResponseFailed("Email or password is incorrect")
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	} else if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	data := UserLoginResponse{
@@ -202,7 +207,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"Success to login",
+		"Succeed to login",
 		data,
 	)
 
@@ -215,14 +220,13 @@ func ChangePassword(c *fiber.Ctx) error {
 
 	user, err := FindUserByIDSvc(userID)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	_, err = ChangePasswordSvc(userID, user, req)
 	if err != nil {
-		statusCode, resp := helper.GetError(err)
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -239,16 +243,16 @@ func ActivateUser(c *fiber.Ctx) error {
 
 	user, _ := FindUserByKeySvc(key)
 	if user == nil {
-		resp := helper.ResponseFailed("User not found")
+		statusCode, resp := helper.GetError(constant.DataNotFound)
 
-		return c.Status(fiber.StatusNotFound).JSON(resp)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	user, err := ActivateUserByKeySvc(key)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
+		statusCode, resp := helper.GetError(err.Error())
 
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := UserUpdateResponse{
