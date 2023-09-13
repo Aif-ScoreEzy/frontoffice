@@ -218,6 +218,33 @@ func PasswordResetSvc(userID string, req *PasswordResetRequest) (*User, error) {
 	return user, nil
 }
 
+func ChangePasswordSvc(userID string, user *User, req *ChangePasswordRequest) (*User, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.CurrentPassword))
+	if err != nil {
+		return nil, errors.New("password is incorrect")
+	}
+
+	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
+	if !isPasswordStrength {
+		return nil, errors.New("password must contain a combination of uppercase, lowercase, number, and symbol")
+	}
+
+	if req.NewPassword != req.ConfirmNewPassword {
+		return nil, errors.New("please ensure that the new password and confirm password fields match exactly")
+	}
+
+	data := &User{
+		Password: SetPassword(req.NewPassword),
+	}
+
+	user, err = UpdateOneByID(data, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func ActivateUserByKeySvc(key string) (*User, error) {
 	user, err := UpdateOneByKey(key)
 	if err != nil {

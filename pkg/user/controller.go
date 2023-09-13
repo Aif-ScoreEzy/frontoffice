@@ -125,18 +125,7 @@ func PasswordReset(c *fiber.Ctx) error {
 
 	_, err := PasswordResetSvc(userID, req)
 	if err != nil {
-		var statusCode int
-
-		switch err.Error() {
-		case "please ensure that password and confirm password fields match exactly":
-			statusCode = fiber.StatusBadRequest
-		case "password must contain a combination of uppercase, lowercase, number, and symbol":
-			statusCode = fiber.StatusBadRequest
-		default:
-			statusCode = fiber.StatusInternalServerError
-		}
-
-		resp := helper.ResponseFailed(err.Error())
+		statusCode, resp := helper.GetError(err)
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -215,6 +204,31 @@ func Login(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"Success to login",
 		data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func ChangePassword(c *fiber.Ctx) error {
+	req := c.Locals("request").(*ChangePasswordRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	user, err := FindUserByIDSvc(userID)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	_, err = ChangePasswordSvc(userID, user, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to change password",
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

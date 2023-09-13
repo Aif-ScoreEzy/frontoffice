@@ -59,19 +59,6 @@ type UserResponse struct {
 	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
-type SendEmailVerificationRequest struct {
-	Email string `json:"email" validate:"required~Email cannot be empty"`
-}
-
-type RequestPasswordResetRequest struct {
-	Email string `json:"email" validate:"required~Email cannot be empty"`
-}
-
-type PasswordResetRequest struct {
-	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
-	ConfirmPassword string `json:"confirm_password" validate:"required~Confirm password cannot be empty"`
-}
-
 type RegisterMemberRequest struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
@@ -90,6 +77,25 @@ type UserLoginResponse struct {
 	CompanyID string `json:"company_id"`
 	RoleID    string `json:"role_id"`
 	Token     string `json:"access_token"`
+}
+
+type SendEmailVerificationRequest struct {
+	Email string `json:"email" validate:"required~Email cannot be empty"`
+}
+
+type RequestPasswordResetRequest struct {
+	Email string `json:"email" validate:"required~Email cannot be empty"`
+}
+
+type PasswordResetRequest struct {
+	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
+	ConfirmPassword string `json:"confirm_password" validate:"required~Confirm password cannot be empty"`
+}
+
+type ChangePasswordRequest struct {
+	CurrentPassword    string `json:"password" validate:"required~Password cannot be empty"`
+	NewPassword        string `json:"new_password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
+	ConfirmNewPassword string `json:"confirm_password" validate:"required~Password cannot be empty"`
 }
 
 type UpdateUserRequest struct {

@@ -26,3 +26,23 @@ func ResponseFailed(message string) BaseResponseFailed {
 		Message: message,
 	}
 }
+
+const (
+	InvalidPassword   = "password must contain a combination of uppercase, lowercase, number, and symbol"
+	IncorrectPassword = "password is incorrect"
+	PasswordMismatch  = "please ensure that password and confirm password fields match exactly"
+)
+
+func GetError(err error) (int, interface{}) {
+	var statusCode int
+
+	switch err.Error() {
+	case IncorrectPassword, PasswordMismatch, InvalidPassword:
+		statusCode = 400
+	default:
+		statusCode = 500
+	}
+
+	resp := ResponseFailed(err.Error())
+	return statusCode, resp
+}
