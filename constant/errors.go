@@ -9,6 +9,7 @@ const (
 	AlreadyVerified            = "the account has already verified"
 	InvalidEmailOrPassword     = "email or password is incorrect"
 	InvalidPassword            = "password must contain a combination of uppercase, lowercase, number, and symbol"
+	InvalidPasswordResetLink   = "invalid password reset link"
 	IncorrectPassword          = "password is incorrect"
 	ConfirmNewPasswordMismatch = "please ensure that the new password and confirm password fields match exactly"
 	ConfirmPasswordMismatch    = "please ensure that password and confirm password fields match exactly"

@@ -38,6 +38,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.IncorrectPassword,
 		constant.InvalidEmailOrPassword,
 		constant.InvalidPassword,
+		constant.InvalidPasswordResetLink,
 		constant.ConfirmNewPasswordMismatch,
 		constant.ConfirmPasswordMismatch:
 		statusCode = 400

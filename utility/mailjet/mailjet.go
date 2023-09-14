@@ -7,7 +7,7 @@ import (
 	"github.com/mailjet/mailjet-apiv3-go"
 )
 
-func CreateMailjet(toMail string, subject string, templateID int32, variables map[string]interface{}) error {
+func CreateMailjet(toMail string, templateID int32, variables map[string]interface{}) error {
 	fromMail := os.Getenv("MAILJET_EMAIL")
 	fromUsername := os.Getenv("MAILJET_USERNAME")
 	publicKey := os.Getenv("MAILJET_PUBLIC_KEY")
@@ -25,7 +25,6 @@ func CreateMailjet(toMail string, subject string, templateID int32, variables ma
 					Email: toMail,
 				},
 			},
-			Subject:          subject,
 			TemplateID:       templateID,
 			TemplateLanguage: true,
 			Variables:        variables,
