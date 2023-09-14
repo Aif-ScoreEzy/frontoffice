@@ -132,6 +132,9 @@ func PasswordReset(c *fiber.Ctx) error {
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
+	} else if data == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
 	} else if data.Activation {
 		statusCode, resp := helper.GetError(constant.InvalidPasswordResetLink)
 		return c.Status(statusCode).JSON(resp)
