@@ -2,6 +2,7 @@ package config
 
 import (
 	"front-office/config/database"
+	"front-office/pkg/auth"
 	"front-office/pkg/company"
 	"front-office/pkg/industry"
 	"front-office/pkg/permission"
@@ -15,5 +16,5 @@ func Migrate() {
 	db := database.DBConn
 
 	log.Println("Running Migrations")
-	db.AutoMigrate(&role.Role{}, &permission.Permission{}, &user.User{}, &company.Company{}, &industry.Industry{}, &product.Product{})
+	db.AutoMigrate(&role.Role{}, &permission.Permission{}, &user.User{}, &auth.PasswordResetToken{}, &company.Company{}, &industry.Industry{}, &product.Product{})
 }
