@@ -24,11 +24,8 @@ func RegisterMember(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := FindUserByEmailSvc(req.Email)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	} else if user != nil {
+	user, _ := FindUserByEmailSvc(req.Email)
+	if user != nil {
 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
 		return c.Status(statusCode).JSON(resp)
 	}

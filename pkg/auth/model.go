@@ -21,17 +21,17 @@ type PasswordResetToken struct {
 }
 
 type RegisterAdminRequest struct {
-	Name            string `json:"name" validate:"required~Name cannot be empty"`
-	Email           string `json:"email" validate:"required~Email cannot be empty, email~Only email pattern are allowed"`
-	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
-	Phone           string `string:"phone" validate:"required~Phone cannot be empty, phone"`
+	Name            string `json:"name" validate:"required~Field Name is required"`
+	Email           string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
+	Password        string `json:"password" validate:"required~Field Password is required, min(8)~Field Password must have at least 8 characters"`
+	Phone           string `string:"phone" validate:"required~Field Phone is required, phone"`
 	CompanyName     string `json:"company_name"`
 	CompanyAddress  string `json:"company_address"`
 	CompanyPhone    string `json:"company_phone"`
 	AgreementNumber string `json:"agreement_number"`
 	IndustryID      string `json:"industry_id"`
 	PaymentScheme   string `json:"payment_scheme"`
-	RoleID          string `json:"role_id" validate:"required~Role cannot be empty"`
+	RoleID          string `json:"role_id" validate:"required~Field Role is required"`
 }
 
 type RegisterAdminResponse struct {
@@ -52,8 +52,8 @@ type RegisterAdminResponse struct {
 }
 
 type UserLoginRequest struct {
-	Email    string `json:"email" validate:"required~Email cannot be empty"`
-	Password string `json:"password" validate:"required~Password cannot be empty"`
+	Email    string `json:"email" validate:"required~Field Email is required"`
+	Password string `json:"password" validate:"required~Field Password is required"`
 }
 
 type UserLoginResponse struct {
@@ -66,20 +66,20 @@ type UserLoginResponse struct {
 }
 
 type SendEmailVerificationRequest struct {
-	Email string `json:"email" validate:"required~Email cannot be empty"`
+	Email string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 }
 
 type RequestPasswordResetRequest struct {
-	Email string `json:"email" validate:"required~Email cannot be empty"`
+	Email string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 }
 
 type PasswordResetRequest struct {
-	Password        string `json:"password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
-	ConfirmPassword string `json:"confirm_password" validate:"required~Confirm password cannot be empty"`
+	Password        string `json:"password" validate:"required~Field Password is required, min(8)~Field Password must have at least 8 characters"`
+	ConfirmPassword string `json:"confirm_password" validate:"required~Field Confirm Password is required"`
 }
 
 type ChangePasswordRequest struct {
-	CurrentPassword    string `json:"password" validate:"required~Password cannot be empty"`
-	NewPassword        string `json:"new_password" validate:"required~Password cannot be empty, min(8)~Password must have at least 8 characters"`
-	ConfirmNewPassword string `json:"confirm_password" validate:"required~Password cannot be empty"`
+	CurrentPassword    string `json:"password" validate:"required~Field Current Password is required"`
+	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Field Password must have at least 8 characters"`
+	ConfirmNewPassword string `json:"confirm_password" validate:"required~Field Confirmation New Password is required"`
 }

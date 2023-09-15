@@ -46,9 +46,9 @@ type UserResponse struct {
 }
 
 type RegisterMemberRequest struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	RoleID string `json:"role_id" validate:"required~Role cannot be empty"`
+	Name   string `json:"name" validate:"required~Field Name is required"`
+	Email  string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
+	RoleID string `json:"role_id" validate:"required~Field Name is required"`
 }
 
 type UpdateUserRequest struct {
