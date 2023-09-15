@@ -4,6 +4,7 @@ const (
 	// general
 	DataAlreadyExist = "data already exists"
 	DataNotFound     = "data not found"
+	RecordNotFound   = "record not found"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"

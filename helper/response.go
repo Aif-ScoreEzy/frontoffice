@@ -44,7 +44,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		statusCode = 400
 	case constant.RequestProhibited:
 		statusCode = 401
-	case constant.DataNotFound:
+	case constant.DataNotFound, constant.RecordNotFound:
 		statusCode = 404
 	default:
 		statusCode = 500
