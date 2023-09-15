@@ -123,7 +123,7 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		fmt.Sprintf("we sent email to %s with a link to reset your password", req.Email),
+		fmt.Sprintf("We've sent an email to %s with a link to reset your password", req.Email),
 		nil,
 	)
 

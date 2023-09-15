@@ -90,7 +90,7 @@ func VerifyUserSvc(userID string) (*user.User, error) {
 func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User) error {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
-	baseURL := os.Getenv("BASE_URL")
+	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
 	if err != nil {
@@ -110,7 +110,7 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User
 	}
 
 	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%s/password-reset/%s", baseURL, token),
+		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
 	}
 
 	err = mailjet.CreateMailjet(req.Email, 5085661, variables)
@@ -187,6 +187,15 @@ func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswor
 	}
 
 	data, err = user.UpdateOneByID(data, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	variables := map[string]interface{}{
+		"username": currentUser.Name,
+	}
+
+	err = mailjet.CreateMailjet(currentUser.Email, 5097353, variables)
 	if err != nil {
 		return nil, err
 	}
