@@ -191,5 +191,14 @@ func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswor
 		return nil, err
 	}
 
+	variables := map[string]interface{}{
+		"username": currentUser.Name,
+	}
+
+	err = mailjet.CreateMailjet(currentUser.Email, 5097353, variables)
+	if err != nil {
+		return nil, err
+	}
+
 	return data, nil
 }
