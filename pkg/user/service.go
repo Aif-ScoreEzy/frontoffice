@@ -86,12 +86,23 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 }
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
-	dataReq := &User{
-		Name:      req.Name,
-		Email:     req.Email,
-		Phone:     req.Phone,
-		CompanyID: req.CompanyID,
-		RoleID:    req.RoleID,
+
+	dataReq := &User{}
+
+	if req.Name != "" {
+		dataReq.Name = req.Name
+	}
+	if req.Email != "" {
+		dataReq.Email = req.Email
+	}
+	if req.Phone != "" {
+		dataReq.Phone = req.Phone
+	}
+	if req.CompanyID != "" {
+		dataReq.CompanyID = req.CompanyID
+	}
+	if req.RoleID != "" {
+		dataReq.RoleID = req.RoleID
 	}
 
 	user, err := UpdateOneByID(dataReq, id)
