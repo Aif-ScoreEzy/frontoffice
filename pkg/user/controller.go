@@ -125,11 +125,14 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user != nil {
-		resp := helper.ResponseFailed("Email already exists")
+	// only check if email is included in the parameters
+	if req.Email != "" {
+		user, _ := FindUserByEmailSvc(req.Email)
+		if user != nil {
+			resp := helper.ResponseFailed("Email already exists")
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
 	}
 
 	_, err = company.IsCompanyIDExistSvc(req.CompanyID)
@@ -146,7 +149,7 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	user, err = UpdateUserByIDSvc(req, id)
+	user, err := UpdateUserByIDSvc(req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 

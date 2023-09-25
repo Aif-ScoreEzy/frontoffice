@@ -80,10 +80,15 @@ func UpdateOneByID(req *User, id string) (*User, error) {
 	err := database.DBConn.Debug().Model(&user).
 		Where("id = ?", id).Updates(req).Error
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
-	return user, nil
+	userDetail, err := FindOneByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return userDetail, nil
 }
 
 func UpdateOneByKey(key string) (*User, error) {
