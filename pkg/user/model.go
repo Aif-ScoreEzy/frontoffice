@@ -40,7 +40,7 @@ type UserResponse struct {
 	Company    company.Company `json:"company"`
 	RoleID     string          `json:"-"`
 	Role       role.Role       `json:"role"`
-	CreatedAt  time.Time       `json:"-"`
+	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"-"`
 	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
 }
