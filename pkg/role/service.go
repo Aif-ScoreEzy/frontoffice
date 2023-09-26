@@ -1,15 +1,18 @@
 package role
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
-func CreateRoleSvc(req RoleRequest) (Role, error) {
+func CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
 	roleID := uuid.NewString()
 	dataReq := Role{
 		ID:          roleID,
 		Name:        req.Name,
 		Permissions: req.Permissions,
+		TierLevel:   req.TierLevel,
 	}
 
 	role, err := Create(dataReq)
@@ -51,10 +54,16 @@ func GetRoleByNameSvc(name string) (Role, error) {
 	return result, nil
 }
 
-func UpdateRoleByIDSvc(req RoleRequest, id string) (Role, error) {
-	dataReq := Role{
-		Name:        req.Name,
-		Permissions: req.Permissions,
+func UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error) {
+	dataReq := &Role{}
+	fmt.Println("=====", req.Permissions)
+
+	if req.Name != "" {
+		dataReq.Name = req.Name
+	}
+
+	if req.Permissions != nil {
+		dataReq.Permissions = req.Permissions
 	}
 
 	role, err := UpdateByID(dataReq, id)
