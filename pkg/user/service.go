@@ -15,6 +15,7 @@ func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, err
 		Email:      req.Email,
 		Key:        helper.GenerateAPIKey(),
 		RoleID:     req.RoleID,
+		Active:     req.Active,
 		IsVerified: true,
 		CompanyID:  loggedUser.CompanyID,
 	}

@@ -61,7 +61,7 @@ type UserLoginResponse struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	CompanyID string `json:"company_id"`
-	RoleID    string `json:"role_id"`
+	TierLevel uint   `json:"tier_level"`
 	Token     string `json:"access_token"`
 }
 
