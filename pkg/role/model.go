@@ -20,7 +20,7 @@ type Role struct {
 type CreateRoleRequest struct {
 	Name        string                  `json:"name" validate:"required~Field Name is required"`
 	Permissions []permission.Permission `json:"permissions" validate:"required~Field Permissions is required"`
-	TierLevel   uint                    `json:"tier_level" validate:"required~Field Tier Level is required, range(2|2)~only available with tier level 2"`
+	TierLevel   uint                    `json:"tier_level" validate:"required~Field Tier Level is required, range(0|2)~Field Tier Level is only available in the range of 0 to 2."`
 }
 
 type CreateRoleResponse struct {
