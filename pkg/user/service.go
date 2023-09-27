@@ -122,3 +122,12 @@ func GetAllUsersSvc() ([]*User, error) {
 
 	return users, nil
 }
+
+func DeleteUserByIDSvc(id string) error {
+	err := DeleteByID(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

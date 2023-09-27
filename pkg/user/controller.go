@@ -15,11 +15,10 @@ func RegisterMember(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
 	loggedUser, err := FindUserByIDSvc(userID)
-	// Only user with role of admin can register another user
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
-	} else if loggedUser.Role.Name != "admin" {
+	} else if loggedUser.Role.TierLevel != 1 {
 		statusCode, resp := helper.GetError(constant.RequestProhibited)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -195,15 +194,42 @@ func GetUserByID(c *fiber.Ctx) error {
 
 	user, _ := FindUserByIDSvc(id)
 	if user == nil {
-		resp := helper.ResponseFailed("User not found")
-
-		return c.Status(fiber.StatusNotFound).JSON(resp)
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		"Succeed to get a user by ID",
+		"succeed to get a user by ID",
 		user,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func DeleteUserByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	loggedUser, err := FindUserByIDSvc(userID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	} else if loggedUser.Role.TierLevel != 1 {
+		statusCode, resp := helper.GetError(constant.RequestProhibited)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, _ := FindUserByIDSvc(id)
+	if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = DeleteUserByIDSvc(id)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	return nil
 }

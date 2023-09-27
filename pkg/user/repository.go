@@ -3,6 +3,7 @@ package user
 import (
 	"front-office/config/database"
 	"front-office/pkg/company"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -122,4 +123,13 @@ func FindAll() ([]*User, error) {
 	}
 
 	return users, nil
+}
+
+func DeleteByID(id string) error {
+	err := database.DBConn.Debug().Model(&User{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

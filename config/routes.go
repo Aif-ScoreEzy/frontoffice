@@ -31,6 +31,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 	api.Get("/users", middleware.Auth(), user.GetAllUsers)
 	api.Get("/user/:id", middleware.Auth(), user.GetUserByID)
+	api.Delete("/user/:id", middleware.Auth(), middleware.GetUserIDFromJWT(), user.DeleteUserByID)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
