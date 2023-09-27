@@ -15,6 +15,7 @@ func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, err
 		Email:      req.Email,
 		Key:        helper.GenerateAPIKey(),
 		RoleID:     req.RoleID,
+		Active:     req.Active,
 		IsVerified: true,
 		CompanyID:  loggedUser.CompanyID,
 	}
@@ -135,4 +136,13 @@ func GetAllUsersSvc() ([]UserResponse, error) {
 	}
 
 	return responseUsers, nil
+}
+
+func DeleteUserByIDSvc(id string) error {
+	err := DeleteByID(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

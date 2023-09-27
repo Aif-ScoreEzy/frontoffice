@@ -31,15 +31,16 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 	api.Get("/users", middleware.Auth(), user.GetAllUsers)
 	api.Get("/user/:id", middleware.Auth(), user.GetUserByID)
+	api.Delete("/user/:id", middleware.Auth(), middleware.GetUserIDFromJWT(), user.DeleteUserByID)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
 
 	// role
-	api.Post("/role", middleware.Auth(), middleware.IsRequestValid(role.RoleRequest{}), role.CreateRole)
+	api.Post("/role", middleware.Auth(), middleware.IsRequestValid(role.CreateRoleRequest{}), role.CreateRole)
 	api.Get("/roles", middleware.Auth(), role.GetAllRoles)
 	api.Get("/role/:id", middleware.Auth(), role.GetRoleByID)
-	api.Put("/role/:id", middleware.Auth(), middleware.IsRequestValid(role.RoleRequest{}), role.UpdateRole)
+	api.Put("/role/:id", middleware.Auth(), middleware.IsRequestValid(role.UpdateRoleRequest{}), role.UpdateRole)
 	api.Delete("/role/:id", middleware.Auth(), role.DeleteRole)
 
 	// permission

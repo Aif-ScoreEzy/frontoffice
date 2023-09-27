@@ -168,6 +168,9 @@ func Login(c *fiber.Ctx) error {
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
 		return c.Status(statusCode).JSON(resp)
+	} else if !user.Active {
+		statusCode, resp := helper.GetError(constant.RequestProhibited)
+		return c.Status(statusCode).JSON(resp)
 	} else if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -184,7 +187,7 @@ func Login(c *fiber.Ctx) error {
 		Name:      user.Name,
 		Email:     user.Email,
 		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
+		TierLevel: user.Role.TierLevel,
 		Token:     token,
 	}
 

@@ -8,7 +8,7 @@ import (
 )
 
 func CreateRole(c *fiber.Ctx) error {
-	request := c.Locals("request").(*RoleRequest)
+	request := c.Locals("request").(*CreateRoleRequest)
 
 	_, err := GetRoleByNameSvc(request.Name)
 	if err != nil {
@@ -26,7 +26,7 @@ func CreateRole(c *fiber.Ctx) error {
 		}
 	}
 
-	role, err := CreateRoleSvc(*request)
+	role, err := CreateRoleSvc(request)
 	if err != nil && err.Error() == "record not found" {
 		resp := helper.ResponseFailed("Data is not found")
 
@@ -80,7 +80,7 @@ func GetRoleByID(c *fiber.Ctx) error {
 }
 
 func UpdateRole(c *fiber.Ctx) error {
-	req := c.Locals("request").(*RoleRequest)
+	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
 	_, err := IsRoleIDExistSvc(id)
@@ -97,7 +97,7 @@ func UpdateRole(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	role, err := UpdateRoleByIDSvc(*req, id)
+	role, err := UpdateRoleByIDSvc(req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
