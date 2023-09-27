@@ -2,6 +2,8 @@ package helper
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -54,4 +56,20 @@ func ExtractUserIDFromClaims(claims *jwt.MapClaims) (string, error) {
 	}
 
 	return (*claims)["user_id"].(string), nil
+}
+
+func ExtractTierLevelFromClaims(claims *jwt.MapClaims) (uint, error) {
+	x, found := (*claims)["tier_level"]
+	if found {
+		tierLevelStr := fmt.Sprintf("%v", x)
+
+		tierLevel, err := strconv.ParseUint(tierLevelStr, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+
+		return uint(tierLevel), nil
+	} else {
+		return 0, errors.New("key doesn't exist")
+	}
 }

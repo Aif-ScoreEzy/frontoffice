@@ -57,7 +57,7 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES"))
 	baseURL := os.Getenv("BASE_URL")
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 		return "", errors.New(constant.InvalidEmailOrPassword)
 	}
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
 	if err != nil {
 		return "", err
 	}

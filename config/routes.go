@@ -25,7 +25,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetUserIDFromJWT(), auth.ChangePassword)
 
 	// user
-	api.Post("/register-member", middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
+	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
 	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
