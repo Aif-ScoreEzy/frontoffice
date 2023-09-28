@@ -6,6 +6,7 @@ import (
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,9 +18,6 @@ func RegisterMember(c *fiber.Ctx) error {
 	loggedUser, err := FindUserByIDSvc(userID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	} else if loggedUser.Role.TierLevel != 1 {
-		statusCode, resp := helper.GetError(constant.RequestProhibited)
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -174,11 +172,24 @@ func UpdateUserByID(c *fiber.Ctx) error {
 }
 
 func GetAllUsers(c *fiber.Ctx) error {
-	users, err := GetAllUsersSvc()
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
+	page := c.Query("page", "1")
+	limit := c.Query("limit", "10")
 
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	user, err := FindUserByIDSvc(userID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	intPage, _ := strconv.Atoi(page)
+	intLimit, _ := strconv.Atoi(limit)
+	offset := (intPage - 1) * intLimit
+
+	users, err := GetAllUsersSvc(intLimit, offset, user.CompanyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(

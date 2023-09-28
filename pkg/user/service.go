@@ -114,21 +114,21 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	return user, nil
 }
 
-func GetAllUsersSvc() ([]UserResponse, error) {
-	users, err := FindAll()
+func GetAllUsersSvc(limit, offset int, companyID string) ([]GetUsersResponse, error) {
+	users, err := FindAll(limit, offset, companyID)
 	if err != nil {
 		return nil, err
 	}
 
-	var responseUsers []UserResponse
+	var responseUsers []GetUsersResponse
 	for _, user := range users {
-		responseUser := UserResponse{
+		responseUser := GetUsersResponse{
 			ID:         user.ID,
 			Name:       user.Name,
 			Email:      user.Email,
-			Phone:      user.Phone,
 			Active:     user.Active,
 			IsVerified: user.IsVerified,
+			CompanyID:  user.CompanyID,
 			Role:       user.Role,
 			CreatedAt:  user.CreatedAt,
 		}

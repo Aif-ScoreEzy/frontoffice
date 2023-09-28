@@ -52,6 +52,20 @@ type RegisterMemberRequest struct {
 	Active bool   `json:"active"`
 }
 
+type GetUsersResponse struct {
+	ID         string         `json:"id"`
+	Name       string         `json:"name"`
+	Email      string         `json:"email"`
+	Active     bool           `json:"active"`
+	IsVerified bool           `json:"is_verified"`
+	CompanyID  string         `json:"company_id"`
+	RoleID     string         `json:"-"`
+	Role       role.Role      `json:"role"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"-"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
 type UpdateUserRequest struct {
 	Name      string `json:"name"`
 	Email     string `json:"email" validate:"email~Only email pattern are allowed"`
