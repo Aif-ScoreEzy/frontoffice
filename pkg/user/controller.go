@@ -242,5 +242,10 @@ func DeleteUserByID(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	return nil
+	resp := helper.ResponseSuccess(
+		"user successfully deleted",
+		user,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
