@@ -114,10 +114,11 @@ func DeactiveOneByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-func FindAll() ([]User, error) {
+func FindAll(limit, offset int, companyID string) ([]User, error) {
 	var users []User
 
-	result := database.DBConn.Debug().Preload("Role").Find(&users)
+	result := database.DBConn.Debug().Preload("Role").Limit(limit).Offset(offset).Find(&users, "company_id = ?", companyID)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
