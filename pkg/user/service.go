@@ -114,8 +114,8 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	return user, nil
 }
 
-func GetAllUsersSvc(limit, offset int, companyID string) ([]GetUsersResponse, error) {
-	users, err := FindAll(limit, offset, companyID)
+func GetAllUsersSvc(limit, offset int, keyword, companyID string) ([]GetUsersResponse, error) {
+	users, err := FindAll(limit, offset, keyword, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +136,11 @@ func GetAllUsersSvc(limit, offset int, companyID string) ([]GetUsersResponse, er
 	}
 
 	return responseUsers, nil
+}
+
+func getTotalDataSvc(keyword, companyID string) (int64, error) {
+	count, err := GetTotalData(keyword, companyID)
+	return count, err
 }
 
 func DeleteUserByIDSvc(id string) error {

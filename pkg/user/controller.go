@@ -174,6 +174,7 @@ func UpdateUserByID(c *fiber.Ctx) error {
 func GetAllUsers(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	limit := c.Query("limit", "10")
+	keyword := c.Query("keyword", "")
 
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	user, err := FindUserByIDSvc(userID)
@@ -186,15 +187,23 @@ func GetAllUsers(c *fiber.Ctx) error {
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
-	users, err := GetAllUsersSvc(intLimit, offset, user.CompanyID)
+	users, err := GetAllUsersSvc(intLimit, offset, keyword, user.CompanyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	// total data
+	totalData, _ := getTotalDataSvc(keyword, user.CompanyID)
+
+	fullResponsePage := map[string]interface{}{
+		"total_data": totalData,
+		"data":       users,
+	}
+
 	resp := helper.ResponseSuccess(
 		"Succeed to get all users",
-		users,
+		fullResponsePage,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
