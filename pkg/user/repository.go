@@ -114,10 +114,30 @@ func DeactiveOneByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-func FindAll(limit, offset int, companyID string) ([]User, error) {
+func FindAll(limit, offset int, keyword, companyID string) ([]User, error) {
 	var users []User
 
-	result := database.DBConn.Debug().Preload("Role").Limit(limit).Offset(offset).Find(&users, "company_id = ?", companyID)
+	// result := database.DBConn.Debug().Preload("Role").Limit(limit).Offset(offset).Find(&users, "company_id = ?", companyID)
+
+	// if result.Error != nil {
+	// 	return nil, result.Error
+	// }
+
+	// return users, nil
+
+	// new queries
+	conditions := map[string]interface{}{
+		"name":  "%" + keyword + "%", // Example name condition
+		"email": "%" + keyword + "%", // Example email condition
+	}
+	query := database.DBConn.Debug().Preload("Role")
+
+	for key, value := range conditions {
+		query = query.Or(key+" LIKE ?", value)
+	}
+	query = query.Where("company_id = ?", companyID)
+
+	result := query.Limit(limit).Offset(offset).Find(&users)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -133,4 +153,25 @@ func DeleteByID(id string) error {
 	}
 
 	return nil
+}
+
+func GetTotalData(keyword, companyID string) (int64, error) {
+	var users []User
+	var count int64
+
+	// make sure main query is the same as FindAll method
+	conditions := map[string]interface{}{
+		"name":  "%" + keyword + "%", // Example name condition
+		"email": "%" + keyword + "%", // Example email condition
+	}
+
+	query := database.DBConn.Debug().Preload("Role")
+	for key, value := range conditions {
+		query = query.Or(key+" LIKE ?", value)
+	}
+	query = query.Where("company_id = ?", companyID)
+
+	err := query.Find(&users).Count(&count).Error
+
+	return count, err
 }
