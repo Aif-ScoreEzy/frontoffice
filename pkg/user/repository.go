@@ -95,23 +95,33 @@ func UpdateOneByID(req *User, id string) (*User, error) {
 func UpdateOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Update("active", true).Error
+	err := database.DBConn.Debug().Model(&user).Where("key = ?", key).Update("active", true).Error
 	if err != nil {
 		return user, err
 	}
 
-	return user, nil
+	userDetail, err := FindOneByKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return userDetail, nil
 }
 
 func DeactiveOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
+	err := database.DBConn.Debug().Model(&user).Where("email = ?", email).Update("active", false).Error
 	if err != nil {
 		return user, err
 	}
 
-	return user, nil
+	userDetail, err := FindOneByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return userDetail, nil
 }
 
 func FindAll(limit, offset int, keyword, companyID string) ([]User, error) {
