@@ -100,12 +100,11 @@ func UpdateOneByKey(key string) (*User, error) {
 		return user, err
 	}
 
-	userDetail, err := FindOneByKey(key)
-	if err != nil {
+	if err := database.DBConn.First(&user, "key = ?", key).Error; err != nil {
 		return nil, err
 	}
 
-	return userDetail, nil
+	return user, nil
 }
 
 func DeactiveOneByEmail(email string) (*User, error) {
@@ -116,12 +115,11 @@ func DeactiveOneByEmail(email string) (*User, error) {
 		return user, err
 	}
 
-	userDetail, err := FindOneByEmail(email)
-	if err != nil {
+	if err := database.DBConn.First(&user, "email = ?", email).Error; err != nil {
 		return nil, err
 	}
 
-	return userDetail, nil
+	return user, nil
 }
 
 func FindAll(limit, offset int, keyword, companyID string) ([]User, error) {
