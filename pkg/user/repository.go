@@ -95,9 +95,13 @@ func UpdateOneByID(req *User, id string) (*User, error) {
 func UpdateOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Update("active", true).Error
+	err := database.DBConn.Debug().Model(&user).Where("key = ?", key).Update("active", true).Error
 	if err != nil {
 		return user, err
+	}
+
+	if err := database.DBConn.First(&user, "key = ?", key).Error; err != nil {
+		return nil, err
 	}
 
 	return user, nil
@@ -106,9 +110,13 @@ func UpdateOneByKey(key string) (*User, error) {
 func DeactiveOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
+	err := database.DBConn.Debug().Model(&user).Where("email = ?", email).Update("active", false).Error
 	if err != nil {
 		return user, err
+	}
+
+	if err := database.DBConn.First(&user, "email = ?", email).Error; err != nil {
+		return nil, err
 	}
 
 	return user, nil
