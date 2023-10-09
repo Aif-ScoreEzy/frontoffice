@@ -1,8 +1,6 @@
 package role
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 )
 
@@ -45,10 +43,10 @@ func IsRoleIDExistSvc(id string) (Role, error) {
 	return result, nil
 }
 
-func GetRoleByNameSvc(name string) (Role, error) {
+func GetRoleByNameSvc(name string) (*Role, error) {
 	result, err := FindOneByName(name)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	return result, nil
@@ -56,7 +54,6 @@ func GetRoleByNameSvc(name string) (Role, error) {
 
 func UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error) {
 	dataReq := &Role{}
-	fmt.Println("=====", req.Permissions)
 
 	if req.Name != "" {
 		dataReq.Name = req.Name
