@@ -36,6 +36,8 @@ func GetError(errorMessage string) (int, interface{}) {
 	case constant.AlreadyVerified,
 		constant.DataAlreadyExist,
 		constant.IncorrectPassword,
+		constant.InvalidActiveValue,
+		constant.InvalidDateFormat,
 		constant.InvalidEmailOrPassword,
 		constant.InvalidPassword,
 		constant.InvalidPasswordResetLink,

@@ -57,3 +57,20 @@ func ValidatePasswordStrength(password string) bool {
 
 	return true
 }
+
+func ParseDate(layout, date string) error {
+	_, err := time.Parse(layout, date)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func FormatStartTimeForSQL(date string) string {
+	return date + " 00:00:00"
+}
+
+func FormatEndTimeForSQL(date string) string {
+	return date + " 24:00:00"
+}

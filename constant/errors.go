@@ -15,4 +15,7 @@ const (
 	ConfirmNewPasswordMismatch = "please ensure that the new password and confirm password fields match exactly"
 	ConfirmPasswordMismatch    = "please ensure that password and confirm password fields match exactly"
 	RequestProhibited          = "request is prohibited"
+
+	InvalidDateFormat  = "invalid date format"
+	InvalidActiveValue = "invalid value for 'active', it must be a boolean"
 )
