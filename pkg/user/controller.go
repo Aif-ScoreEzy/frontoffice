@@ -6,7 +6,6 @@ import (
 	"front-office/helper"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -175,26 +174,36 @@ func GetAllUsers(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	limit := c.Query("limit", "10")
 	keyword := c.Query("keyword", "")
-
+	roleName := c.Query("role", "")
+	active := c.Query("active", "")
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	var roleID string
+	if roleName != "" {
+		role, err := role.GetRoleByNameSvc(roleName)
+		if err != nil {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+		roleID = role.ID
+	}
+
 	user, err := FindUserByIDSvc(userID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	intPage, _ := strconv.Atoi(page)
-	intLimit, _ := strconv.Atoi(limit)
-	offset := (intPage - 1) * intLimit
-
-	users, err := GetAllUsersSvc(intLimit, offset, keyword, user.CompanyID)
+	users, err := GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, user.CompanyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	// total data
-	totalData, _ := getTotalDataSvc(keyword, user.CompanyID)
+	totalData, _ := GetTotalDataSvc(keyword, roleID, active, startDate, endDate, user.CompanyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
