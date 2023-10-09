@@ -3,6 +3,7 @@ package user
 import (
 	"front-office/config/database"
 	"front-office/pkg/company"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -125,7 +126,10 @@ func DeactiveOneByEmail(email string) (*User, error) {
 func FindAll(limit, offset int, keyword, roleID, active, startTime, endTime, companyID string) ([]User, error) {
 	var users []User
 
-	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND name LIKE ?", companyID, "%"+keyword+"%")
+	// avoid case sensitive (uppercase/lowercase) keywords
+	keywordToLower := strings.ToLower(keyword)
+
+	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND LOWER(name) LIKE ?", companyID, "%"+keywordToLower+"%")
 
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
@@ -161,7 +165,10 @@ func GetTotalData(keyword, roleID, active, startTime, endTime, companyID string)
 	var users []User
 	var count int64
 
-	query := database.DBConn.Debug().Where("company_id = ? AND name LIKE ?", companyID, "%"+keyword+"%")
+	// avoid case sensitive (uppercase/lowercase) keywords
+	keywordToLower := strings.ToLower(keyword)
+
+	query := database.DBConn.Debug().Where("company_id = ? AND LOWER(name) LIKE ?", companyID, "%"+keywordToLower+"%")
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
 	}
