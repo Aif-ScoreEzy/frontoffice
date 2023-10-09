@@ -1,7 +1,6 @@
 package role
 
 import (
-	"errors"
 	"fmt"
 	"front-office/config/database"
 
@@ -41,11 +40,11 @@ func FindOneByID(role Role) (Role, error) {
 	return role, nil
 }
 
-func FindOneByName(name string) (Role, error) {
-	var role Role
+func FindOneByName(name string) (*Role, error) {
+	var role *Role
 	result := database.DBConn.Debug().First(&role, "name = ?", name)
-	if result.RowsAffected != 0 {
-		return role, errors.New("Role with the same name already exists")
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return role, nil

@@ -122,28 +122,22 @@ func DeactiveOneByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-func FindAll(limit, offset int, keyword, companyID string) ([]User, error) {
+func FindAll(limit, offset int, keyword, roleID, active, startTime, endTime, companyID string) ([]User, error) {
 	var users []User
 
-	// result := database.DBConn.Debug().Preload("Role").Limit(limit).Offset(offset).Find(&users, "company_id = ?", companyID)
+	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND name LIKE ?", companyID, "%"+keyword+"%")
 
-	// if result.Error != nil {
-	// 	return nil, result.Error
-	// }
-
-	// return users, nil
-
-	// new queries
-	conditions := map[string]interface{}{
-		"name":  "%" + keyword + "%", // Example name condition
-		"email": "%" + keyword + "%", // Example email condition
+	if roleID != "" {
+		query = query.Where("role_id = ?", roleID)
 	}
-	query := database.DBConn.Debug().Preload("Role")
 
-	for key, value := range conditions {
-		query = query.Or(key+" LIKE ?", value)
+	if active != "" {
+		query = query.Where("active = ?", active)
 	}
-	query = query.Where("company_id = ?", companyID)
+
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
 
 	result := query.Limit(limit).Offset(offset).Find(&users)
 
@@ -163,21 +157,22 @@ func DeleteByID(id string) error {
 	return nil
 }
 
-func GetTotalData(keyword, companyID string) (int64, error) {
+func GetTotalData(keyword, roleID, active, startTime, endTime, companyID string) (int64, error) {
 	var users []User
 	var count int64
 
-	// make sure main query is the same as FindAll method
-	conditions := map[string]interface{}{
-		"name":  "%" + keyword + "%", // Example name condition
-		"email": "%" + keyword + "%", // Example email condition
+	query := database.DBConn.Debug().Where("company_id = ? AND name LIKE ?", companyID, "%"+keyword+"%")
+	if roleID != "" {
+		query = query.Where("role_id = ?", roleID)
 	}
 
-	query := database.DBConn.Debug().Preload("Role")
-	for key, value := range conditions {
-		query = query.Or(key+" LIKE ?", value)
+	if active != "" {
+		query = query.Where("active = ?", active)
 	}
-	query = query.Where("company_id = ?", companyID)
+
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
 
 	err := query.Find(&users).Count(&count).Error
 

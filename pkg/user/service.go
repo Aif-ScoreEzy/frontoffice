@@ -1,8 +1,11 @@
 package user
 
 import (
+	"errors"
+	"front-office/constant"
 	"front-office/helper"
 	"front-office/utility/mailjet"
+	"strconv"
 
 	"github.com/google/uuid"
 )
@@ -114,8 +117,43 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	return user, nil
 }
 
-func GetAllUsersSvc(limit, offset int, keyword, companyID string) ([]GetUsersResponse, error) {
-	users, err := FindAll(limit, offset, keyword, companyID)
+func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
+	intPage, _ := strconv.Atoi(page)
+	intLimit, _ := strconv.Atoi(limit)
+	offset := (intPage - 1) * intLimit
+
+	if active != "" {
+		_, err := strconv.ParseBool(active)
+		if err != nil {
+			return nil, errors.New(constant.InvalidActiveValue)
+		}
+	}
+
+	var startTime, endTime string
+	layoutPostgreSQLDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreSQLDate, startDate)
+		if err != nil {
+			return nil, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreSQLDate, endDate)
+		if err != nil {
+			return nil, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	users, err := FindAll(intLimit, offset, keyword, roleID, active, startTime, endTime, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +176,32 @@ func GetAllUsersSvc(limit, offset int, keyword, companyID string) ([]GetUsersRes
 	return responseUsers, nil
 }
 
-func getTotalDataSvc(keyword, companyID string) (int64, error) {
-	count, err := GetTotalData(keyword, companyID)
+func GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error) {
+	var startTime, endTime string
+	layoutPostgreSQLDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreSQLDate, startDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreSQLDate, endDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	count, err := GetTotalData(keyword, roleID, active, startTime, endTime, companyID)
 	return count, err
 }
 
