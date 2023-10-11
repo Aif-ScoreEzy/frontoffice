@@ -1,20 +1,15 @@
 package company
 
 import (
-	"fmt"
 	"front-office/config/database"
-
-	"gorm.io/gorm"
 )
 
-func FindOneByID(company Company) (Company, error) {
-	err := database.DBConn.First(&company).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return company, fmt.Errorf("Company with ID %s not found", company.ID)
-		}
+func FindOneByID(id string) (*Company, error) {
+	var company *Company
 
-		return company, fmt.Errorf("Failed to find company with ID %s: %v", company.ID, err)
+	err := database.DBConn.First(&company, "id = ?", id).Error
+	if err != nil {
+		return nil, err
 	}
 
 	return company, nil

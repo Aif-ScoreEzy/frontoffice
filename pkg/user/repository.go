@@ -75,7 +75,7 @@ func CreateMember(user *User) (*User, error) {
 	return user, nil
 }
 
-func UpdateOneByID(req *User, id string) (*User, error) {
+func UpdateOneByID(req map[string]interface{}, id string) (*User, error) {
 	var user *User
 
 	err := database.DBConn.Debug().Model(&user).

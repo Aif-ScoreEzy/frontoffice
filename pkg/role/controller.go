@@ -64,7 +64,7 @@ func GetAllRoles(c *fiber.Ctx) error {
 func GetRoleByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	role, err := IsRoleIDExistSvc(id)
+	role, err := FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -83,7 +83,7 @@ func UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
-	_, err := IsRoleIDExistSvc(id)
+	_, err := FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -115,7 +115,7 @@ func UpdateRole(c *fiber.Ctx) error {
 func DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := IsRoleIDExistSvc(id)
+	_, err := FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 

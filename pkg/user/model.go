@@ -17,7 +17,7 @@ type User struct {
 	Phone       string          `json:"phone"`
 	AccountType string          `json:"account_type"`
 	Key         string          `json:"key"`
-	Active      bool            `gorm:"default:true" json:"active"`
+	Active      bool            `gorm:"default:false" json:"active"`
 	IsVerified  bool            `gorm:"default:false" json:"is_verified"`
 	CompanyID   string          `json:"company_id"`
 	Company     company.Company `gorm:"foreignKey:CompanyID" json:"company"`
@@ -67,11 +67,10 @@ type GetUsersResponse struct {
 }
 
 type UpdateUserRequest struct {
-	Name      string `json:"name"`
-	Email     string `json:"email" validate:"email~Only email pattern are allowed"`
-	Phone     string `string:"phone" validate:"phone"`
-	RoleID    string `json:"role_id"`
-	CompanyID string `json:"company_id"`
+	Name   *string `json:"name"`
+	Email  *string `json:"email" validate:"email~Only email pattern are allowed"`
+	RoleID *string `json:"role_id"`
+	Active *bool   `json:"active"`
 }
 
 type UserUpdateResponse struct {
