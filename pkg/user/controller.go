@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"front-office/constant"
 	"front-office/helper"
-	"front-office/pkg/company"
 	"front-office/pkg/role"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,7 +32,7 @@ func RegisterMember(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"We sent an email with the credentials for login to "+req.Email,
+		"the activation link has been sent to your email address",
 		nil,
 	)
 
@@ -116,40 +115,29 @@ func UpdateUserByID(c *fiber.Ctx) error {
 
 	_, err := FindUserByIDSvc(id)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	// only check if email is included in the parameters
-	if req.Email != "" {
-		user, _ := FindUserByEmailSvc(req.Email)
+	if req.Email != nil {
+		user, _ := FindUserByEmailSvc(*req.Email)
 		if user != nil {
-			resp := helper.ResponseFailed("Email already exists")
-
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
+			return c.Status(statusCode).JSON(resp)
 		}
 	}
 
-	_, err = company.IsCompanyIDExistSvc(req.CompanyID)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	_, err = role.IsRoleIDExistSvc(req.RoleID)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
+	// company, _ := company.FindCompanyByIDSvc(req.CompanyID)
+	// if company == nil {
+	// 	statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
+	// 	return c.Status(statusCode).JSON(resp)
+	// }
 
 	user, err := UpdateUserByIDSvc(req, id)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := UserUpdateResponse{

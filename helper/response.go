@@ -34,7 +34,6 @@ func GetError(errorMessage string) (int, interface{}) {
 
 	switch errorMessage {
 	case constant.AlreadyVerified,
-		constant.DataAlreadyExist,
 		constant.IncorrectPassword,
 		constant.InvalidActiveValue,
 		constant.InvalidDateFormat,
@@ -48,6 +47,9 @@ func GetError(errorMessage string) (int, interface{}) {
 		statusCode = 401
 	case constant.DataNotFound, constant.RecordNotFound:
 		statusCode = 404
+	case constant.DataAlreadyExist,
+		constant.EmailAlreadyExists:
+		statusCode = 409
 	default:
 		statusCode = 500
 	}

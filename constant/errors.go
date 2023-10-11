@@ -18,4 +18,6 @@ const (
 
 	InvalidDateFormat  = "invalid date format"
 	InvalidActiveValue = "invalid value for 'active', it must be a boolean"
+
+	EmailAlreadyExists = "email already exists"
 )

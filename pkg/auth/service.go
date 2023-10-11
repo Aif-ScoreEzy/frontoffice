@@ -10,6 +10,7 @@ import (
 	"front-office/utility/mailjet"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -75,11 +76,13 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User
 }
 
 func VerifyUserSvc(userID string) (*user.User, error) {
-	req := &user.User{
-		IsVerified: true,
-	}
+	updateUser := map[string]interface{}{}
 
-	user, err := user.UpdateOneByID(req, userID)
+	updateUser["active"] = true
+	updateUser["is_verified"] = true
+	updateUser["updated_at"] = time.Now()
+
+	user, err := user.UpdateOneByID(updateUser, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +171,8 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 }
 
 func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
+	updateUser := map[string]interface{}{}
+
 	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(req.CurrentPassword))
 	if err != nil {
 		return nil, errors.New(constant.IncorrectPassword)
@@ -182,11 +187,10 @@ func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswor
 		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
 	}
 
-	data := &user.User{
-		Password: user.SetPassword(req.NewPassword),
-	}
+	updateUser["password"] = user.SetPassword(req.NewPassword)
+	updateUser["updated_at"] = time.Now()
 
-	data, err = user.UpdateOneByID(data, userID)
+	data, err := user.UpdateOneByID(updateUser, userID)
 	if err != nil {
 		return nil, err
 	}

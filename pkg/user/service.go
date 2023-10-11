@@ -2,10 +2,14 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"front-office/constant"
 	"front-office/helper"
+	"front-office/pkg/role"
 	"front-office/utility/mailjet"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -13,14 +17,12 @@ import (
 func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, error) {
 	userID := uuid.NewString()
 	dataUser := &User{
-		ID:         userID,
-		Name:       req.Name,
-		Email:      req.Email,
-		Key:        helper.GenerateAPIKey(),
-		RoleID:     req.RoleID,
-		Active:     req.Active,
-		IsVerified: true,
-		CompanyID:  loggedUser.CompanyID,
+		ID:        userID,
+		Name:      req.Name,
+		Email:     req.Email,
+		Key:       helper.GenerateAPIKey(),
+		RoleID:    req.RoleID,
+		CompanyID: loggedUser.CompanyID,
 	}
 
 	password := helper.GeneratePassword()
@@ -28,12 +30,20 @@ func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, err
 
 	user, err := CreateMember(dataUser)
 	if err != nil {
-		return user, err
+		return nil, err
+	}
+
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EMAIL_ACTIVATION_EXPIRES_MINUTES"))
+	baseURL := os.Getenv("BASE_URL")
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
+	if err != nil {
+		return nil, err
 	}
 
 	variables := map[string]interface{}{
-		"email":    req.Email,
-		"password": password,
+		"url": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
 	}
 
 	err = mailjet.CreateMailjet(req.Email, 5082139, variables)
@@ -90,26 +100,34 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 }
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
+	updateUser := map[string]interface{}{}
 
-	dataReq := &User{}
-
-	if req.Name != "" {
-		dataReq.Name = req.Name
-	}
-	if req.Email != "" {
-		dataReq.Email = req.Email
-	}
-	if req.Phone != "" {
-		dataReq.Phone = req.Phone
-	}
-	if req.CompanyID != "" {
-		dataReq.CompanyID = req.CompanyID
-	}
-	if req.RoleID != "" {
-		dataReq.RoleID = req.RoleID
+	if req.Name != nil {
+		updateUser["name"] = *req.Name
 	}
 
-	user, err := UpdateOneByID(dataReq, id)
+	if req.Email != nil {
+		updateUser["email"] = *req.Email
+	}
+
+	if req.RoleID != nil {
+		role, err := role.FindOneByID(*req.RoleID)
+		if err != nil {
+			return nil, err
+		} else if role == nil {
+			return nil, errors.New(constant.DataNotFound)
+		}
+
+		updateUser["role_id"] = *req.RoleID
+	}
+
+	if req.Active != nil {
+		updateUser["active"] = *req.Active
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	user, err := UpdateOneByID(updateUser, id)
 	if err != nil {
 		return user, err
 	}
