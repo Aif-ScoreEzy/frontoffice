@@ -143,7 +143,7 @@ func PasswordResetSvc(userID, token string, req *PasswordResetRequest) (*user.Us
 		return nil, errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	err := UpdateOne(userID, token, req)
+	err := UpdatePassword(userID, token, req)
 	if err != nil {
 		return nil, err
 	}
@@ -205,4 +205,35 @@ func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswor
 	}
 
 	return data, nil
+}
+
+func UpdateProfileSvc(id string, req *UpdateProfileRequest) (*user.User, error) {
+	updateUser := map[string]interface{}{}
+
+	if req.Name != nil {
+		updateUser["name"] = *req.Name
+	}
+
+	if req.Email != nil {
+		result, _ := user.FindOneByID(id)
+		if result.Role.TierLevel == 2 {
+			return nil, errors.New(constant.RequestProhibited)
+		}
+
+		result, _ = user.FindUserByEmailSvc(*req.Email)
+		if result != nil {
+			return nil, errors.New(constant.EmailAlreadyExists)
+		}
+
+		updateUser["email"] = *req.Email
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	user, err := UpdateOne(id, updateUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

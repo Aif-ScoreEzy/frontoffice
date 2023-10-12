@@ -222,3 +222,30 @@ func ChangePassword(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
+
+func UpdateProfile(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateProfileRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	updateUser, err := UpdateProfileSvc(userID, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	dataResponse := user.UserUpdateResponse{
+		ID:        updateUser.ID,
+		Name:      updateUser.Name,
+		Email:     updateUser.Email,
+		Active:    updateUser.Active,
+		CompanyID: updateUser.CompanyID,
+		RoleID:    updateUser.RoleID,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to update user",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}

@@ -60,7 +60,6 @@ func ActivateUser(c *fiber.Ctx) error {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Phone:     user.Phone,
 		Active:    user.Active,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
@@ -95,7 +94,6 @@ func DeactiveUser(c *fiber.Ctx) error {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Phone:     user.Phone,
 		Active:    user.Active,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
@@ -113,30 +111,12 @@ func UpdateUserByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	id := c.Params("id")
 
-	_, err := FindUserByIDSvc(id)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	// only check if email is included in the parameters
-	if req.Email != nil {
-		user, _ := FindUserByEmailSvc(*req.Email)
-		if user != nil {
-			statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
-			return c.Status(statusCode).JSON(resp)
-		}
-	}
-
-	// company, _ := company.FindCompanyByIDSvc(req.CompanyID)
-	// if company == nil {
-	// 	statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
-	// 	return c.Status(statusCode).JSON(resp)
-	// }
-
 	user, err := UpdateUserByIDSvc(req, id)
-	if err != nil {
+	if user == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	} else if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -144,7 +124,6 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Phone:     user.Phone,
 		Active:    user.Active,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,
