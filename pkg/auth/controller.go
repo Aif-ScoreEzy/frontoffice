@@ -5,6 +5,8 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/user"
+	"os"
+	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -244,6 +246,59 @@ func UpdateProfile(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"success to update user",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func UploadProfileImage(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if file.Size > 200*1024 { // 200 KB dalam byte
+		statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%s%s", userID, ext)
+	filePath := fmt.Sprintf("./public/%s", filename)
+
+	if _, err := os.Stat(filePath); err == nil {
+		if err := os.Remove(filePath); err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	if err := c.SaveFile(file, filePath); err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	updateUser, err := UploadProfileImageSvc(userID, &filename)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	dataResponse := user.UserUpdateResponse{
+		ID:        updateUser.ID,
+		Name:      updateUser.Name,
+		Email:     updateUser.Email,
+		Active:    updateUser.Active,
+		CompanyID: updateUser.CompanyID,
+		RoleID:    updateUser.RoleID,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to upload profile image",
 		dataResponse,
 	)
 

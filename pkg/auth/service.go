@@ -237,3 +237,20 @@ func UpdateProfileSvc(id string, req *UpdateProfileRequest) (*user.User, error) 
 
 	return user, nil
 }
+
+func UploadProfileImageSvc(id string, filename *string) (*user.User, error) {
+	updateUser := map[string]interface{}{}
+
+	if filename != nil {
+		updateUser["image"] = *filename
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	user, err := UpdateOne(id, updateUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

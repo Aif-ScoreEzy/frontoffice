@@ -88,3 +88,7 @@ type UpdateProfileRequest struct {
 	Name  *string `json:"name"`
 	Email *string `json:"email"`
 }
+
+type UploadProfileImageRequest struct {
+	Image *string `json:"image"`
+}
