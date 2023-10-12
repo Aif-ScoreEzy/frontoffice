@@ -50,9 +50,9 @@ func FindOneByToken(token string) (*PasswordResetToken, error) {
 	return result, nil
 }
 
-func UpdateOne(userID, token string, req *PasswordResetRequest) error {
+func UpdatePassword(id, token string, req *PasswordResetRequest) error {
 	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
-		err := tx.Debug().Model(&user.User{}).Where("id = ?", userID).Update("password", user.SetPassword(req.Password)).Error
+		err := tx.Debug().Model(&user.User{}).Where("id = ?", id).Update("password", user.SetPassword(req.Password)).Error
 		if err != nil {
 			return err
 		}
@@ -69,4 +69,20 @@ func UpdateOne(userID, token string, req *PasswordResetRequest) error {
 	}
 
 	return nil
+}
+
+func UpdateOne(id string, req map[string]interface{}) (*user.User, error) {
+	var updateUser *user.User
+
+	err := database.DBConn.Debug().Model(&updateUser).Where("id = ?", id).Updates(req).Error
+	if err != nil {
+		return nil, err
+	}
+
+	updateUser, err = user.FindOneByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return updateUser, nil
 }

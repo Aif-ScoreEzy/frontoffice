@@ -2,9 +2,11 @@ package constant
 
 const (
 	// general
-	DataAlreadyExist = "data already exists"
-	DataNotFound     = "data not found"
-	RecordNotFound   = "record not found"
+	DataAlreadyExist   = "data already exists"
+	DataNotFound       = "data not found"
+	RecordNotFound     = "record not found"
+	FileSizeIsTooLarge = "file size should not exceed 200 KB"
+	InvalidDateFormat  = "invalid date format"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"
@@ -16,8 +18,6 @@ const (
 	ConfirmPasswordMismatch    = "please ensure that password and confirm password fields match exactly"
 	RequestProhibited          = "request is prohibited"
 
-	InvalidDateFormat  = "invalid date format"
 	InvalidActiveValue = "invalid value for 'active', it must be a boolean"
-
 	EmailAlreadyExists = "email already exists"
 )

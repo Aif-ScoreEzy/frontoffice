@@ -83,3 +83,12 @@ type ChangePasswordRequest struct {
 	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Field Password must have at least 8 characters"`
 	ConfirmNewPassword string `json:"confirm_password" validate:"required~Field Confirmation New Password is required"`
 }
+
+type UpdateProfileRequest struct {
+	Name  *string `json:"name"`
+	Email *string `json:"email"`
+}
+
+type UploadProfileImageRequest struct {
+	Image *string `json:"image"`
+}

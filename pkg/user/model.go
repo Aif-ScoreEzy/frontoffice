@@ -19,6 +19,7 @@ type User struct {
 	Key         string          `json:"key"`
 	Active      bool            `gorm:"default:false" json:"active"`
 	IsVerified  bool            `gorm:"default:false" json:"is_verified"`
+	Image       string          `json:"image"`
 	CompanyID   string          `json:"company_id"`
 	Company     company.Company `gorm:"foreignKey:CompanyID" json:"company"`
 	RoleID      string          `gorm:"not null" json:"role_id"`
@@ -78,7 +79,6 @@ type UserUpdateResponse struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	Password  string `json:"-"`
-	Phone     string `json:"phone"`
 	Active    bool   `json:"active"`
 	CompanyID string `json:"company_id"`
 	RoleID    string `json:"role_id"`

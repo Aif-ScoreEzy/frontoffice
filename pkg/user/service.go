@@ -107,6 +107,13 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	}
 
 	if req.Email != nil {
+		user, err := FindUserByEmailSvc(*req.Email)
+		if err != nil {
+			return nil, err
+		} else if user != nil {
+			return nil, errors.New(constant.EmailAlreadyExists)
+		}
+
 		updateUser["email"] = *req.Email
 	}
 

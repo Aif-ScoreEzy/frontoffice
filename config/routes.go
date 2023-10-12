@@ -23,6 +23,8 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(auth.UserLoginRequest{}), auth.Login)
 	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetUserIDFromJWT(), auth.ChangePassword)
+	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(auth.UpdateProfileRequest{}), middleware.GetUserIDFromJWT(), auth.UpdateProfile)
+	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(auth.UploadProfileImageRequest{}), middleware.GetUserIDFromJWT(), auth.UploadProfileImage)
 
 	// user
 	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
