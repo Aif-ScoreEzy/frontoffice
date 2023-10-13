@@ -34,7 +34,7 @@ func FindOneByKey(key string) (*User, error) {
 func FindOneByID(id string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "id = ?", id).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -57,23 +57,68 @@ func Create(company *company.Company, user *User) (*User, error) {
 	})
 
 	if errTx != nil {
-		return user, errTx
+		return nil, errTx
 	}
 
 	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").Preload("Role.Permissions").First(&user)
 
-	return user, errTx
+	return user, nil
 }
 
-func CreateMember(user *User) (*User, error) {
-	err := database.DBConn.Debug().Create(&user).Error
+func CreateMember(user *User, activationToken *ActivationToken) (*User, error) {
+	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Debug().Create(&user).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Create(&activationToken).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTx != nil {
+		return nil, errTx
+	}
+
+	database.DBConn.Preload("Company").Preload("Role").First(&user)
+
+	return user, nil
+}
+
+func CreateActivationToken(data *ActivationToken) error {
+	err := database.DBConn.Debug().Create(&data).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
+	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Model(&User{}).Where("id = ?", id).Updates(req).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTX != nil {
+		return nil, errTX
+	}
+
+	userDetail, err := FindOneByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	database.DBConn.Debug().Preload("Company").Preload("Role").Preload("Role.Permissions").First(&user)
-
-	return user, nil
+	return userDetail, nil
 }
 
 func UpdateOneByID(req map[string]interface{}, id string) (*User, error) {

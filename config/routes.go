@@ -18,7 +18,7 @@ func SetupRoutes(app *fiber.App) {
 	// auth
 	api.Post("/register-admin", middleware.IsRequestValid(auth.RegisterAdminRequest{}), auth.RegisterAdmin)
 	api.Post("/send-email-verification", middleware.IsRequestValid(auth.SendEmailVerificationRequest{}), auth.SendEmailVerification)
-	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), auth.VerifyUser)
+	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.VerifyUser)
 	api.Post("/request-password-reset", middleware.IsRequestValid(auth.RequestPasswordResetRequest{}), auth.RequestPasswordReset)
 	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(auth.UserLoginRequest{}), auth.Login)

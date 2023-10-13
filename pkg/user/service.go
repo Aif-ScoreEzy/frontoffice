@@ -14,44 +14,91 @@ import (
 	"github.com/google/uuid"
 )
 
-func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, error) {
+func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, string, error) {
 	userID := uuid.NewString()
+
+	var tierLevel uint
+	if req.RoleID != "" {
+		result, err := role.FindRoleByIDSvc(req.RoleID)
+		if result == nil {
+			return nil, "", errors.New(constant.DataNotFound)
+		} else if err != nil {
+			return nil, "", err
+		} else {
+			tierLevel = result.TierLevel
+		}
+	}
+
 	dataUser := &User{
 		ID:        userID,
 		Name:      req.Name,
 		Email:     req.Email,
 		Key:       helper.GenerateAPIKey(),
+		Image:     "default-profile-image.jpg",
 		RoleID:    req.RoleID,
 		CompanyID: loggedUser.CompanyID,
 	}
 
-	password := helper.GeneratePassword()
-	dataUser.Password = SetPassword(password)
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
-	user, err := CreateMember(dataUser)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userID, tierLevel)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
+	tokenID := uuid.NewString()
+	data := &ActivationToken{
+		ID:     tokenID,
+		Token:  token,
+		UserID: userID,
+	}
+
+	user, err := CreateMember(dataUser, data)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
+}
+
+func CreateActivationTokenSvc(user *User) (string, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EMAIL_ACTIVATION_EXPIRES_MINUTES"))
-	baseURL := os.Getenv("BASE_URL")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+
+	tokenID := uuid.NewString()
+	data := &ActivationToken{
+		ID:     tokenID,
+		Token:  token,
+		UserID: user.ID,
+	}
+
+	err = CreateActivationToken(data)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func SendEmailActivationSvc(email, token string) error {
+	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
-		"url": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
+		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
 	}
 
-	err = mailjet.CreateMailjet(req.Email, 5082139, variables)
+	err := mailjet.CreateMailjet(email, 5082139, variables)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return user, nil
+	return nil
 }
 
 func FindUserByEmailSvc(email string) (*User, error) {

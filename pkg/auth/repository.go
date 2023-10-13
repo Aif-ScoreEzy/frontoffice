@@ -40,7 +40,7 @@ func CreatePasswordResetToken(data *PasswordResetToken) error {
 	return nil
 }
 
-func FindOneByToken(token string) (*PasswordResetToken, error) {
+func FindOneByPasswordResetToken(token string) (*PasswordResetToken, error) {
 	var result *PasswordResetToken
 	err := database.DBConn.Debug().First(&result, "token = ?", token).Error
 	if err != nil {
@@ -50,7 +50,17 @@ func FindOneByToken(token string) (*PasswordResetToken, error) {
 	return result, nil
 }
 
-func UpdatePassword(id, token string, req *PasswordResetRequest) error {
+func FindOneByActivationToken(token string) (*user.ActivationToken, error) {
+	var result *user.ActivationToken
+	err := database.DBConn.Debug().First(&result, "token = ?", token).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func ResetPassword(id, token string, req *PasswordResetRequest) error {
 	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		err := tx.Debug().Model(&user.User{}).Where("id = ?", id).Update("password", user.SetPassword(req.Password)).Error
 		if err != nil {
