@@ -55,8 +55,8 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 
 func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User) error {
 	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES"))
-	baseURL := os.Getenv("BASE_URL")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_VERIFICATION_EXPIRES_MINUTES"))
+	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
 	if err != nil {
@@ -75,6 +75,15 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User
 	return nil
 }
 
+func VerifyActivationToken(token string) (*user.ActivationToken, error) {
+	result, err := FindOneByActivationToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func VerifyUserSvc(userID string) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
@@ -83,6 +92,31 @@ func VerifyUserSvc(userID string) (*user.User, error) {
 	updateUser["updated_at"] = time.Now()
 
 	user, err := user.UpdateOneByID(updateUser, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
+	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
+	if !isPasswordStrength {
+		return nil, errors.New(constant.InvalidPassword)
+	}
+
+	if req.Password != req.ConfirmPassword {
+		return nil, errors.New(constant.ConfirmPasswordMismatch)
+	}
+
+	updateUser := map[string]interface{}{}
+
+	updateUser["password"] = user.SetPassword(req.Password)
+	updateUser["active"] = true
+	updateUser["is_verified"] = true
+	updateUser["updated_at"] = time.Now()
+
+	user, err := user.VerifyUserTx(updateUser, userID, token)
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +158,8 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User
 	return nil
 }
 
-func VerifyToken(token string) (*PasswordResetToken, error) {
-	result, err := FindOneByToken(token)
+func VerifyPasswordResetToken(token string) (*PasswordResetToken, error) {
+	result, err := FindOneByPasswordResetToken(token)
 	if err != nil {
 		return nil, err
 	}
@@ -133,22 +167,22 @@ func VerifyToken(token string) (*PasswordResetToken, error) {
 	return result, nil
 }
 
-func PasswordResetSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
+func PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
-		return nil, errors.New(constant.InvalidPassword)
+		return errors.New(constant.InvalidPassword)
 	}
 
 	if req.Password != req.ConfirmPassword {
-		return nil, errors.New(constant.ConfirmPasswordMismatch)
+		return errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	err := UpdatePassword(userID, token, req)
+	err := ResetPassword(userID, token, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return nil, nil
+	return nil
 }
 
 func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {

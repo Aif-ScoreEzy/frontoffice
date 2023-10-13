@@ -13,19 +13,25 @@ func RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterMemberRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
-	loggedUser, err := FindUserByIDSvc(userID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
 	user, _ := FindUserByEmailSvc(req.Email)
 	if user != nil {
 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = RegisterMemberSvc(req, loggedUser)
+	loggedUser, err := FindUserByIDSvc(userID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	_, token, err := RegisterMemberSvc(req, loggedUser)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = SendEmailActivationSvc(req.Email, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

@@ -36,6 +36,7 @@ func GetError(errorMessage string) (int, interface{}) {
 	case constant.AlreadyVerified,
 		constant.FileSizeIsTooLarge,
 		constant.IncorrectPassword,
+		constant.InvalidActivationLink,
 		constant.InvalidActiveValue,
 		constant.InvalidDateFormat,
 		constant.InvalidEmailOrPassword,

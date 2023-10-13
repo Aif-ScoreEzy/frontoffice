@@ -16,5 +16,5 @@ func Migrate() {
 	db := database.DBConn
 
 	log.Println("Running Migrations")
-	db.AutoMigrate(&role.Role{}, &permission.Permission{}, &user.User{}, &auth.PasswordResetToken{}, &company.Company{}, &industry.Industry{}, &product.Product{})
+	db.AutoMigrate(&role.Role{}, &permission.Permission{}, &user.User{}, &user.ActivationToken{}, &auth.PasswordResetToken{}, &company.Company{}, &industry.Industry{}, &product.Product{})
 }
