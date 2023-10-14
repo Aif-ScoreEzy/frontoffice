@@ -187,12 +187,14 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	data := UserLoginResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CompanyID: user.CompanyID,
-		TierLevel: user.Role.TierLevel,
-		Token:     token,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		CompanyID:   user.CompanyID,
+		CompanyName: user.Company.CompanyName,
+		TierLevel:   user.Role.TierLevel,
+		Image:       user.Image,
+		Token:       token,
 	}
 
 	resp := helper.ResponseSuccess(
