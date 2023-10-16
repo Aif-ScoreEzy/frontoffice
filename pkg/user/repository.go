@@ -132,7 +132,12 @@ func UpdateOneByID(req map[string]interface{}, id, companyID string) (*User, err
 func UpdateOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Where("key = ?", key).Update("active", true).Error
+	changeStatus := map[string]interface{}{
+		"active": true,
+		"status": "active",
+	}
+
+	err := database.DBConn.Debug().Model(&user).Where("key = ?", key).Updates(changeStatus).Error
 	if err != nil {
 		return user, err
 	}
@@ -147,7 +152,12 @@ func UpdateOneByKey(key string) (*User, error) {
 func DeactiveOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Model(&user).Where("email = ?", email).Update("active", false).Error
+	changeStatus := map[string]interface{}{
+		"active": false,
+		"status": "inactive",
+	}
+
+	err := database.DBConn.Debug().Model(&user).Where("email = ?", email).Updates(changeStatus).Error
 	if err != nil {
 		return user, err
 	}
