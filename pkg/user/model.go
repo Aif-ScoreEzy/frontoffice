@@ -17,9 +17,10 @@ type User struct {
 	Phone       string          `json:"phone"`
 	AccountType string          `json:"account_type"`
 	Key         string          `json:"key"`
+	Status      string          `gorm:"default:pending" json:"status"`
 	Active      bool            `gorm:"default:false" json:"active"`
 	IsVerified  bool            `gorm:"default:false" json:"is_verified"`
-	Image       string          `json:"image"`
+	Image       string          `gorm:"default:default-profile-image.jpg" json:"image"`
 	CompanyID   string          `json:"company_id"`
 	Company     company.Company `gorm:"foreignKey:CompanyID" json:"company"`
 	RoleID      string          `gorm:"not null" json:"role_id"`
@@ -46,6 +47,7 @@ type UserResponse struct {
 	Email      string          `json:"email"`
 	Password   string          `json:"-"`
 	Phone      string          `json:"phone"`
+	Status     string          `json:"status"`
 	Active     bool            `json:"active"`
 	IsVerified bool            `json:"is_verified"`
 	CompanyID  string          `json:"-"`
@@ -61,7 +63,6 @@ type RegisterMemberRequest struct {
 	Name   string `json:"name" validate:"required~Field Name is required"`
 	Email  string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 	RoleID string `json:"role_id" validate:"required~Field Role is required"`
-	Active bool   `json:"active"`
 }
 
 type ActivationAccountRequest struct {
@@ -72,6 +73,7 @@ type GetUsersResponse struct {
 	ID         string         `json:"id"`
 	Name       string         `json:"name"`
 	Email      string         `json:"email"`
+	Status     string         `json:"status"`
 	Active     bool           `json:"active"`
 	IsVerified bool           `json:"is_verified"`
 	CompanyID  string         `json:"company_id"`
@@ -87,6 +89,7 @@ type UpdateUserRequest struct {
 	Email  *string `json:"email" validate:"email~Only email pattern are allowed"`
 	RoleID *string `json:"role_id"`
 	Active *bool   `json:"active"`
+	Status *string `json:"status"`
 }
 
 type UserUpdateResponse struct {
@@ -94,6 +97,7 @@ type UserUpdateResponse struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	Password  string `json:"-"`
+	Status    string `json:"status"`
 	Active    bool   `json:"active"`
 	CompanyID string `json:"company_id"`
 	RoleID    string `json:"role_id"`

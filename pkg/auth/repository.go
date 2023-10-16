@@ -8,7 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateAdmin(company *company.Company, user *user.User) (*user.User, error) {
+func CreateAdmin(company *company.Company, user *user.User, activationToken *user.ActivationToken) (*user.User, error) {
+	database.DBConn.Preload("Company").Preload("Role").First(&user)
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
@@ -16,6 +17,10 @@ func CreateAdmin(company *company.Company, user *user.User) (*user.User, error) 
 
 		user.CompanyID = company.ID
 		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Create(&activationToken).Error; err != nil {
 			return err
 		}
 
@@ -82,17 +87,12 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 }
 
 func UpdateOne(id string, req map[string]interface{}) (*user.User, error) {
-	var updateUser *user.User
+	var user *user.User
 
-	err := database.DBConn.Debug().Model(&updateUser).Where("id = ?", id).Updates(req).Error
+	err := database.DBConn.Debug().Model(&user).Where("id = ?", id).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}
 
-	updateUser, err = user.FindOneByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return updateUser, nil
+	return user, nil
 }

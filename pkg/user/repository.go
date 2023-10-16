@@ -31,10 +31,10 @@ func FindOneByKey(key string) (*User, error) {
 	return user, nil
 }
 
-func FindOneByID(id string) (*User, error) {
+func FindOneByID(id, companyID string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +97,13 @@ func CreateActivationToken(data *ActivationToken) error {
 }
 
 func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
+	var user *User
 	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Model(&User{}).Where("id = ?", id).Updates(req).Error; err != nil {
+		if err := tx.Debug().Model(&user).Where("id = ?", id).Updates(req).Error; err != nil {
 			return err
 		}
 
@@ -113,29 +114,19 @@ func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
 		return nil, errTX
 	}
 
-	userDetail, err := FindOneByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return userDetail, nil
+	return user, nil
 }
 
-func UpdateOneByID(req map[string]interface{}, id string) (*User, error) {
+func UpdateOneByID(req map[string]interface{}, id, companyID string) (*User, error) {
 	var user *User
 
 	err := database.DBConn.Debug().Model(&user).
-		Where("id = ?", id).Updates(req).Error
+		Where("id = ? AND company_id = ?", id, companyID).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}
 
-	userDetail, err := FindOneByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return userDetail, nil
+	return user, nil
 }
 
 func UpdateOneByKey(key string) (*User, error) {

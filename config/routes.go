@@ -27,13 +27,13 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(auth.UploadProfileImageRequest{}), middleware.GetUserIDFromJWT(), auth.UploadProfileImage)
 
 	// user
-	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
-	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
+	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
+	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetUserIDFromJWT(), user.UpdateUserByID)
 	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
 	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetAllUsers)
-	api.Get("/user/:id", middleware.Auth(), user.GetUserByID)
-	api.Delete("/user/:id", middleware.Auth(), middleware.GetUserIDFromJWT(), user.DeleteUserByID)
+	api.Get("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetUserByID)
+	api.Delete("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.DeleteUserByID)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)

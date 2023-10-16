@@ -41,6 +41,7 @@ func RegisterAdmin(c *fiber.Ctx) error {
 		Name:    user.Name,
 		Email:   user.Email,
 		Phone:   user.Phone,
+		Status:  user.Status,
 		Active:  user.Active,
 		Company: user.Company,
 		Role:    user.Role,
@@ -82,16 +83,17 @@ func SendEmailVerification(c *fiber.Ctx) error {
 
 func VerifyUser(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
-	data, _ := VerifyActivationToken(token)
-	if data.Activation || data == nil {
+	data, err := VerifyActivationToken(token)
+	if err != nil || (data != nil && data.Activation) {
 		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	result, err := user.FindOneByID(userID)
+	result, err := user.FindOneByID(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -208,14 +210,15 @@ func Login(c *fiber.Ctx) error {
 func ChangePassword(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, err := user.FindUserByIDSvc(userID)
+	user, err := user.FindUserByIDSvc(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ChangePasswordSvc(userID, user, req)
+	_, err = ChangePasswordSvc(userID, user.CompanyID, user, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -232,8 +235,9 @@ func ChangePassword(c *fiber.Ctx) error {
 func UpdateProfile(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateProfileRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	updateUser, err := UpdateProfileSvc(userID, req)
+	updateUser, err := UpdateProfileSvc(userID, companyID, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -265,7 +269,7 @@ func UploadProfileImage(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if file.Size > 200*1024 { // 200 KB dalam byte
+	if file.Size > 200*1024 {
 		statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
 		return c.Status(statusCode).JSON(resp)
 	}
