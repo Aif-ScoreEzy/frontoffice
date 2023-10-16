@@ -6,6 +6,7 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/company"
+	"front-office/pkg/role"
 	"front-office/pkg/user"
 	"front-office/utility/mailjet"
 	"os"
@@ -20,6 +21,18 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return nil, errors.New(constant.InvalidPassword)
+	}
+
+	var tierLevel uint
+	if req.RoleID != "" {
+		result, err := role.FindRoleByIDSvc(req.RoleID)
+		if result == nil {
+			return nil, errors.New(constant.DataNotFound)
+		} else if err != nil {
+			return nil, err
+		} else {
+			tierLevel = result.TierLevel
+		}
 	}
 
 	companyID := uuid.NewString()
@@ -45,7 +58,22 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 
 	dataUser.Password = user.SetPassword(req.Password)
 
-	user, err := CreateAdmin(dataCompany, dataUser)
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, userID, tierLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenID := uuid.NewString()
+	dataToken := &user.ActivationToken{
+		ID:     tokenID,
+		Token:  token,
+		UserID: userID,
+	}
+
+	user, err := CreateAdmin(dataCompany, dataUser, dataToken)
 	if err != nil {
 		return user, err
 	}
@@ -84,14 +112,15 @@ func VerifyActivationToken(token string) (*user.ActivationToken, error) {
 	return result, nil
 }
 
-func VerifyUserSvc(userID string) (*user.User, error) {
+func VerifyUserSvc(userID, companyID string) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
 	updateUser["active"] = true
+	updateUser["status"] = "active"
 	updateUser["is_verified"] = true
 	updateUser["updated_at"] = time.Now()
 
-	user, err := user.UpdateOneByID(updateUser, userID)
+	user, err := user.UpdateOneByID(updateUser, userID, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +141,7 @@ func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.Use
 	updateUser := map[string]interface{}{}
 
 	updateUser["password"] = user.SetPassword(req.Password)
+	updateUser["status"] = "active"
 	updateUser["active"] = true
 	updateUser["is_verified"] = true
 	updateUser["updated_at"] = time.Now()
@@ -204,7 +234,7 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 	return token, nil
 }
 
-func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
+func ChangePasswordSvc(userID, companyID string, currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
 	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(req.CurrentPassword))
@@ -224,7 +254,7 @@ func ChangePasswordSvc(userID string, currentUser *user.User, req *ChangePasswor
 	updateUser["password"] = user.SetPassword(req.NewPassword)
 	updateUser["updated_at"] = time.Now()
 
-	data, err := user.UpdateOneByID(updateUser, userID)
+	data, err := user.UpdateOneByID(updateUser, userID, companyID)
 	if err != nil {
 		return nil, err
 	}

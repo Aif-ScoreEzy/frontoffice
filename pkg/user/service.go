@@ -48,13 +48,13 @@ func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, str
 	}
 
 	tokenID := uuid.NewString()
-	data := &ActivationToken{
+	dataToken := &ActivationToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: userID,
 	}
 
-	user, err := CreateMember(dataUser, data)
+	user, err := CreateMember(dataUser, dataToken)
 	if err != nil {
 		return nil, "", err
 	}
@@ -146,7 +146,7 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 	return user, nil
 }
 
-func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
+func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, error) {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -176,12 +176,19 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id string) (*User, error) {
 	}
 
 	if req.Active != nil {
-		updateUser["active"] = *req.Active
+		if *req.Active {
+			updateUser["status"] = "active"
+			updateUser["active"] = true
+		} else {
+			updateUser["status"] = "inactive"
+			updateUser["active"] = false
+		}
+
 	}
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, id)
+	user, err := UpdateOneByID(updateUser, id, companyID)
 	if err != nil {
 		return user, err
 	}

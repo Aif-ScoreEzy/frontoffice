@@ -40,6 +40,7 @@ type RegisterAdminResponse struct {
 	Email      string          `json:"email"`
 	Password   string          `json:"-"`
 	Phone      string          `json:"phone"`
+	Status     string          `json:"status"`
 	Active     bool            `json:"active"`
 	IsVerified bool            `json:"is_verified"`
 	CompanyID  string          `json:"-"`

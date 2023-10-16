@@ -25,7 +25,7 @@ func RegisterMember(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, token, err := RegisterMemberSvc(req, loggedUser)
+	user, token, err := RegisterMemberSvc(req, loggedUser)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -33,8 +33,17 @@ func RegisterMember(c *fiber.Ctx) error {
 
 	err = SendEmailActivationSvc(req.Email, token)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		resend := "resend"
+		req := &UpdateUserRequest{
+			Status: &resend,
+		}
+
+		_, err = UpdateUserByIDSvc(req, user.ID, loggedUser.CompanyID)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
 	}
 
 	resp := helper.ResponseSuccess(
@@ -51,14 +60,12 @@ func ActivateUser(c *fiber.Ctx) error {
 	user, _ := FindUserByKeySvc(key)
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
-
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	user, err := ActivateUserByKeySvc(key)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
-
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -84,16 +91,14 @@ func DeactiveUser(c *fiber.Ctx) error {
 
 	user, _ := FindUserByEmailSvc(email)
 	if user == nil {
-		resp := helper.ResponseFailed("User not found")
-
-		return c.Status(fiber.StatusNotFound).JSON(resp)
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	user, err := DeactivateUserByEmailSvc(email)
 	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := UserUpdateResponse{
@@ -115,9 +120,16 @@ func DeactiveUser(c *fiber.Ctx) error {
 
 func UpdateUserByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	id := c.Params("id")
 
-	user, err := UpdateUserByIDSvc(req, id)
+	loggedUser, err := FindUserByIDSvc(userID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, err := UpdateUserByIDSvc(req, id, loggedUser.CompanyID)
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
@@ -130,6 +142,7 @@ func UpdateUserByID(c *fiber.Ctx) error {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
+		Status:    user.Status,
 		Active:    user.Active,
 		CompanyID: user.CompanyID,
 		RoleID:    user.RoleID,

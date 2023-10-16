@@ -121,11 +121,11 @@ func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
 	return userDetail, nil
 }
 
-func UpdateOneByID(req map[string]interface{}, id string) (*User, error) {
+func UpdateOneByID(req map[string]interface{}, id, companyID string) (*User, error) {
 	var user *User
 
 	err := database.DBConn.Debug().Model(&user).
-		Where("id = ?", id).Updates(req).Error
+		Where("id = ? AND company_id = ?", id, companyID).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}

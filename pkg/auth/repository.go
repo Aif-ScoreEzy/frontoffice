@@ -8,7 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateAdmin(company *company.Company, user *user.User) (*user.User, error) {
+func CreateAdmin(company *company.Company, user *user.User, activationToken *user.ActivationToken) (*user.User, error) {
+	database.DBConn.Preload("Company").Preload("Role").First(&user)
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
@@ -16,6 +17,10 @@ func CreateAdmin(company *company.Company, user *user.User) (*user.User, error) 
 
 		user.CompanyID = company.ID
 		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Create(&activationToken).Error; err != nil {
 			return err
 		}
 
