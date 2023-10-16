@@ -57,12 +57,14 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	CompanyID string `json:"company_id"`
-	TierLevel uint   `json:"tier_level"`
-	Token     string `json:"access_token"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	CompanyID   string `json:"company_id"`
+	CompanyName string `json:"company_name"`
+	TierLevel   uint   `json:"tier_level"`
+	Image       string `json:"image"`
+	Token       string `json:"access_token"`
 }
 
 type SendEmailVerificationRequest struct {
