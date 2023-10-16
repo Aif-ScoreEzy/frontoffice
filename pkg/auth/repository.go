@@ -87,17 +87,12 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 }
 
 func UpdateOne(id string, req map[string]interface{}) (*user.User, error) {
-	var updateUser *user.User
+	var user *user.User
 
-	err := database.DBConn.Debug().Model(&updateUser).Where("id = ?", id).Updates(req).Error
+	err := database.DBConn.Debug().Model(&user).Where("id = ?", id).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}
 
-	updateUser, err = user.FindOneByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return updateUser, nil
+	return user, nil
 }

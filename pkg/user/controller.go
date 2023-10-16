@@ -11,7 +11,7 @@ import (
 
 func RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterMemberRequest)
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
 	user, _ := FindUserByEmailSvc(req.Email)
 	if user != nil {
@@ -19,13 +19,7 @@ func RegisterMember(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	loggedUser, err := FindUserByIDSvc(userID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, token, err := RegisterMemberSvc(req, loggedUser)
+	user, token, err := RegisterMemberSvc(req, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -38,7 +32,7 @@ func RegisterMember(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = UpdateUserByIDSvc(req, user.ID, loggedUser.CompanyID)
+		_, err = UpdateUserByIDSvc(req, user.ID, companyID)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -120,20 +114,17 @@ func DeactiveUser(c *fiber.Ctx) error {
 
 func UpdateUserByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	id := c.Params("id")
 
-	loggedUser, err := FindUserByIDSvc(userID)
+	_, err := UpdateUserByIDSvc(req, id, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := UpdateUserByIDSvc(req, id, loggedUser.CompanyID)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
+	user, err := FindUserByIDSvc(id, companyID)
+	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -165,6 +156,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
 	var roleID string
 	if roleName != "" {
@@ -176,7 +168,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 		roleID = role.ID
 	}
 
-	user, err := FindUserByIDSvc(userID)
+	user, err := FindUserByIDSvc(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -188,7 +180,6 @@ func GetAllUsers(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	// total data
 	totalData, _ := GetTotalDataSvc(keyword, roleID, active, startDate, endDate, user.CompanyID)
 
 	fullResponsePage := map[string]interface{}{
@@ -206,8 +197,9 @@ func GetAllUsers(c *fiber.Ctx) error {
 
 func GetUserByID(c *fiber.Ctx) error {
 	id := c.Params("id")
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, _ := FindUserByIDSvc(id)
+	user, _ := FindUserByIDSvc(id, companyID)
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
@@ -223,24 +215,15 @@ func GetUserByID(c *fiber.Ctx) error {
 
 func DeleteUserByID(c *fiber.Ctx) error {
 	id := c.Params("id")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	loggedUser, err := FindUserByIDSvc(userID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	} else if loggedUser.Role.TierLevel != 1 {
-		statusCode, resp := helper.GetError(constant.RequestProhibited)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, _ := FindUserByIDSvc(id)
+	user, _ := FindUserByIDSvc(id, companyID)
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = DeleteUserByIDSvc(id)
+	err := DeleteUserByIDSvc(id)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -248,7 +231,7 @@ func DeleteUserByID(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"user successfully deleted",
-		user,
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

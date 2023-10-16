@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, string, error) {
+func RegisterMemberSvc(req *RegisterMemberRequest, companyID string) (*User, string, error) {
 	userID := uuid.NewString()
 
 	var tierLevel uint
@@ -36,13 +36,13 @@ func RegisterMemberSvc(req *RegisterMemberRequest, loggedUser *User) (*User, str
 		Key:       helper.GenerateAPIKey(),
 		Image:     "default-profile-image.jpg",
 		RoleID:    req.RoleID,
-		CompanyID: loggedUser.CompanyID,
+		CompanyID: companyID,
 	}
 
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, tierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userID, dataUser.CompanyID, tierLevel)
 	if err != nil {
 		return nil, "", err
 	}
@@ -66,7 +66,7 @@ func CreateActivationTokenSvc(user *User) (string, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
 		return "", err
 	}
@@ -119,8 +119,8 @@ func FindUserByKeySvc(key string) (*User, error) {
 	return user, nil
 }
 
-func FindUserByIDSvc(id string) (*User, error) {
-	user, err := FindOneByID(id)
+func FindUserByIDSvc(id, companyID string) (*User, error) {
+	user, err := FindOneByID(id, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -188,12 +188,12 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, err
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, id, companyID)
+	_, err := UpdateOneByID(updateUser, id, companyID)
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
-	return user, nil
+	return nil, nil
 }
 
 func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
@@ -243,6 +243,7 @@ func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, co
 			ID:         user.ID,
 			Name:       user.Name,
 			Email:      user.Email,
+			Status:     user.Status,
 			Active:     user.Active,
 			IsVerified: user.IsVerified,
 			CompanyID:  user.CompanyID,

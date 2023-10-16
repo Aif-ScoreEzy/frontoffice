@@ -67,7 +67,15 @@ func GetUserIDFromJWT() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
 
+		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
 		c.Locals("userID", userID)
+		c.Locals("companyID", companyID)
 
 		return c.Next()
 	}

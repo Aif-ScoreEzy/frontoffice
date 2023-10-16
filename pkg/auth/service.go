@@ -61,7 +61,7 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, tierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userID, companyID, tierLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_VERIFICATION_EXPIRES_MINUTES"))
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 		return "", errors.New(constant.InvalidEmailOrPassword)
 	}
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.Role.TierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
 		return "", err
 	}
@@ -271,7 +271,7 @@ func ChangePasswordSvc(userID, companyID string, currentUser *user.User, req *Ch
 	return data, nil
 }
 
-func UpdateProfileSvc(id string, req *UpdateProfileRequest) (*user.User, error) {
+func UpdateProfileSvc(id, companyID string, req *UpdateProfileRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -279,7 +279,7 @@ func UpdateProfileSvc(id string, req *UpdateProfileRequest) (*user.User, error) 
 	}
 
 	if req.Email != nil {
-		result, _ := user.FindOneByID(id)
+		result, _ := user.FindOneByID(id, companyID)
 		if result.Role.TierLevel == 2 {
 			return nil, errors.New(constant.RequestProhibited)
 		}

@@ -83,6 +83,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 
 func VerifyUser(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
@@ -92,7 +93,7 @@ func VerifyUser(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	result, err := user.FindOneByID(userID)
+	result, err := user.FindOneByID(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -209,8 +210,9 @@ func Login(c *fiber.Ctx) error {
 func ChangePassword(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, err := user.FindUserByIDSvc(userID)
+	user, err := user.FindUserByIDSvc(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -233,8 +235,9 @@ func ChangePassword(c *fiber.Ctx) error {
 func UpdateProfile(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateProfileRequest)
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	updateUser, err := UpdateProfileSvc(userID, req)
+	updateUser, err := UpdateProfileSvc(userID, companyID, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
