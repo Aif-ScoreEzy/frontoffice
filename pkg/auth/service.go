@@ -318,3 +318,18 @@ func UploadProfileImageSvc(id string, filename *string) (*user.User, error) {
 
 	return user, nil
 }
+
+func updateUserSvc(user UpdateUserAuth, userID, companyID string) (*user.User, error) {
+	updateUser := map[string]interface{}{}
+
+	if user.Status != "" {
+		updateUser["status"] = user.Status
+	}
+
+	usr, err := UpdateOne(userID, updateUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return usr, nil
+}
