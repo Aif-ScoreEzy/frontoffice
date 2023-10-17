@@ -112,21 +112,21 @@ func VerifyActivationToken(token string) (*user.ActivationToken, error) {
 	return result, nil
 }
 
-func VerifyUserSvc(userID, companyID string) (*user.User, error) {
-	updateUser := map[string]interface{}{}
+// func VerifyUserSvc(userID, companyID string) (*user.User, error) {
+// 	updateUser := map[string]interface{}{}
 
-	updateUser["active"] = true
-	updateUser["status"] = "active"
-	updateUser["is_verified"] = true
-	updateUser["updated_at"] = time.Now()
+// 	updateUser["active"] = true
+// 	updateUser["status"] = "active"
+// 	updateUser["is_verified"] = true
+// 	updateUser["updated_at"] = time.Now()
 
-	user, err := user.UpdateOneByID(updateUser, userID, companyID)
-	if err != nil {
-		return nil, err
-	}
+// 	user, err := user.UpdateOneByID(updateUser, userID, companyID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return user, nil
-}
+// 	return user, nil
+// }
 
 func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
@@ -254,7 +254,7 @@ func ChangePasswordSvc(userID, companyID string, currentUser *user.User, req *Ch
 	updateUser["password"] = user.SetPassword(req.NewPassword)
 	updateUser["updated_at"] = time.Now()
 
-	data, err := user.UpdateOneByID(updateUser, userID, companyID)
+	data, err := user.UpdateOneByID(updateUser, currentUser, userID, companyID)
 	if err != nil {
 		return nil, err
 	}
