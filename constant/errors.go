@@ -21,4 +21,5 @@ const (
 
 	InvalidActiveValue = "invalid value for 'active', it must be a boolean"
 	EmailAlreadyExists = "email already exists"
+	SendEmailFailed    = "send email failed"
 )

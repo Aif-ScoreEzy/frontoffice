@@ -27,7 +27,6 @@ func RegisterMember(c *fiber.Ctx) error {
 
 	err = SendEmailActivationSvc(req.Email, token)
 	if err != nil {
-		fmt.Println("errrrrrrrr", err)
 		resend := "resend"
 		req := &UpdateUserRequest{
 			Status: &resend,
@@ -39,10 +38,8 @@ func RegisterMember(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		respFailed := helper.ResponseFailed(
-			"Send email failed",
-		)
-		return c.Status(fiber.StatusInternalServerError).JSON(respFailed)
+		statusCode, resp := helper.GetError(constant.SendEmailFailed)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -216,6 +213,61 @@ func GetUserByID(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"succeed to get a user by ID",
 		user,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func SendEmailActivation(c *fiber.Ctx) error {
+	email := c.Params("email")
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	user, err := FindUserByEmailSvc(email)
+	if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	} else if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, _ = FindUserByIDSvc(user.ID, companyID)
+	if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if user.Active {
+		statusCode, resp := helper.GetError(constant.AlreadyVerified)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	token, err := CreateActivationTokenSvc(user)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	errMailjet := SendEmailActivationSvc(email, token)
+	if errMailjet != nil {
+		resend := "resend"
+		req := &UpdateUserRequest{
+			Status: &resend,
+		}
+
+		_, err = UpdateUserByIDSvc(req, user)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		statusCode, resp := helper.GetError(errMailjet.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"the activation link has been sent to your email address",
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
