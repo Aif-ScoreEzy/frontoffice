@@ -37,7 +37,7 @@ func RegisterMember(c *fiber.Ctx) error {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
-
+		return c.Status(fiber.StatusInternalServerError).SendString("Send email failed!")
 	}
 
 	resp := helper.ResponseSuccess(

@@ -186,6 +186,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, err
 
 	}
 
+	if req.Status != nil {
+		updateUser["status"] = *req.Status
+	}
+
 	updateUser["updated_at"] = time.Now()
 
 	_, err := UpdateOneByID(updateUser, id, companyID)
