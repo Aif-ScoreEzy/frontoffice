@@ -93,7 +93,7 @@ func SendEmailActivationSvc(email, token string) error {
 		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
 	}
 
-	err := mailjet.CreateMailjet(email, 5082139, variables)
+	err := mailjet.CreateMailjet(email, 5188578, variables)
 	if err != nil {
 		return err
 	}
@@ -189,13 +189,9 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 		updateUser["status"] = *req.Status
 	}
 
-	if req.Status != nil {
-		updateUser["status"] = *req.Status
-	}
-
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, user, user.ID, user.CompanyID)
+	user, err := UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}

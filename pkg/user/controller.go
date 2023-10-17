@@ -261,8 +261,19 @@ func SendEmailActivation(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		statusCode, resp := helper.GetError(errMailjet.Error())
+		statusCode, resp := helper.GetError(constant.SendEmailFailed)
 		return c.Status(statusCode).JSON(resp)
+	} else {
+		pending := "pending"
+		req := &UpdateUserRequest{
+			Status: &pending,
+		}
+
+		_, err = UpdateUserByIDSvc(req, user)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
 	}
 
 	resp := helper.ResponseSuccess(

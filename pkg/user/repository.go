@@ -117,9 +117,9 @@ func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
 	return user, nil
 }
 
-func UpdateOneByID(req map[string]interface{}, user *User, id, companyID string) (*User, error) {
+func UpdateOneByID(req map[string]interface{}, user *User) (*User, error) {
 	err := database.DBConn.Debug().Model(&user).
-		Where("id = ? AND company_id = ?", id, companyID).Updates(req).Error
+		Where("id = ? AND company_id = ?", user.ID, user.CompanyID).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}
