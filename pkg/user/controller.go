@@ -27,6 +27,7 @@ func RegisterMember(c *fiber.Ctx) error {
 
 	err = SendEmailActivationSvc(req.Email, token)
 	if err != nil {
+		fmt.Println("errrrrrrrr", err)
 		resend := "resend"
 		req := &UpdateUserRequest{
 			Status: &resend,
@@ -37,7 +38,11 @@ func RegisterMember(c *fiber.Ctx) error {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
-		return c.Status(fiber.StatusInternalServerError).SendString("Send email failed!")
+
+		respFailed := helper.ResponseFailed(
+			"Send email failed",
+		)
+		return c.Status(fiber.StatusInternalServerError).JSON(respFailed)
 	}
 
 	resp := helper.ResponseSuccess(
