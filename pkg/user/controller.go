@@ -33,7 +33,7 @@ func RegisterMember(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = UpdateUserByIDSvc(req, user.ID, companyID)
+		_, err = UpdateUserByIDSvc(req, user)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -122,14 +122,20 @@ func UpdateUserByID(c *fiber.Ctx) error {
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	id := c.Params("id")
 
-	_, err := UpdateUserByIDSvc(req, id, companyID)
-	if err != nil {
+	user, err := FindUserByIDSvc(id, companyID)
+	if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	} else if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := FindUserByIDSvc(id, companyID)
-	if err != nil {
+	user, err = UpdateUserByIDSvc(req, user)
+	if user == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	} else if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -160,32 +166,29 @@ func GetAllUsers(c *fiber.Ctx) error {
 	active := c.Query("active", "")
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
 	var roleID string
 	if roleName != "" {
 		role, err := role.GetRoleByNameSvc(roleName)
-		if err != nil {
+		if role == nil {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		} else if err != nil {
 			statusCode, resp := helper.GetError(constant.DataNotFound)
 			return c.Status(statusCode).JSON(resp)
 		}
+
 		roleID = role.ID
 	}
 
-	user, err := FindUserByIDSvc(userID, companyID)
+	users, err := GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	users, err := GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, user.CompanyID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	totalData, _ := GetTotalDataSvc(keyword, roleID, active, startDate, endDate, user.CompanyID)
+	totalData, _ := GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,

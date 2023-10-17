@@ -146,7 +146,7 @@ func DeactivateUserByEmailSvc(email string) (*User, error) {
 	return user, nil
 }
 
-func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, error) {
+func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -166,10 +166,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, err
 
 	if req.RoleID != nil {
 		role, err := role.FindOneByID(*req.RoleID)
-		if err != nil {
-			return nil, err
-		} else if role == nil {
+		if role == nil {
 			return nil, errors.New(constant.DataNotFound)
+		} else if err != nil {
+			return nil, err
 		}
 
 		updateUser["role_id"] = *req.RoleID
@@ -183,7 +183,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, err
 			updateUser["status"] = "inactive"
 			updateUser["active"] = false
 		}
+	}
 
+	if req.Status != nil {
+		updateUser["status"] = *req.Status
 	}
 
 	if req.Status != nil {
@@ -192,12 +195,12 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, id, companyID string) (*User, err
 
 	updateUser["updated_at"] = time.Now()
 
-	_, err := UpdateOneByID(updateUser, id, companyID)
+	user, err := UpdateOneByID(updateUser, user, user.ID, user.CompanyID)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	return user, nil
 }
 
 func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID string) ([]GetUsersResponse, error) {

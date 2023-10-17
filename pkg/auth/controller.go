@@ -14,13 +14,13 @@ import (
 func RegisterAdmin(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterAdminRequest)
 
-	user, _ := user.FindUserByEmailSvc(req.Email)
-	if user != nil {
+	userExists, _ := user.FindUserByEmailSvc(req.Email)
+	if userExists != nil {
 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := RegisterAdminSvc(req)
+	newUser, err := RegisterAdminSvc(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
@@ -30,21 +30,32 @@ func RegisterAdmin(c *fiber.Ctx) error {
 		Email: req.Email,
 	}
 
-	err = SendEmailVerificationSvc(sendVerificationRequest, user)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
+	errMailjet := SendEmailVerificationSvc(sendVerificationRequest, newUser)
+	if errMailjet != nil {
+		resend := "resend"
+		req := &user.UpdateUserRequest{
+			Status: &resend,
+		}
+
+		_, err = user.UpdateUserByIDSvc(req, newUser)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		statusCode, resp := helper.GetError(errMailjet.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := RegisterAdminResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Phone:   user.Phone,
-		Status:  user.Status,
-		Active:  user.Active,
-		Company: user.Company,
-		Role:    user.Role,
+		ID:      newUser.ID,
+		Name:    newUser.Name,
+		Email:   newUser.Email,
+		Phone:   newUser.Phone,
+		Status:  newUser.Status,
+		Active:  newUser.Active,
+		Company: newUser.Company,
+		Role:    newUser.Role,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -58,8 +69,8 @@ func RegisterAdmin(c *fiber.Ctx) error {
 func SendEmailVerification(c *fiber.Ctx) error {
 	req := c.Locals("request").(*SendEmailVerificationRequest)
 
-	user, err := user.FindUserByEmailSvc(req.Email)
-	if user == nil {
+	userExists, err := user.FindUserByEmailSvc(req.Email)
+	if userExists == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	} else if err != nil {
@@ -67,9 +78,20 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = SendEmailVerificationSvc(req, user)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
+	errMailjet := SendEmailVerificationSvc(req, userExists)
+	if errMailjet != nil {
+		resend := "resend"
+		req := &user.UpdateUserRequest{
+			Status: &resend,
+		}
+
+		_, err = user.UpdateUserByIDSvc(req, userExists)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		statusCode, resp := helper.GetError(errMailjet.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
