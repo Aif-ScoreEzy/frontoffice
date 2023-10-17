@@ -95,6 +95,16 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	// update status to pending when resend mail successfully
+	updateUser := UpdateUserAuth{
+		Status: "pending",
+	}
+	_, err = updateUserSvc(updateUser, userExists.ID, userExists.CompanyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
 	resp := helper.ResponseSuccess(
 		"the verification link has been sent to your email address",
 		nil,

@@ -95,3 +95,7 @@ type UpdateProfileRequest struct {
 type UploadProfileImageRequest struct {
 	Image *string `json:"image"`
 }
+
+type UpdateUserAuth struct {
+	Status string `json:"status"`
+}
