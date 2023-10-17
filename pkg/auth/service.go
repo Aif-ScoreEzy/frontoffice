@@ -234,7 +234,7 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 	return token, nil
 }
 
-func ChangePasswordSvc(userID, companyID string, currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
+func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
 	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(req.CurrentPassword))
@@ -254,7 +254,7 @@ func ChangePasswordSvc(userID, companyID string, currentUser *user.User, req *Ch
 	updateUser["password"] = user.SetPassword(req.NewPassword)
 	updateUser["updated_at"] = time.Now()
 
-	data, err := user.UpdateOneByID(updateUser, currentUser, userID, companyID)
+	data, err := user.UpdateOneByID(updateUser, currentUser)
 	if err != nil {
 		return nil, err
 	}

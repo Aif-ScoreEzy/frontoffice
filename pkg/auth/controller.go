@@ -244,13 +244,13 @@ func ChangePassword(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, err := user.FindUserByIDSvc(userID, companyID)
+	userExists, err := user.FindUserByIDSvc(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ChangePasswordSvc(userID, user.CompanyID, user, req)
+	_, err = ChangePasswordSvc(userExists, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
