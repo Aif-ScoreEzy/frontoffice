@@ -62,45 +62,6 @@ func RegisterMemberSvc(req *RegisterMemberRequest, companyID string) (*User, str
 	return user, token, nil
 }
 
-func CreateActivationTokenSvc(user *User) (string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", err
-	}
-
-	tokenID := uuid.NewString()
-	data := &ActivationToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: user.ID,
-	}
-
-	err = CreateActivationToken(data)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
-func SendEmailActivationSvc(email, token string) error {
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
-
-	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
-	}
-
-	err := mailjet.CreateMailjet(email, 5188578, variables)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func FindUserByEmailSvc(email string) (*User, error) {
 	user, err := FindOneByEmail(email)
 	if err != nil {
@@ -128,19 +89,106 @@ func FindUserByIDSvc(id, companyID string) (*User, error) {
 	return user, err
 }
 
-func ActivateUserByKeySvc(key string) (*User, error) {
-	user, err := UpdateOneByKey(key)
+func CreateActivationTokenSvc(user *User) (string, *ActivationToken, error) {
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
-		return user, err
+		return "", nil, err
+	}
+
+	tokenID := uuid.NewString()
+	activationToken := &ActivationToken{
+		ID:     tokenID,
+		Token:  token,
+		UserID: user.ID,
+	}
+
+	activationToken, err = CreateActivationToken(activationToken)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return token, activationToken, nil
+}
+
+func SendEmailActivationSvc(email, token string) error {
+	baseURL := os.Getenv("FRONTEND_BASE_URL")
+
+	variables := map[string]interface{}{
+		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
+	}
+
+	err := mailjet.CreateMailjet(email, 5188578, variables)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
+	result, err := FindOneActivationTokenBytoken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error) {
+	result, err := FindOneActivationTokenByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
+	updateUser := map[string]interface{}{}
+
+	if req.Name != nil {
+		updateUser["name"] = *req.Name
+	}
+
+	if req.Email != nil {
+		result, _ := FindOneByID(user.ID, user.CompanyID)
+		if result.Role.TierLevel == 2 {
+			return nil, errors.New(constant.RequestProhibited)
+		}
+
+		result, _ = FindUserByEmailSvc(*req.Email)
+		if result != nil {
+			return nil, errors.New(constant.EmailAlreadyExists)
+		}
+
+		updateUser["email"] = *req.Email
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	user, err := UpdateOneByID(updateUser, user)
+	if err != nil {
+		return nil, err
 	}
 
 	return user, nil
 }
 
-func DeactivateUserByEmailSvc(email string) (*User, error) {
-	user, err := DeactiveOneByEmail(email)
+func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
+	updateUser := map[string]interface{}{}
+
+	if filename != nil {
+		updateUser["image"] = *filename
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	user, err := UpdateOneByID(updateUser, user)
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	return user, nil
@@ -199,16 +247,13 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	return user, nil
 }
 
-func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
+func GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
-	if active != "" {
-		_, err := strconv.ParseBool(active)
-		if err != nil {
-			return nil, errors.New(constant.InvalidActiveValue)
-		}
+	if status != "" && (status != "active" && status != "inactive" && status != "resend" && status != "pending") {
+		return nil, errors.New(constant.InvalidStatusValue)
 	}
 
 	var startTime, endTime string
@@ -235,7 +280,7 @@ func GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, co
 		endTime = helper.FormatEndTimeForSQL(endDate)
 	}
 
-	users, err := FindAll(intLimit, offset, keyword, roleID, active, startTime, endTime, companyID)
+	users, err := FindAll(intLimit, offset, keyword, roleID, status, startTime, endTime, companyID)
 	if err != nil {
 		return nil, err
 	}

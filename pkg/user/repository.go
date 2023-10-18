@@ -2,7 +2,6 @@ package user
 
 import (
 	"front-office/config/database"
-	"front-office/pkg/company"
 	"strings"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 func FindOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "email = ?", email).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +22,7 @@ func FindOneByEmail(email string) (*User, error) {
 func FindOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "key = ?", key).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "key = ?", key).Error
 	if err != nil {
 		return nil, err
 	}
@@ -38,29 +37,6 @@ func FindOneByID(id, companyID string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return user, nil
-}
-
-func Create(company *company.Company, user *User) (*User, error) {
-	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&company).Error; err != nil {
-			return err
-		}
-
-		user.CompanyID = company.ID
-		if err := tx.Create(&user).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if errTx != nil {
-		return nil, errTx
-	}
-
-	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").Preload("Role.Permissions").First(&user)
 
 	return user, nil
 }
@@ -82,28 +58,48 @@ func CreateMember(user *User, activationToken *ActivationToken) (*User, error) {
 		return nil, errTx
 	}
 
-	database.DBConn.Preload("Company").Preload("Role").First(&user)
-
 	return user, nil
 }
 
-func CreateActivationToken(data *ActivationToken) error {
-	err := database.DBConn.Debug().Create(&data).Error
+func FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
+	var activationToken *ActivationToken
+
+	err := database.DBConn.Debug().First(&activationToken, "token = ?", token).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return activationToken, nil
 }
 
-func VerifyUserTx(req map[string]interface{}, id, token string) (*User, error) {
+func FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
+	var activationToken *ActivationToken
+
+	err := database.DBConn.Debug().First(&activationToken, "user_id = ?", userID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return activationToken, nil
+}
+
+func CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
+	err := database.DBConn.Debug().Create(&activationToken).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return activationToken, nil
+}
+
+func VerifyUserTx(req map[string]interface{}, userID, token string) (*User, error) {
 	var user *User
 	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Model(&user).Where("id = ?", id).Updates(req).Error; err != nil {
+		if err := tx.Debug().Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
 			return err
 		}
 
@@ -127,47 +123,7 @@ func UpdateOneByID(req map[string]interface{}, user *User) (*User, error) {
 	return user, nil
 }
 
-func UpdateOneByKey(key string) (*User, error) {
-	var user *User
-
-	changeStatus := map[string]interface{}{
-		"active": true,
-		"status": "active",
-	}
-
-	err := database.DBConn.Debug().Model(&user).Where("key = ?", key).Updates(changeStatus).Error
-	if err != nil {
-		return user, err
-	}
-
-	if err := database.DBConn.First(&user, "key = ?", key).Error; err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func DeactiveOneByEmail(email string) (*User, error) {
-	var user *User
-
-	changeStatus := map[string]interface{}{
-		"active": false,
-		"status": "inactive",
-	}
-
-	err := database.DBConn.Debug().Model(&user).Where("email = ?", email).Updates(changeStatus).Error
-	if err != nil {
-		return user, err
-	}
-
-	if err := database.DBConn.First(&user, "email = ?", email).Error; err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func FindAll(limit, offset int, keyword, roleID, active, startTime, endTime, companyID string) ([]User, error) {
+func FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, companyID string) ([]User, error) {
 	var users []User
 
 	// avoid case sensitive (uppercase/lowercase) keywords
@@ -179,8 +135,8 @@ func FindAll(limit, offset int, keyword, roleID, active, startTime, endTime, com
 		query = query.Where("role_id = ?", roleID)
 	}
 
-	if active != "" {
-		query = query.Where("active = ?", active)
+	if status != "" {
+		query = query.Where("status = ?", status)
 	}
 
 	if startTime != "" {
@@ -205,7 +161,7 @@ func DeleteByID(id string) error {
 	return nil
 }
 
-func GetTotalData(keyword, roleID, active, startTime, endTime, companyID string) (int64, error) {
+func GetTotalData(keyword, roleID, status, startTime, endTime, companyID string) (int64, error) {
 	var users []User
 	var count int64
 
@@ -217,8 +173,8 @@ func GetTotalData(keyword, roleID, active, startTime, endTime, companyID string)
 		query = query.Where("role_id = ?", roleID)
 	}
 
-	if active != "" {
-		query = query.Where("active = ?", active)
+	if status != "" {
+		query = query.Where("active = ?", status)
 	}
 
 	if startTime != "" {

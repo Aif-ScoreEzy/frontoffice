@@ -9,7 +9,6 @@ import (
 )
 
 func CreateAdmin(company *company.Company, user *user.User, activationToken *user.ActivationToken) (*user.User, error) {
-	database.DBConn.Preload("Company").Preload("Role").First(&user)
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
@@ -31,21 +30,21 @@ func CreateAdmin(company *company.Company, user *user.User, activationToken *use
 		return user, errTx
 	}
 
-	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").Preload("Role.Permissions").First(&user)
+	database.DBConn.Preload("Company").Preload("Role").First(&user)
 
 	return user, errTx
 }
 
-func CreatePasswordResetToken(data *PasswordResetToken) error {
-	err := database.DBConn.Debug().Create(&data).Error
+func CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error) {
+	err := database.DBConn.Debug().Create(&passwordResetToken).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return passwordResetToken, nil
 }
 
-func FindOneByPasswordResetToken(token string) (*PasswordResetToken, error) {
+func FindOnePasswordTokenByToken(token string) (*PasswordResetToken, error) {
 	var result *PasswordResetToken
 	err := database.DBConn.Debug().First(&result, "token = ?", token).Error
 	if err != nil {
@@ -55,14 +54,15 @@ func FindOneByPasswordResetToken(token string) (*PasswordResetToken, error) {
 	return result, nil
 }
 
-func FindOneByActivationToken(token string) (*user.ActivationToken, error) {
-	var result *user.ActivationToken
-	err := database.DBConn.Debug().First(&result, "token = ?", token).Error
+func FindOnePasswordTokenByUserID(userID string) (*PasswordResetToken, error) {
+	var passwordResetToken *PasswordResetToken
+
+	err := database.DBConn.Debug().First(&passwordResetToken, "user_id = ?", userID).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return passwordResetToken, nil
 }
 
 func ResetPassword(id, token string, req *PasswordResetRequest) error {
@@ -84,15 +84,4 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 	}
 
 	return nil
-}
-
-func UpdateOne(id string, req map[string]interface{}) (*user.User, error) {
-	var user *user.User
-
-	err := database.DBConn.Debug().Model(&user).Where("id = ?", id).Updates(req).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
 }

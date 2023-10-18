@@ -37,7 +37,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.FileSizeIsTooLarge,
 		constant.IncorrectPassword,
 		constant.InvalidActivationLink,
-		constant.InvalidActiveValue,
+		constant.InvalidStatusValue,
 		constant.InvalidDateFormat,
 		constant.InvalidEmailOrPassword,
 		constant.InvalidPassword,
@@ -49,6 +49,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		statusCode = 401
 	case constant.DataNotFound, constant.RecordNotFound:
 		statusCode = 404
+		errorMessage = constant.DataNotFound
 	case constant.DataAlreadyExist,
 		constant.EmailAlreadyExists:
 		statusCode = 409

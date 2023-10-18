@@ -103,6 +103,15 @@ type UserUpdateResponse struct {
 	RoleID    string `json:"role_id"`
 }
 
+type UpdateProfileRequest struct {
+	Name  *string `json:"name"`
+	Email *string `json:"email"`
+}
+
+type UploadProfileImageRequest struct {
+	Image *string `json:"image"`
+}
+
 func SetPassword(password string) string {
 	hashedPass, _ := bcrypt.GenerateFromPassword([]byte(password), 12)
 	password = string(hashedPass)
