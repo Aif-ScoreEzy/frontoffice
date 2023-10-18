@@ -11,8 +11,6 @@ import (
 var DBConn *gorm.DB
 
 func ConnectPostgres() error {
-	//dsn := "user=postgres password=srlyw4Ty38d5hHgs host=db.wzwsqnwncocfxlppuomq.supabase.co port=5432 dbname=postgres sslmode=disable Timezone=Asia/Jakarta"
-
 	dsn := "host=" + os.Getenv("DB_HOST") +
 		" user=" + os.Getenv("DB_USER") +
 		" password=" + os.Getenv("DB_PASSWORD") +

@@ -128,15 +128,6 @@ func SendEmailActivationSvc(email, token string) error {
 	return nil
 }
 
-func VerifyActivationToken(token string) (*ActivationToken, error) {
-	result, err := FindOneActivationTokenBytoken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
 	result, err := FindOneActivationTokenBytoken(token)
 	if err != nil {
@@ -202,21 +193,6 @@ func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 
 	return user, nil
 }
-
-// func updateUserSvc(user UpdateUserAuth, userID, companyID string) (*user.User, error) {
-// 	updateUser := map[string]interface{}{}
-
-// 	if user.Status != "" {
-// 		updateUser["status"] = user.Status
-// 	}
-
-// 	usr, err := UpdateOne(userID, updateUser)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return usr, nil
-// }
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}

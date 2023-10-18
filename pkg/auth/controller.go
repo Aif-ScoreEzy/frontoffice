@@ -70,7 +70,7 @@ func VerifyUser(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
-	data, err := user.VerifyActivationToken(token)
+	data, err := user.FindActivationTokenByTokenSvc(token)
 	if err != nil || (data != nil && data.Activation) {
 		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
 		return c.Status(statusCode).JSON(resp)
@@ -138,53 +138,6 @@ func Login(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
-
-// func SendEmailVerification(c *fiber.Ctx) error {
-// 	req := c.Locals("request").(*SendEmailVerificationRequest)
-
-// 	userExists, err := user.FindUserByEmailSvc(req.Email)
-// 	if userExists == nil {
-// 		statusCode, resp := helper.GetError(constant.DataNotFound)
-// 		return c.Status(statusCode).JSON(resp)
-// 	} else if err != nil {
-// 		statusCode, resp := helper.GetError(err.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
-
-// 	errMailjet := SendEmailVerificationSvc(req, userExists)
-// 	if errMailjet != nil {
-// 		resend := "resend"
-// 		req := &user.UpdateUserRequest{
-// 			Status: &resend,
-// 		}
-
-// 		_, err = user.UpdateUserByIDSvc(req, userExists)
-// 		if err != nil {
-// 			statusCode, resp := helper.GetError(err.Error())
-// 			return c.Status(statusCode).JSON(resp)
-// 		}
-
-// 		statusCode, resp := helper.GetError(errMailjet.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
-
-// 	// update status to pending when resend mail successfully
-// 	updateUser := UpdateUserAuth{
-// 		Status: "pending",
-// 	}
-// 	_, err = updateUserSvc(updateUser, userExists.ID, userExists.CompanyID)
-// 	if err != nil {
-// 		statusCode, resp := helper.GetError(err.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
-
-// 	resp := helper.ResponseSuccess(
-// 		"the verification link has been sent to your email address",
-// 		nil,
-// 	)
-
-// 	return c.Status(fiber.StatusOK).JSON(resp)
-// }
 
 func SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")

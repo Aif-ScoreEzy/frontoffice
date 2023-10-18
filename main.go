@@ -19,7 +19,6 @@ func main() {
 	app := fiber.New()
 	app.Use(recover.New())
 
-	// set dir public
 	app.Static("/", "./public")
 
 	config.LoadEnv()
