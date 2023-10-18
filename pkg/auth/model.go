@@ -87,15 +87,6 @@ type ChangePasswordRequest struct {
 	ConfirmNewPassword string `json:"confirm_password" validate:"required~Field Confirmation New Password is required"`
 }
 
-type UpdateProfileRequest struct {
-	Name  *string `json:"name"`
-	Email *string `json:"email"`
-}
-
-type UploadProfileImageRequest struct {
-	Image *string `json:"image"`
-}
-
 type UpdateUserAuth struct {
 	Status string `json:"status"`
 }

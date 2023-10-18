@@ -17,23 +17,20 @@ func SetupRoutes(app *fiber.App) {
 
 	// auth
 	api.Post("/register-admin", middleware.IsRequestValid(auth.RegisterAdminRequest{}), auth.RegisterAdmin)
-	api.Post("/send-email-verification", middleware.IsRequestValid(auth.SendEmailVerificationRequest{}), auth.SendEmailVerification)
 	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.VerifyUser)
 	api.Post("/request-password-reset", middleware.IsRequestValid(auth.RequestPasswordResetRequest{}), auth.RequestPasswordReset)
 	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(auth.UserLoginRequest{}), auth.Login)
 	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetUserIDFromJWT(), auth.ChangePassword)
-	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(auth.UpdateProfileRequest{}), middleware.GetUserIDFromJWT(), auth.UpdateProfile)
-	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(auth.UploadProfileImageRequest{}), middleware.GetUserIDFromJWT(), auth.UploadProfileImage)
 
 	// user
 	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
-	api.Post("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.SendEmailActivation)
-	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetUserIDFromJWT(), user.UpdateUserByID)
-	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
-	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
 	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetAllUsers)
 	api.Get("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetUserByID)
+	api.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), auth.SendEmailActivation)
+	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetUserIDFromJWT(), user.UpdateUserByID)
+	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(user.UpdateProfileRequest{}), middleware.GetUserIDFromJWT(), user.UpdateProfile)
+	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(user.UploadProfileImageRequest{}), middleware.GetUserIDFromJWT(), user.UploadProfileImage)
 	api.Delete("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.DeleteUserByID)
 
 	// company

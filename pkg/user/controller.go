@@ -5,6 +5,8 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
+	"os"
+	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -43,96 +45,26 @@ func RegisterMember(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"the activation link has been sent to your email address",
+		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
 		nil,
 	)
 
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func ActivateUser(c *fiber.Ctx) error {
-	key := c.Params("key")
-
-	user, _ := FindUserByKeySvc(key)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, err := ActivateUserByKeySvc(key)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	dataResponse := UserUpdateResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		Active:    user.Active,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
-	}
-
-	resp := helper.ResponseSuccess(
-		"success in activating the user",
-		dataResponse,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func DeactiveUser(c *fiber.Ctx) error {
-	email := c.Params("email")
-
-	user, _ := FindUserByEmailSvc(email)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, err := DeactivateUserByEmailSvc(email)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	dataResponse := UserUpdateResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		Active:    user.Active,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
-	}
-
-	resp := helper.ResponseSuccess(
-		"success in deactivating the user",
-		dataResponse,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
 func UpdateUserByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-	id := c.Params("id")
+	userID := c.Params("id")
 
-	user, err := FindUserByIDSvc(id, companyID)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
+	user, err := FindUserByIDSvc(userID, companyID)
+	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	user, err = UpdateUserByIDSvc(req, user)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
+	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -155,12 +87,108 @@ func UpdateUserByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func UpdateProfile(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateProfileRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	user, err := FindUserByIDSvc(userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, err = UpdateProfileSvc(req, user)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	dataResponse := &UserUpdateResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Status:    user.Status,
+		Active:    user.Active,
+		CompanyID: user.CompanyID,
+		RoleID:    user.RoleID,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to update user",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func UploadProfileImage(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	user, err := FindUserByIDSvc(userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if file.Size > 200*1024 {
+		statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%s%s", userID, ext)
+	filePath := fmt.Sprintf("./public/%s", filename)
+
+	if _, err := os.Stat(filePath); err == nil {
+		if err := os.Remove(filePath); err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	if err := c.SaveFile(file, filePath); err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, err = UploadProfileImageSvc(user, &filename)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	dataResponse := &UserUpdateResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Status:    user.Status,
+		Active:    user.Active,
+		CompanyID: user.CompanyID,
+		RoleID:    user.RoleID,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to upload profile image",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
 func GetAllUsers(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	limit := c.Query("limit", "10")
 	keyword := c.Query("keyword", "")
 	roleName := c.Query("role", "")
-	active := c.Query("active", "")
+	status := c.Query("status", "")
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
@@ -168,24 +196,21 @@ func GetAllUsers(c *fiber.Ctx) error {
 	var roleID string
 	if roleName != "" {
 		role, err := role.GetRoleByNameSvc(roleName)
-		if role == nil {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
-		} else if err != nil {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
 		roleID = role.ID
 	}
 
-	users, err := GetAllUsersSvc(limit, page, keyword, roleID, active, startDate, endDate, companyID)
+	users, err := GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID)
+	totalData, _ := GetTotalDataSvc(keyword, roleID, status, startDate, endDate, companyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
@@ -201,12 +226,12 @@ func GetAllUsers(c *fiber.Ctx) error {
 }
 
 func GetUserByID(c *fiber.Ctx) error {
-	id := c.Params("id")
+	userID := c.Params("id")
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, _ := FindUserByIDSvc(id, companyID)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
+	user, err := FindUserByIDSvc(userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -218,83 +243,17 @@ func GetUserByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func SendEmailActivation(c *fiber.Ctx) error {
-	email := c.Params("email")
+func DeleteUserByID(c *fiber.Ctx) error {
+	userID := c.Params("id")
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, err := FindUserByEmailSvc(email)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, _ = FindUserByIDSvc(user.ID, companyID)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if user.Active {
-		statusCode, resp := helper.GetError(constant.AlreadyVerified)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	token, err := CreateActivationTokenSvc(user)
+	_, err := FindUserByIDSvc(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	errMailjet := SendEmailActivationSvc(email, token)
-	if errMailjet != nil {
-		resend := "resend"
-		req := &UpdateUserRequest{
-			Status: &resend,
-		}
-
-		_, err = UpdateUserByIDSvc(req, user)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		statusCode, resp := helper.GetError(constant.SendEmailFailed)
-		return c.Status(statusCode).JSON(resp)
-	} else {
-		pending := "pending"
-		req := &UpdateUserRequest{
-			Status: &pending,
-		}
-
-		_, err = UpdateUserByIDSvc(req, user)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-	}
-
-	resp := helper.ResponseSuccess(
-		"the activation link has been sent to your email address",
-		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func DeleteUserByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-
-	user, _ := FindUserByIDSvc(id, companyID)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err := DeleteUserByIDSvc(id)
+	err = DeleteUserByIDSvc(userID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

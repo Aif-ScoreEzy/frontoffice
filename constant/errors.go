@@ -19,7 +19,7 @@ const (
 	ConfirmPasswordMismatch    = "please ensure that password and confirm password fields match exactly"
 	RequestProhibited          = "request is prohibited"
 
-	InvalidActiveValue = "invalid value for 'active', it must be a boolean"
+	InvalidStatusValue = "invalid value for 'status'"
 	EmailAlreadyExists = "email already exists"
 	SendEmailFailed    = "send email failed"
 )

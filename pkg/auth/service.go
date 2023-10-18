@@ -67,13 +67,13 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 	}
 
 	tokenID := uuid.NewString()
-	dataToken := &user.ActivationToken{
+	dataActivationToken := &user.ActivationToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: userID,
 	}
 
-	user, err := CreateAdmin(dataCompany, dataUser, dataToken)
+	user, err := CreateAdmin(dataCompany, dataUser, dataActivationToken)
 	if err != nil {
 		return user, err
 	}
@@ -103,31 +103,6 @@ func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User
 	return nil
 }
 
-func VerifyActivationToken(token string) (*user.ActivationToken, error) {
-	result, err := FindOneByActivationToken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// func VerifyUserSvc(userID, companyID string) (*user.User, error) {
-// 	updateUser := map[string]interface{}{}
-
-// 	updateUser["active"] = true
-// 	updateUser["status"] = "active"
-// 	updateUser["is_verified"] = true
-// 	updateUser["updated_at"] = time.Now()
-
-// 	user, err := user.UpdateOneByID(updateUser, userID, companyID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return user, nil
-// }
-
 func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
@@ -154,33 +129,38 @@ func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.Use
 	return user, nil
 }
 
-func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User) error {
+func CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
 	tokenID := uuid.NewString()
-	data := &PasswordResetToken{
+	passwordResetToken := &PasswordResetToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: user.ID,
 	}
 
-	err = CreatePasswordResetToken(data)
+	passwordResetToken, err = CreatePasswordResetToken(passwordResetToken)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
+
+	return token, passwordResetToken, nil
+}
+
+func SendEmailPasswordResetSvc(email, token string) error {
+	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
 		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
 	}
 
-	err = mailjet.CreateMailjet(req.Email, 5085661, variables)
+	err := mailjet.CreateMailjet(email, 5085661, variables)
 	if err != nil {
 		return err
 	}
@@ -188,8 +168,8 @@ func SendEmailPasswordResetSvc(req *RequestPasswordResetRequest, user *user.User
 	return nil
 }
 
-func VerifyPasswordResetToken(token string) (*PasswordResetToken, error) {
-	result, err := FindOneByPasswordResetToken(token)
+func FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error) {
+	result, err := FindOnePasswordTokenByToken(token)
 	if err != nil {
 		return nil, err
 	}
@@ -269,67 +249,4 @@ func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*use
 	}
 
 	return data, nil
-}
-
-func UpdateProfileSvc(id, companyID string, req *UpdateProfileRequest) (*user.User, error) {
-	updateUser := map[string]interface{}{}
-
-	if req.Name != nil {
-		updateUser["name"] = *req.Name
-	}
-
-	if req.Email != nil {
-		result, _ := user.FindOneByID(id, companyID)
-		if result.Role.TierLevel == 2 {
-			return nil, errors.New(constant.RequestProhibited)
-		}
-
-		result, _ = user.FindUserByEmailSvc(*req.Email)
-		if result != nil {
-			return nil, errors.New(constant.EmailAlreadyExists)
-		}
-
-		updateUser["email"] = *req.Email
-	}
-
-	updateUser["updated_at"] = time.Now()
-
-	user, err := UpdateOne(id, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func UploadProfileImageSvc(id string, filename *string) (*user.User, error) {
-	updateUser := map[string]interface{}{}
-
-	if filename != nil {
-		updateUser["image"] = *filename
-	}
-
-	updateUser["updated_at"] = time.Now()
-
-	user, err := UpdateOne(id, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func updateUserSvc(user UpdateUserAuth, userID, companyID string) (*user.User, error) {
-	updateUser := map[string]interface{}{}
-
-	if user.Status != "" {
-		updateUser["status"] = user.Status
-	}
-
-	usr, err := UpdateOne(userID, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, nil
 }
