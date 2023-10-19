@@ -26,7 +26,7 @@ func SetupRoutes(app *fiber.App) {
 	// user
 	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
 	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetAllUsers)
-	api.Get("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), user.GetUserByID)
+	api.Get("/user/:id", middleware.Auth(), middleware.GetUserIDFromJWT(), user.GetUserByID)
 	api.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetUserIDFromJWT(), auth.SendEmailActivation)
 	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetUserIDFromJWT(), user.UpdateUserByID)
 	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(user.UpdateProfileRequest{}), middleware.GetUserIDFromJWT(), user.UpdateProfile)
