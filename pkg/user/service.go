@@ -202,10 +202,8 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	}
 
 	if req.Email != nil {
-		user, err := FindUserByEmailSvc(*req.Email)
-		if err != nil {
-			return nil, err
-		} else if user != nil {
+		user, _ := FindUserByEmailSvc(*req.Email)
+		if user != nil {
 			return nil, errors.New(constant.EmailAlreadyExists)
 		}
 
