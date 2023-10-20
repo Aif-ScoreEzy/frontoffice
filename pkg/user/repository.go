@@ -129,7 +129,7 @@ func FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, com
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND LOWER(name) LIKE ?", companyID, "%"+keywordToLower+"%")
+	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
 
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
@@ -168,7 +168,7 @@ func GetTotalData(keyword, roleID, status, startTime, endTime, companyID string)
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := database.DBConn.Debug().Where("company_id = ? AND LOWER(name) LIKE ?", companyID, "%"+keywordToLower+"%")
+	query := database.DBConn.Debug().Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
 	}
