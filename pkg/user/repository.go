@@ -94,6 +94,7 @@ func CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, 
 
 func VerifyUserTx(req map[string]interface{}, userID, token string) (*User, error) {
 	var user *User
+
 	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
@@ -174,7 +175,7 @@ func GetTotalData(keyword, roleID, status, startTime, endTime, companyID string)
 	}
 
 	if status != "" {
-		query = query.Where("active = ?", status)
+		query = query.Where("status = ?", status)
 	}
 
 	if startTime != "" {

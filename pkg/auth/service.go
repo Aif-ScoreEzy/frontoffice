@@ -153,14 +153,15 @@ func CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, 
 	return token, passwordResetToken, nil
 }
 
-func SendEmailPasswordResetSvc(email, token string) error {
+func SendEmailPasswordResetSvc(email, name, token string) error {
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
+		"name": name,
 		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
 	}
 
-	err := mailjet.CreateMailjet(email, 5085661, variables)
+	err := mailjet.CreateMailjet(email, 5202383, variables)
 	if err != nil {
 		return err
 	}
@@ -243,10 +244,7 @@ func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*use
 		"username": currentUser.Name,
 	}
 
-	err = mailjet.CreateMailjet(currentUser.Email, 5097353, variables)
-	if err != nil {
-		return nil, err
-	}
+	mailjet.CreateMailjet(currentUser.Email, 5097353, variables)
 
 	return data, nil
 }

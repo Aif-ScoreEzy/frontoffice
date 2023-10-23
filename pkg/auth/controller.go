@@ -212,14 +212,14 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = SendEmailPasswordResetSvc(req.Email, token)
+	err = SendEmailPasswordResetSvc(req.Email, userExists.Name, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		fmt.Sprintf("We've sent an email to %s with a link to reset your password", req.Email),
+		fmt.Sprintf("we've sent an email to %s with a link to reset your password", req.Email),
 		nil,
 	)
 

@@ -196,16 +196,15 @@ func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 
 func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
+	oldEmail := user.Email
 
 	if req.Name != nil {
 		updateUser["name"] = *req.Name
 	}
 
 	if req.Email != nil {
-		user, err := FindUserByEmailSvc(*req.Email)
-		if err != nil {
-			return nil, err
-		} else if user != nil {
+		userExists, _ := FindUserByEmailSvc(*req.Email)
+		if userExists != nil {
 			return nil, errors.New(constant.EmailAlreadyExists)
 		}
 
@@ -233,18 +232,23 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 		}
 	}
 
-	if req.Status != nil {
-		updateUser["status"] = *req.Status
-	}
-
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, user)
+	updatedUser, err := UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	if oldEmail != updatedUser.Email {
+		variables := map[string]interface{}{
+			"name":  updatedUser.Name,
+			"email": *req.Email,
+		}
+
+		mailjet.CreateMailjet(*req.Email, 5201222, variables)
+	}
+
+	return updatedUser, nil
 }
 
 func GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
