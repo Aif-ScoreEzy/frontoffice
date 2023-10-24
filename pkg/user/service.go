@@ -197,6 +197,7 @@ func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
 	oldEmail := user.Email
+	currentTime := time.Now()
 
 	if req.Name != nil {
 		updateUser["name"] = *req.Name
@@ -232,17 +233,21 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 		}
 	}
 
-	updateUser["updated_at"] = time.Now()
+	updateUser["updated_at"] = currentTime
 
 	updatedUser, err := UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
 
+	formattedTime := helper.FormatWIB(currentTime)
+
 	if oldEmail != updatedUser.Email {
 		variables := map[string]interface{}{
-			"name":  updatedUser.Name,
-			"email": *req.Email,
+			"name":      updatedUser.Name,
+			"oldEmail":  oldEmail,
+			"newEmail":  *req.Email,
+			"updatedAt": formattedTime,
 		}
 
 		mailjet.CreateMailjet(*req.Email, 5201222, variables)
