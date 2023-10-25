@@ -233,6 +233,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 		}
 	}
 
+	if req.Status != nil {
+		updateUser["status"] = req.Status
+	}
+
 	updateUser["updated_at"] = currentTime
 
 	updatedUser, err := UpdateOneByID(updateUser, user)
