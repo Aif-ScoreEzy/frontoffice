@@ -5,8 +5,6 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
-	"os"
-	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -125,36 +123,10 @@ func UpdateProfile(c *fiber.Ctx) error {
 func UploadProfileImage(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
 	user, err := FindUserByIDSvc(userID, companyID)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	file, err := c.FormFile("image")
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if file.Size > 200*1024 {
-		statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	ext := filepath.Ext(file.Filename)
-	filename := fmt.Sprintf("%s%s", userID, ext)
-	filePath := fmt.Sprintf("./public/%s", filename)
-
-	if _, err := os.Stat(filePath); err == nil {
-		if err := os.Remove(filePath); err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-	}
-
-	if err := c.SaveFile(file, filePath); err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}

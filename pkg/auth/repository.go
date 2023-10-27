@@ -80,7 +80,7 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 	})
 
 	if errTX != nil {
-		return nil
+		return errTX
 	}
 
 	return nil

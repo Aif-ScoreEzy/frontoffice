@@ -39,7 +39,7 @@ func SetHeaderAuth(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func GetUserIDFromJWT() fiber.Handler {
+func GetPayloadFromJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		authHeader := c.Get("Authorization")

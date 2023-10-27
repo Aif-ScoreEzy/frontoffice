@@ -83,7 +83,7 @@ type PasswordResetRequest struct {
 
 type ChangePasswordRequest struct {
 	CurrentPassword    string `json:"password" validate:"required~Field Current Password is required"`
-	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Field Password must have at least 8 characters"`
+	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Password must have at least 8 characters"`
 	ConfirmNewPassword string `json:"confirm_password" validate:"required~Field Confirmation New Password is required"`
 }
 
