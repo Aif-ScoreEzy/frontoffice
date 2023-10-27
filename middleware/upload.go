@@ -20,12 +20,26 @@ func FileUpload() fiber.Handler {
 			return c.Status(statusCode).JSON(resp)
 		}
 
+		validExtensions := []string{".jpg", ".jpeg", ".png"}
+		ext := filepath.Ext(file.Filename)
+		valid := false
+		for _, allowedExt := range validExtensions {
+			if ext == allowedExt {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			statusCode, resp := helper.GetError(constant.InvalidImageFile)
+			return c.Status(statusCode).JSON(resp)
+		}
+
 		if file.Size > 200*1024 {
 			statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		ext := filepath.Ext(file.Filename)
 		filename := fmt.Sprintf("%s%s", userID, ext)
 		filePath := fmt.Sprintf("./public/%s", filename)
 
