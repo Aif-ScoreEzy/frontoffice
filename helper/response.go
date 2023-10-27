@@ -40,6 +40,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.InvalidStatusValue,
 		constant.InvalidDateFormat,
 		constant.InvalidEmailOrPassword,
+		constant.InvalidImageFile,
 		constant.InvalidPassword,
 		constant.InvalidPasswordResetLink,
 		constant.ConfirmNewPasswordMismatch,
