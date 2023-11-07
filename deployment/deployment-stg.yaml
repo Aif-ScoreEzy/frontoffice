@@ -52,81 +52,101 @@ spec:
             memory: "2Gi"
             cpu: "1"
         env:
-          - name: PS_APP_ENV
+          - name: APP_ENV
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_APP_ENV
-          - name: PS_APP_PORT
+                key: APP_ENV
+          - name: BASE_URL
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_APP_PORT
-          - name: PS_SLACK_TOKEN
+                key: BASE_URL
+          - name: CLOUD_PROVIDER
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_SLACK_TOKEN
-          - name: PS_SLACK_CHANNEL
+                key: CLOUD_PROVIDER
+          - name: APP_PORT
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_SLACK_CHANNEL
-          - name: PS_PG_HOST
+                key: APP_PORT
+          - name: SLACK_TOKEN
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_PG_HOST
-          - name: PS_PG_PORT
+                key: SLACK_TOKEN
+          - name: SLACK_CHANNEL
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_PG_PORT
-          - name: PS_PG_USER
+                key: SLACK_CHANNEL
+          - name: DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: DB_HOST
+          - name: DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: DB_PORT
+          - name: DB_USER
             valueFrom:
               secretKeyRef:
                 name: frontoffice-be-secret
-                key: PS_PG_USER
-          - name: PS_PG_PASS
+                key: DB_USER
+          - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: frontoffice-be-secret
-                key: PS_PG_PASS
-          - name: PS_PG_DB_NAME
+                key: DB_PASSWORD
+          - name: DB_NAME
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_PG_DB_NAME
-          - name: PS_PG2_HOST
+                key: DB_NAME
+          - name: MAILJET_EMAIL
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_PG2_HOST
-          - name: PS_PG2_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: frontoffice-be-config
-                key: PS_PG2_PORT
-          - name: PS_PG2_USER
+                key: MAILJET_EMAIL
+          - name: MAILJET_USERNAME
             valueFrom:
               secretKeyRef:
                 name: frontoffice-be-secret
-                key: PS_PG2_USER
-          - name: PS_PG2_PASS
+                key: MAILJET_USERNAME
+          - name: MAILJET_PUBLIC_KEY
             valueFrom:
               secretKeyRef:
                 name: frontoffice-be-secret
-                key: PS_PG2_PASS
-          - name: PS_PG2_DB_NAME
+                key: MAILJET_PUBLIC_KEY
+          - name: MAILJET_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: frontoffice-be-secret
+                key: MAILJET_SECRET_KEY
+          - name: JWT_SECRET_KEY
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_PG2_DB_NAME
-          - name: PS_GCP_CLOUD_SQL
+                key: JWT_SECRET_KEY
+          - name: JWT_EXPIRES_MINUTES
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: PS_GCP_CLOUD_SQL
+                key: JWT_EXPIRES_MINUTES
+          - name: JWT_RESET_PASSWORD_EXPIRES_MINUTES
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: JWT_RESET_PASSWORD_EXPIRES_MINUTES
+          - name: JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
