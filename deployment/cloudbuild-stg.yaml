@@ -7,6 +7,6 @@ steps:
   args:
   - run
   - --filename=deployment/deployment-stg.yaml
-  - --image=asia.gcr.io/$PROJECT_ID/frontoffice-bee:$TAG_NAME
+  - --image=asia.gcr.io/$PROJECT_ID/frontoffice-be:$TAG_NAME
   - --location=asia-southeast2-a
   - --cluster=staging
