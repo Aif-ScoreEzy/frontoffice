@@ -62,11 +62,11 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: BASE_URL
-          - name: CLOUD_PROVIDER
+          - name: GCP_CLOUD_SQL
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: CLOUD_PROVIDER
+                key: GCP_CLOUD_SQL
           - name: APP_PORT
             valueFrom:
               configMapKeyRef:
