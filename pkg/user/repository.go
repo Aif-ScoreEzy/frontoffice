@@ -2,7 +2,8 @@ package user
 
 import (
 	"front-office/config/database"
-	"front-office/pkg/company"
+	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -10,7 +11,7 @@ import (
 func FindOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "email = ?", email).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +22,7 @@ func FindOneByEmail(email string) (*User, error) {
 func FindOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "key = ?", key).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "key = ?", key).Error
 	if err != nil {
 		return nil, err
 	}
@@ -29,10 +30,10 @@ func FindOneByKey(key string) (*User, error) {
 	return user, nil
 }
 
-func FindOneByID(id string) (*User, error) {
+func FindOneByID(id, companyID string) (*User, error) {
 	var user *User
 
-	err := database.DBConn.Debug().Preload("Role").Preload("Company").Preload("Company.Industry").First(&user, "id = ?", id).Error
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,14 +41,13 @@ func FindOneByID(id string) (*User, error) {
 	return user, nil
 }
 
-func Create(company *company.Company, user *User) (*User, error) {
+func CreateMember(user *User, activationToken *ActivationToken) (*User, error) {
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&company).Error; err != nil {
+		if err := tx.Debug().Create(&user).Error; err != nil {
 			return err
 		}
 
-		user.CompanyID = company.ID
-		if err := tx.Create(&user).Error; err != nil {
+		if err := tx.Debug().Create(&activationToken).Error; err != nil {
 			return err
 		}
 
@@ -55,66 +55,134 @@ func Create(company *company.Company, user *User) (*User, error) {
 	})
 
 	if errTx != nil {
-		return user, errTx
+		return nil, errTx
 	}
 
-	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").Preload("Role.Permissions").First(&user)
-
-	return user, errTx
+	return user, nil
 }
 
-func CreateMember(user *User) (*User, error) {
-	err := database.DBConn.Debug().Create(&user).Error
+func FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
+	var activationToken *ActivationToken
+
+	err := database.DBConn.Debug().First(&activationToken, "token = ?", token).Error
 	if err != nil {
 		return nil, err
 	}
 
-	database.DBConn.Debug().Preload("Company").Preload("Role").Preload("Role.Permissions").First(&user)
+	return activationToken, nil
+}
+
+func FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
+	var activationToken *ActivationToken
+
+	err := database.DBConn.Debug().First(&activationToken, "user_id = ?", userID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return activationToken, nil
+}
+
+func CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
+	err := database.DBConn.Debug().Create(&activationToken).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return activationToken, nil
+}
+
+func VerifyUserTx(req map[string]interface{}, userID, token string) (*User, error) {
+	var user *User
+
+	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTX != nil {
+		return nil, errTX
+	}
 
 	return user, nil
 }
 
-func UpdateOneByID(req *User, id string) (*User, error) {
-	var user *User
-
+func UpdateOneByID(req map[string]interface{}, user *User) (*User, error) {
 	err := database.DBConn.Debug().Model(&user).
-		Where("id = ?", id).Updates(req).Error
+		Where("id = ? AND company_id = ?", user.ID, user.CompanyID).Updates(req).Error
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	return user, nil
 }
 
-func UpdateOneByKey(key string) (*User, error) {
-	var user *User
+func FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, companyID string) ([]User, error) {
+	var users []User
 
-	err := database.DBConn.Debug().Model(&user).Update("active", true).Error
-	if err != nil {
-		return user, err
+	// avoid case sensitive (uppercase/lowercase) keywords
+	keywordToLower := strings.ToLower(keyword)
+
+	query := database.DBConn.Debug().Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+
+	if roleID != "" {
+		query = query.Where("role_id = ?", roleID)
 	}
 
-	return user, nil
-}
-
-func DeactiveOneByEmail(email string) (*User, error) {
-	var user *User
-
-	err := database.DBConn.Debug().Model(&user).Update("active", false).Error
-	if err != nil {
-		return user, err
+	if status != "" {
+		query = query.Where("status = ?", status)
 	}
 
-	return user, nil
-}
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
 
-func FindAll() ([]*User, error) {
-	var users []*User
+	result := query.Limit(limit).Offset(offset).Find(&users)
 
-	result := database.DBConn.Debug().Preload("Role").Find(&users)
 	if result.Error != nil {
-		return users, result.Error
+		return nil, result.Error
 	}
 
 	return users, nil
+}
+
+func DeleteByID(id string) error {
+	err := database.DBConn.Debug().Model(&User{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetTotalData(keyword, roleID, status, startTime, endTime, companyID string) (int64, error) {
+	var users []User
+	var count int64
+
+	// avoid case sensitive (uppercase/lowercase) keywords
+	keywordToLower := strings.ToLower(keyword)
+
+	query := database.DBConn.Debug().Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+	if roleID != "" {
+		query = query.Where("role_id = ?", roleID)
+	}
+
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
+
+	err := query.Find(&users).Count(&count).Error
+
+	return count, err
 }

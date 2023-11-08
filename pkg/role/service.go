@@ -4,12 +4,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateRoleSvc(req RoleRequest) (Role, error) {
+func CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
 	roleID := uuid.NewString()
 	dataReq := Role{
 		ID:          roleID,
 		Name:        req.Name,
 		Permissions: req.Permissions,
+		TierLevel:   req.TierLevel,
 	}
 
 	role, err := Create(dataReq)
@@ -29,32 +30,33 @@ func GetAllRolesSvc() ([]Role, error) {
 	return roles, nil
 }
 
-func IsRoleIDExistSvc(id string) (Role, error) {
-	role := Role{
-		ID: id,
-	}
-
-	result, err := FindOneByID(role)
+func FindRoleByIDSvc(id string) (*Role, error) {
+	result, err := FindOneByID(id)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	return result, nil
 }
 
-func GetRoleByNameSvc(name string) (Role, error) {
+func GetRoleByNameSvc(name string) (*Role, error) {
 	result, err := FindOneByName(name)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	return result, nil
 }
 
-func UpdateRoleByIDSvc(req RoleRequest, id string) (Role, error) {
-	dataReq := Role{
-		Name:        req.Name,
-		Permissions: req.Permissions,
+func UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error) {
+	dataReq := &Role{}
+
+	if req.Name != "" {
+		dataReq.Name = req.Name
+	}
+
+	if req.Permissions != nil {
+		dataReq.Permissions = req.Permissions
 	}
 
 	role, err := UpdateByID(dataReq, id)

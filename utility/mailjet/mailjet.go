@@ -1,7 +1,6 @@
 package mailjet
 
 import (
-	"log"
 	"os"
 
 	"github.com/mailjet/mailjet-apiv3-go"
@@ -34,7 +33,7 @@ func CreateMailjet(toMail string, templateID int32, variables map[string]interfa
 	messages := mailjet.MessagesV31{Info: messageInfo}
 	_, err := mailjetClient.SendMailV31(&messages)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return nil

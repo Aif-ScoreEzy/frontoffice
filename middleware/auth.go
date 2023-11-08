@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"front-office/constant"
 	"front-office/helper"
 	"os"
 	"strings"
@@ -38,7 +39,7 @@ func SetHeaderAuth(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func GetUserIDFromJWT() fiber.Handler {
+func GetPayloadFromJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		authHeader := c.Get("Authorization")
@@ -66,7 +67,52 @@ func GetUserIDFromJWT() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
 
+		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
 		c.Locals("userID", userID)
+		c.Locals("companyID", companyID)
+
+		return c.Next()
+	}
+}
+
+func AdminAuth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		secret := os.Getenv("JWT_SECRET_KEY")
+		authHeader := c.Get("Authorization")
+
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 {
+			resp := helper.ResponseFailed("Invalid token")
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
+		token := bearerToken[1]
+
+		claims, err := helper.ExtractClaimsFromJWT(token, secret)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+
+		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
+		if tierLevel == 2 {
+			resp := helper.ResponseFailed(constant.RequestProhibited)
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
 
 		return c.Next()
 	}

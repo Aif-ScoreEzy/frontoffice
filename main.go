@@ -19,6 +19,8 @@ func main() {
 	app := fiber.New()
 	app.Use(recover.New())
 
+	app.Static("/", "./public")
+
 	config.LoadEnv()
 
 	database.ConnectPostgres()

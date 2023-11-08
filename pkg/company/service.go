@@ -1,13 +1,9 @@
 package company
 
-func IsCompanyIDExistSvc(id string) (Company, error) {
-	company := Company{
-		ID: id,
-	}
-
-	result, err := FindOneByID(company)
+func FindCompanyByIDSvc(id string) (*Company, error) {
+	result, err := FindOneByID(id)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	return result, nil

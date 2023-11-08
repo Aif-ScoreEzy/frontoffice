@@ -57,3 +57,27 @@ func ValidatePasswordStrength(password string) bool {
 
 	return true
 }
+
+func ParseDate(layout, date string) error {
+	_, err := time.Parse(layout, date)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func FormatStartTimeForSQL(date string) string {
+	return date + " 00:00:00"
+}
+
+func FormatEndTimeForSQL(date string) string {
+	return date + " 24:00:00"
+}
+
+func FormatWIB(currentTime time.Time) string {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	currentTime = currentTime.In(loc)
+
+	return currentTime.Format("2006-01-02 15:04:05 MST")
+}

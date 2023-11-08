@@ -1,11 +1,7 @@
 package role
 
 import (
-	"errors"
-	"fmt"
 	"front-office/config/database"
-
-	"gorm.io/gorm"
 )
 
 func Create(role Role) (Role, error) {
@@ -28,37 +24,34 @@ func FindAll() ([]Role, error) {
 	return roles, nil
 }
 
-func FindOneByID(role Role) (Role, error) {
-	err := database.DBConn.Debug().Preload("Permissions").First(&role).Error
+func FindOneByID(id string) (*Role, error) {
+	var role *Role
+
+	err := database.DBConn.Debug().Preload("Permissions").First(&role, "id = ?", id).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return role, fmt.Errorf("Role with ID %s not found", role.ID)
-		}
-
-		return role, fmt.Errorf("Failed to find role with ID %s: %v", role.ID, err)
+		return nil, err
 	}
 
 	return role, nil
 }
 
-func FindOneByName(name string) (Role, error) {
-	var role Role
+func FindOneByName(name string) (*Role, error) {
+	var role *Role
 	result := database.DBConn.Debug().First(&role, "name = ?", name)
-	if result.RowsAffected != 0 {
-		return role, errors.New("Role with the same name already exists")
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return role, nil
 }
 
-func UpdateByID(req Role, id string) (Role, error) {
-	var role Role
-	database.DBConn.Preload("Permissions").First(&role, "id = ?", id)
+func UpdateByID(req *Role, id string) (*Role, error) {
+	var role *Role
 
 	result := database.DBConn.Debug().Model(&role).
 		Where("id = ?", id).Updates(req)
 	if result.Error != nil {
-		return role, result.Error
+		return nil, result.Error
 	}
 
 	return role, nil

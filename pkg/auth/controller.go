@@ -12,13 +12,13 @@ import (
 func RegisterAdmin(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RegisterAdminRequest)
 
-	user, _ := user.FindUserByEmailSvc(req.Email)
-	if user != nil {
+	userExists, _ := user.FindUserByEmailSvc(req.Email)
+	if userExists != nil {
 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := RegisterAdminSvc(req)
+	newUser, err := RegisterAdminSvc(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
@@ -28,133 +28,71 @@ func RegisterAdmin(c *fiber.Ctx) error {
 		Email: req.Email,
 	}
 
-	err = SendEmailVerificationSvc(sendVerificationRequest, user)
+	err = SendEmailVerificationSvc(sendVerificationRequest, newUser)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
+		resend := "resend"
+		req := &user.UpdateUserRequest{
+			Status: &resend,
+		}
+
+		_, err = user.UpdateUserByIDSvc(req, newUser)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		statusCode, resp := helper.GetError(constant.SendEmailFailed)
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := RegisterAdminResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Phone:   user.Phone,
-		Active:  user.Active,
-		Company: user.Company,
-		Role:    user.Role,
+		ID:      newUser.ID,
+		Name:    newUser.Name,
+		Email:   newUser.Email,
+		Phone:   newUser.Phone,
+		Status:  newUser.Status,
+		Active:  newUser.Active,
+		Company: newUser.Company,
+		Role:    newUser.Role,
 	}
 
 	resp := helper.ResponseSuccess(
-		"the verification link has been sent to your email address",
+		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
 		dataResponse,
 	)
 
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func SendEmailVerification(c *fiber.Ctx) error {
-	req := c.Locals("request").(*SendEmailVerificationRequest)
-
-	user, err := user.FindUserByEmailSvc(req.Email)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = SendEmailVerificationSvc(req, user)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"the verification link has been sent to your email address",
-		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
 func VerifyUser(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	req := c.Locals("request").(*PasswordResetRequest)
+	token := c.Params("token")
 
-	user, err := user.FindOneByID(userID)
+	data, err := user.FindActivationTokenByTokenSvc(token)
+	if err != nil || (data != nil && data.Activation) {
+		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	result, err := user.FindOneByID(userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
-	} else if user.IsVerified {
+	} else if result.IsVerified && result.Active {
 		statusCode, resp := helper.GetError(constant.AlreadyVerified)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = VerifyUserSvc(userID)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"your email has been verified",
-		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func RequestPasswordReset(c *fiber.Ctx) error {
-	req := c.Locals("request").(*RequestPasswordResetRequest)
-
-	user, err := user.FindUserByEmailSvc(req.Email)
-	if user == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = SendEmailPasswordResetSvc(req, user)
+	_, err = VerifyUserTxSvc(userID, token, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		fmt.Sprintf("We've sent an email to %s with a link to reset your password", req.Email),
-		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func PasswordReset(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	req := c.Locals("request").(*PasswordResetRequest)
-	token := c.Params("token")
-
-	data, err := VerifyToken(token)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	} else if data == nil {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	} else if data.Activation {
-		statusCode, resp := helper.GetError(constant.InvalidPasswordResetLink)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	_, err = PasswordResetSvc(userID, token, req)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"succeed to reset password",
+		"your account has been verified",
 		nil,
 	)
 
@@ -168,6 +106,9 @@ func Login(c *fiber.Ctx) error {
 	if user == nil {
 		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
 		return c.Status(statusCode).JSON(resp)
+	} else if user != nil && !user.Active {
+		statusCode, resp := helper.GetError(constant.RequestProhibited)
+		return c.Status(statusCode).JSON(resp)
 	} else if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -180,12 +121,14 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	data := UserLoginResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
-		Token:     token,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		CompanyID:   user.CompanyID,
+		CompanyName: user.Company.CompanyName,
+		TierLevel:   user.Role.TierLevel,
+		Image:       user.Image,
+		Token:       token,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -196,17 +139,130 @@ func Login(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func ChangePassword(c *fiber.Ctx) error {
-	req := c.Locals("request").(*ChangePasswordRequest)
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
+func SendEmailActivation(c *fiber.Ctx) error {
+	email := c.Params("email")
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, err := user.FindUserByIDSvc(userID)
+	userExists, err := user.FindUserByEmailSvc(email)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ChangePasswordSvc(userID, user, req)
+	userExists, err = user.FindUserByIDSvc(userExists.ID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if userExists.IsVerified {
+		statusCode, resp := helper.GetError(constant.AlreadyVerified)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var token string
+	activationToken, _ := user.FindActivationTokenByUserIDSvc(userExists.ID)
+	if activationToken == nil {
+		token, _, err = user.CreateActivationTokenSvc(userExists)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	} else {
+		token = activationToken.Token
+	}
+
+	err = user.SendEmailActivationSvc(email, token)
+	if err != nil {
+		statusCode, resp := helper.GetError(constant.SendEmailFailed)
+		return c.Status(statusCode).JSON(resp)
+	} else {
+		pending := "pending"
+		req := &user.UpdateUserRequest{
+			Status: &pending,
+		}
+
+		_, err = user.UpdateUserByIDSvc(req, userExists)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	resp := helper.ResponseSuccess(
+		fmt.Sprintf("we've sent an email to %s with a link to activate the account", email),
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func RequestPasswordReset(c *fiber.Ctx) error {
+	req := c.Locals("request").(*RequestPasswordResetRequest)
+
+	userExists, err := user.FindUserByEmailSvc(req.Email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	token, _, err := CreatePasswordResetTokenSvc(userExists)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = SendEmailPasswordResetSvc(req.Email, userExists.Name, token)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		fmt.Sprintf("we've sent an email to %s with a link to reset your password", req.Email),
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func PasswordReset(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	req := c.Locals("request").(*PasswordResetRequest)
+	token := c.Params("token")
+
+	data, err := FindPasswordResetTokenByTokenSvc(token)
+	if err != nil || (data != nil && data.Activation) {
+		statusCode, resp := helper.GetError(constant.InvalidPasswordResetLink)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = PasswordResetSvc(userID, token, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"succeed to reset password",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func ChangePassword(c *fiber.Ctx) error {
+	req := c.Locals("request").(*ChangePasswordRequest)
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	userExists, err := user.FindUserByIDSvc(userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	_, err = ChangePasswordSvc(userExists, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

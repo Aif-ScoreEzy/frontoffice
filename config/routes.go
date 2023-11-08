@@ -17,29 +17,30 @@ func SetupRoutes(app *fiber.App) {
 
 	// auth
 	api.Post("/register-admin", middleware.IsRequestValid(auth.RegisterAdminRequest{}), auth.RegisterAdmin)
-	api.Post("/send-email-verification", middleware.IsRequestValid(auth.SendEmailVerificationRequest{}), auth.SendEmailVerification)
-	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), auth.VerifyUser)
+	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.VerifyUser)
 	api.Post("/request-password-reset", middleware.IsRequestValid(auth.RequestPasswordResetRequest{}), auth.RequestPasswordReset)
-	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
+	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.GetPayloadFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(auth.UserLoginRequest{}), auth.Login)
-	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetUserIDFromJWT(), auth.ChangePassword)
+	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetPayloadFromJWT(), auth.ChangePassword)
 
 	// user
-	api.Post("/register-member", middleware.Auth(), middleware.GetUserIDFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
-	api.Put("/user/:id", middleware.Auth(), middleware.IsRequestValid(user.UpdateUserRequest{}), user.UpdateUserByID)
-	api.Put("/activate/:key", middleware.Auth(), user.ActivateUser)
-	api.Put("/deactivate/:email", middleware.Auth(), user.DeactiveUser)
-	api.Get("/users", middleware.Auth(), user.GetAllUsers)
-	api.Get("/user/:id", middleware.Auth(), user.GetUserByID)
+	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
+	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.GetAllUsers)
+	api.Get("/user/:id", middleware.Auth(), middleware.GetPayloadFromJWT(), user.GetUserByID)
+	api.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), auth.SendEmailActivation)
+	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetPayloadFromJWT(), user.UpdateUserByID)
+	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(user.UpdateProfileRequest{}), middleware.GetPayloadFromJWT(), user.UpdateProfile)
+	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(user.UploadProfileImageRequest{}), middleware.GetPayloadFromJWT(), middleware.FileUpload(), user.UploadProfileImage)
+	api.Delete("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.DeleteUserByID)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
 
 	// role
-	api.Post("/role", middleware.Auth(), middleware.IsRequestValid(role.RoleRequest{}), role.CreateRole)
+	api.Post("/role", middleware.Auth(), middleware.IsRequestValid(role.CreateRoleRequest{}), role.CreateRole)
 	api.Get("/roles", middleware.Auth(), role.GetAllRoles)
 	api.Get("/role/:id", middleware.Auth(), role.GetRoleByID)
-	api.Put("/role/:id", middleware.Auth(), middleware.IsRequestValid(role.RoleRequest{}), role.UpdateRole)
+	api.Put("/role/:id", middleware.Auth(), middleware.IsRequestValid(role.UpdateRoleRequest{}), role.UpdateRole)
 	api.Delete("/role/:id", middleware.Auth(), role.DeleteRole)
 
 	// permission

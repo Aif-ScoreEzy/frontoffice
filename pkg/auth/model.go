@@ -40,6 +40,7 @@ type RegisterAdminResponse struct {
 	Email      string          `json:"email"`
 	Password   string          `json:"-"`
 	Phone      string          `json:"phone"`
+	Status     string          `json:"status"`
 	Active     bool            `json:"active"`
 	IsVerified bool            `json:"is_verified"`
 	CompanyID  string          `json:"-"`
@@ -57,12 +58,14 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	CompanyID string `json:"company_id"`
-	RoleID    string `json:"role_id"`
-	Token     string `json:"access_token"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	CompanyID   string `json:"company_id"`
+	CompanyName string `json:"company_name"`
+	TierLevel   uint   `json:"tier_level"`
+	Image       string `json:"image"`
+	Token       string `json:"access_token"`
 }
 
 type SendEmailVerificationRequest struct {
@@ -80,6 +83,10 @@ type PasswordResetRequest struct {
 
 type ChangePasswordRequest struct {
 	CurrentPassword    string `json:"password" validate:"required~Field Current Password is required"`
-	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Field Password must have at least 8 characters"`
+	NewPassword        string `json:"new_password" validate:"required~Field New Password is required, min(8)~Field Password must have at least 8 characters"`
 	ConfirmNewPassword string `json:"confirm_password" validate:"required~Field Confirmation New Password is required"`
+}
+
+type UpdateUserAuth struct {
+	Status string `json:"status"`
 }
