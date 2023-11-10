@@ -5,6 +5,7 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/user"
+	"front-office/utility/mailjet"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,17 +19,13 @@ func RegisterAdmin(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	newUser, err := RegisterAdminSvc(req)
+	newUser, token, err := RegisterAdminSvc(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
 	}
 
-	sendVerificationRequest := &SendEmailVerificationRequest{
-		Email: req.Email,
-	}
-
-	err = SendEmailVerificationSvc(sendVerificationRequest, newUser)
+	err = mailjet.SendEmailVerification(req.Email, token)
 	if err != nil {
 		resend := "resend"
 		req := &user.UpdateUserRequest{
@@ -172,7 +169,7 @@ func SendEmailActivation(c *fiber.Ctx) error {
 		token = activationToken.Token
 	}
 
-	err = user.SendEmailActivationSvc(email, token)
+	err = mailjet.SendEmailActivation(email, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
 		return c.Status(statusCode).JSON(resp)
@@ -212,7 +209,7 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = SendEmailPasswordResetSvc(req.Email, userExists.Name, token)
+	err = mailjet.SendEmailPasswordReset(req.Email, userExists.Name, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

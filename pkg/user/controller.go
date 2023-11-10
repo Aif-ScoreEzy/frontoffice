@@ -5,6 +5,7 @@ import (
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
+	"front-office/utility/mailjet"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,7 +26,7 @@ func RegisterMember(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = SendEmailActivationSvc(req.Email, token)
+	err = mailjet.SendEmailActivation(req.Email, token)
 	if err != nil {
 		resend := "resend"
 		req := &UpdateUserRequest{

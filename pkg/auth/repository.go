@@ -30,7 +30,7 @@ func CreateAdmin(company *company.Company, user *user.User, activationToken *use
 		return user, errTx
 	}
 
-	database.DBConn.Preload("Company").Preload("Role").First(&user)
+	database.DBConn.Preload("Company").Preload("Company.Industry").Preload("Role").First(&user)
 
 	return user, errTx
 }

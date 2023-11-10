@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/company"
@@ -17,19 +16,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
+func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_VERIFICATION_EXPIRES_MINUTES"))
+
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
-		return nil, errors.New(constant.InvalidPassword)
+		return nil, "", errors.New(constant.InvalidPassword)
 	}
 
 	var tierLevel uint
 	if req.RoleID != "" {
 		result, err := role.FindRoleByIDSvc(req.RoleID)
 		if result == nil {
-			return nil, errors.New(constant.DataNotFound)
+			return nil, "", errors.New(constant.DataNotFound)
 		} else if err != nil {
-			return nil, err
+			return nil, "", err
 		} else {
 			tierLevel = result.TierLevel
 		}
@@ -58,12 +60,9 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 
 	dataUser.Password = user.SetPassword(req.Password)
 
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
-
 	token, err := helper.GenerateToken(secret, minutesToExpired, userID, companyID, tierLevel)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	tokenID := uuid.NewString()
@@ -75,32 +74,10 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, error) {
 
 	user, err := CreateAdmin(dataCompany, dataUser, dataActivationToken)
 	if err != nil {
-		return user, err
+		return user, "", err
 	}
 
-	return user, nil
-}
-
-func SendEmailVerificationSvc(req *SendEmailVerificationRequest, user *user.User) error {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_VERIFICATION_EXPIRES_MINUTES"))
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return err
-	}
-
-	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%s/verify/%s", baseURL, token),
-	}
-
-	err = mailjet.CreateMailjet(req.Email, 5075167, variables)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return user, "", nil
 }
 
 func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
@@ -151,22 +128,6 @@ func CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, 
 	}
 
 	return token, passwordResetToken, nil
-}
-
-func SendEmailPasswordResetSvc(email, name, token string) error {
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
-
-	variables := map[string]interface{}{
-		"name": name,
-		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
-	}
-
-	err := mailjet.CreateMailjet(email, 5202383, variables)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error) {
@@ -240,11 +201,7 @@ func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*use
 		return nil, err
 	}
 
-	variables := map[string]interface{}{
-		"username": currentUser.Name,
-	}
-
-	mailjet.CreateMailjet(currentUser.Email, 5097353, variables)
+	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(currentUser.Name, currentUser.Email)
 
 	return data, nil
 }

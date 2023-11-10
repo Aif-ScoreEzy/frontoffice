@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
@@ -111,21 +110,6 @@ func CreateActivationTokenSvc(user *User) (string, *ActivationToken, error) {
 	}
 
 	return token, activationToken, nil
-}
-
-func SendEmailActivationSvc(email, token string) error {
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
-
-	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
-	}
-
-	err := mailjet.CreateMailjet(email, 5188578, variables)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
@@ -243,14 +227,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	formattedTime := helper.FormatWIB(currentTime)
 
 	if oldEmail != updatedUser.Email {
-		variables := map[string]interface{}{
-			"name":      updatedUser.Name,
-			"oldEmail":  oldEmail,
-			"newEmail":  *req.Email,
-			"updatedAt": formattedTime,
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(updatedUser.Name, oldEmail, *req.Email, formattedTime)
+		if err != nil {
+			return nil, err
 		}
-
-		mailjet.CreateMailjet(*req.Email, 5201222, variables)
 	}
 
 	return updatedUser, nil
