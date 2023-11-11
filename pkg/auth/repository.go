@@ -2,13 +2,15 @@ package auth
 
 import (
 	"front-office/config/database"
+	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/company"
+	"front-office/pkg/password_reset_token"
 	"front-office/pkg/user"
 
 	"gorm.io/gorm"
 )
 
-func CreateAdmin(company *company.Company, user *user.User, activationToken *user.ActivationToken) (*user.User, error) {
+func CreateAdmin(company *company.Company, user *user.User, activationToken *activation_token.ActivationToken) (*user.User, error) {
 	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
@@ -35,34 +37,24 @@ func CreateAdmin(company *company.Company, user *user.User, activationToken *use
 	return user, errTx
 }
 
-func CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error) {
-	err := database.DBConn.Debug().Create(&passwordResetToken).Error
-	if err != nil {
-		return nil, err
+func CreateMember(user *user.User, activationToken *activation_token.ActivationToken) (*user.User, error) {
+	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Debug().Create(&user).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Create(&activationToken).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTx != nil {
+		return nil, errTx
 	}
 
-	return passwordResetToken, nil
-}
-
-func FindOnePasswordTokenByToken(token string) (*PasswordResetToken, error) {
-	var result *PasswordResetToken
-	err := database.DBConn.Debug().First(&result, "token = ?", token).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func FindOnePasswordTokenByUserID(userID string) (*PasswordResetToken, error) {
-	var passwordResetToken *PasswordResetToken
-
-	err := database.DBConn.Debug().First(&passwordResetToken, "user_id = ?", userID).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return passwordResetToken, nil
+	return user, nil
 }
 
 func ResetPassword(id, token string, req *PasswordResetRequest) error {
@@ -72,7 +64,7 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 			return err
 		}
 
-		if err := tx.Debug().Model(&PasswordResetToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+		if err := tx.Debug().Model(&password_reset_token.PasswordResetToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
@@ -84,4 +76,26 @@ func ResetPassword(id, token string, req *PasswordResetRequest) error {
 	}
 
 	return nil
+}
+
+func VerifyUserTx(req map[string]interface{}, userID, token string) (*user.User, error) {
+	var user *user.User
+
+	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Debug().Model(&activation_token.ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTX != nil {
+		return nil, errTX
+	}
+
+	return user, nil
 }

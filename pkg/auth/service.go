@@ -4,6 +4,7 @@ import (
 	"errors"
 	"front-office/constant"
 	"front-office/helper"
+	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/company"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
@@ -66,7 +67,7 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
 	}
 
 	tokenID := uuid.NewString()
-	dataActivationToken := &user.ActivationToken{
+	dataActivationToken := &activation_token.ActivationToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: userID,
@@ -78,6 +79,54 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
 	}
 
 	return user, "", nil
+}
+
+func RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error) {
+	userID := uuid.NewString()
+
+	var tierLevel uint
+	if req.RoleID != "" {
+		result, err := role.FindRoleByIDSvc(req.RoleID)
+		if result == nil {
+			return nil, "", errors.New(constant.DataNotFound)
+		} else if err != nil {
+			return nil, "", err
+		} else {
+			tierLevel = result.TierLevel
+		}
+	}
+
+	dataUser := &user.User{
+		ID:        userID,
+		Name:      req.Name,
+		Email:     req.Email,
+		Key:       helper.GenerateAPIKey(),
+		Image:     "default-profile-image.jpg",
+		RoleID:    req.RoleID,
+		CompanyID: companyID,
+	}
+
+	secret := os.Getenv("JWT_SECRET_KEY")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, userID, dataUser.CompanyID, tierLevel)
+	if err != nil {
+		return nil, "", err
+	}
+
+	tokenID := uuid.NewString()
+	dataToken := &activation_token.ActivationToken{
+		ID:     tokenID,
+		Token:  token,
+		UserID: userID,
+	}
+
+	user, err := CreateMember(dataUser, dataToken)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
 }
 
 func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
@@ -98,45 +147,12 @@ func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.Use
 	updateUser["is_verified"] = true
 	updateUser["updated_at"] = time.Now()
 
-	user, err := user.VerifyUserTx(updateUser, userID, token)
+	user, err := VerifyUserTx(updateUser, userID, token)
 	if err != nil {
 		return nil, err
 	}
 
 	return user, nil
-}
-
-func CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", nil, err
-	}
-
-	tokenID := uuid.NewString()
-	passwordResetToken := &PasswordResetToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: user.ID,
-	}
-
-	passwordResetToken, err = CreatePasswordResetToken(passwordResetToken)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return token, passwordResetToken, nil
-}
-
-func FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error) {
-	result, err := FindOnePasswordTokenByToken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
@@ -202,6 +218,9 @@ func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*use
 	}
 
 	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(currentUser.Name, currentUser.Email)
+	if err != nil {
+		return nil, err
+	}
 
 	return data, nil
 }

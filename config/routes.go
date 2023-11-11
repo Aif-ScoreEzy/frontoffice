@@ -17,14 +17,14 @@ func SetupRoutes(app *fiber.App) {
 
 	// auth
 	api.Post("/register-admin", middleware.IsRequestValid(auth.RegisterAdminRequest{}), auth.RegisterAdmin)
-	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.Auth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.VerifyUser)
+	api.Put("/verify/:token", middleware.SetHeaderAuth, middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.VerifyUser)
 	api.Post("/request-password-reset", middleware.IsRequestValid(auth.RequestPasswordResetRequest{}), auth.RequestPasswordReset)
 	api.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.GetPayloadFromJWT(), middleware.IsRequestValid(auth.PasswordResetRequest{}), auth.PasswordReset)
 	api.Post("/login", middleware.IsRequestValid(auth.UserLoginRequest{}), auth.Login)
 	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetPayloadFromJWT(), auth.ChangePassword)
 
 	// user
-	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), user.RegisterMember)
+	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), auth.RegisterMember)
 	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.GetAllUsers)
 	api.Get("/user/:id", middleware.Auth(), middleware.GetPayloadFromJWT(), user.GetUserByID)
 	api.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), auth.SendEmailActivation)
