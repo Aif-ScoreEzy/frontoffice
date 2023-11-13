@@ -4,14 +4,23 @@ import (
 	"front-office/config/database"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func FindOneByEmail(email string) (*User, error) {
 	var user *User
 
 	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "email = ?", email).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func FindOneByUserID(id string) (*User, error) {
+	var user *User
+
+	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -30,85 +39,12 @@ func FindOneByKey(key string) (*User, error) {
 	return user, nil
 }
 
-func FindOneByID(id, companyID string) (*User, error) {
+func FindOneByUserIDAndCompanyID(id, companyID string) (*User, error) {
 	var user *User
 
 	err := database.DBConn.Debug().Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
 	if err != nil {
 		return nil, err
-	}
-
-	return user, nil
-}
-
-func CreateMember(user *User, activationToken *ActivationToken) (*User, error) {
-	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Debug().Create(&user).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Debug().Create(&activationToken).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if errTx != nil {
-		return nil, errTx
-	}
-
-	return user, nil
-}
-
-func FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
-
-	err := database.DBConn.Debug().First(&activationToken, "token = ?", token).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return activationToken, nil
-}
-
-func FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
-
-	err := database.DBConn.Debug().First(&activationToken, "user_id = ?", userID).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return activationToken, nil
-}
-
-func CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
-	err := database.DBConn.Debug().Create(&activationToken).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return activationToken, nil
-}
-
-func VerifyUserTx(req map[string]interface{}, userID, token string) (*User, error) {
-	var user *User
-
-	errTX := database.DBConn.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Debug().Model(&ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Debug().Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if errTX != nil {
-		return nil, errTX
 	}
 
 	return user, nil

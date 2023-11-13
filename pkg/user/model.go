@@ -30,17 +30,6 @@ type User struct {
 	DeletedAt   gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
-type ActivationToken struct {
-	ID         string         `gorm:"primarykey" json:"id"`
-	Token      string         `gorm:"not null" json:"token"`
-	Activation bool           `gorm:"not null;default:false" json:"activation"`
-	UserID     string         `json:"user_id"`
-	User       User           `gorm:"foreignKey:UserID" json:"user"`
-	CreatedAt  time.Time      `json:"-"`
-	UpdatedAt  time.Time      `json:"-"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
 type UserResponse struct {
 	ID         string          `json:"id"`
 	Name       string          `json:"name"`
@@ -63,10 +52,6 @@ type RegisterMemberRequest struct {
 	Name   string `json:"name" validate:"required~Field Name is required"`
 	Email  string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 	RoleID string `json:"role_id" validate:"required~Field Role is required"`
-}
-
-type ActivationAccountRequest struct {
-	Email string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 }
 
 type GetUsersResponse struct {
