@@ -140,7 +140,7 @@ func VerifyUser(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
+		statusCode, resp := helper.GetError(constant.ActivationTokenExpired)
 		return c.Status(statusCode).JSON(resp)
 	}
 
