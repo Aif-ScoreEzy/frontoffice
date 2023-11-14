@@ -2,65 +2,13 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
 	"front-office/utility/mailjet"
-	"os"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
-
-func RegisterMemberSvc(req *RegisterMemberRequest, companyID string) (*User, string, error) {
-	userID := uuid.NewString()
-
-	var tierLevel uint
-	if req.RoleID != "" {
-		result, err := role.FindRoleByIDSvc(req.RoleID)
-		if result == nil {
-			return nil, "", errors.New(constant.DataNotFound)
-		} else if err != nil {
-			return nil, "", err
-		} else {
-			tierLevel = result.TierLevel
-		}
-	}
-
-	dataUser := &User{
-		ID:        userID,
-		Name:      req.Name,
-		Email:     req.Email,
-		Key:       helper.GenerateAPIKey(),
-		Image:     "default-profile-image.jpg",
-		RoleID:    req.RoleID,
-		CompanyID: companyID,
-	}
-
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, dataUser.CompanyID, tierLevel)
-	if err != nil {
-		return nil, "", err
-	}
-
-	tokenID := uuid.NewString()
-	dataToken := &ActivationToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: userID,
-	}
-
-	user, err := CreateMember(dataUser, dataToken)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return user, token, nil
-}
 
 func FindUserByEmailSvc(email string) (*User, error) {
 	user, err := FindOneByEmail(email)
@@ -81,69 +29,12 @@ func FindUserByKeySvc(key string) (*User, error) {
 }
 
 func FindUserByIDSvc(id, companyID string) (*User, error) {
-	user, err := FindOneByID(id, companyID)
+	user, err := FindOneByUserIDAndCompanyID(id, companyID)
 	if err != nil {
 		return nil, err
 	}
 
 	return user, err
-}
-
-func CreateActivationTokenSvc(user *User) (string, *ActivationToken, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", nil, err
-	}
-
-	tokenID := uuid.NewString()
-	activationToken := &ActivationToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: user.ID,
-	}
-
-	activationToken, err = CreateActivationToken(activationToken)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return token, activationToken, nil
-}
-
-func SendEmailActivationSvc(email, token string) error {
-	baseURL := os.Getenv("FRONTEND_BASE_URL")
-
-	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%s/activation?key=%s", baseURL, token),
-	}
-
-	err := mailjet.CreateMailjet(email, 5188578, variables)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
-	result, err := FindOneActivationTokenBytoken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error) {
-	result, err := FindOneActivationTokenByUserID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
@@ -154,7 +45,7 @@ func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
 	}
 
 	if req.Email != nil {
-		result, _ := FindOneByID(user.ID, user.CompanyID)
+		result, _ := FindOneByUserIDAndCompanyID(user.ID, user.CompanyID)
 		if result.Role.TierLevel == 2 {
 			return nil, errors.New(constant.RequestProhibited)
 		}
@@ -234,7 +125,7 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	}
 
 	if req.Status != nil {
-		updateUser["status"] = req.Status
+		updateUser["status"] = *req.Status
 	}
 
 	updateUser["updated_at"] = currentTime
@@ -247,14 +138,10 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	formattedTime := helper.FormatWIB(currentTime)
 
 	if oldEmail != updatedUser.Email {
-		variables := map[string]interface{}{
-			"name":      updatedUser.Name,
-			"oldEmail":  oldEmail,
-			"newEmail":  *req.Email,
-			"updatedAt": formattedTime,
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(updatedUser.Name, oldEmail, *req.Email, formattedTime)
+		if err != nil {
+			return nil, err
 		}
-
-		mailjet.CreateMailjet(*req.Email, 5201222, variables)
 	}
 
 	return updatedUser, nil

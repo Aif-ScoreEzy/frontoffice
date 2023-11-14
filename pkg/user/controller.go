@@ -2,52 +2,70 @@ package user
 
 import (
 	"fmt"
-	"front-office/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterMember(c *fiber.Ctx) error {
-	req := c.Locals("request").(*RegisterMemberRequest)
+func GetAllUsers(c *fiber.Ctx) error {
+	page := c.Query("page", "1")
+	limit := c.Query("limit", "10")
+	keyword := c.Query("keyword", "")
+	roleName := c.Query("role", "")
+	status := c.Query("status", "")
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	user, _ := FindUserByEmailSvc(req.Email)
-	if user != nil {
-		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	user, token, err := RegisterMemberSvc(req, companyID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = SendEmailActivationSvc(req.Email, token)
-	if err != nil {
-		resend := "resend"
-		req := &UpdateUserRequest{
-			Status: &resend,
-		}
-
-		_, err = UpdateUserByIDSvc(req, user)
+	var roleID string
+	if roleName != "" {
+		role, err := role.GetRoleByNameSvc(roleName)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		statusCode, resp := helper.GetError(constant.SendEmailFailed)
+		roleID = role.ID
+	}
+
+	users, err := GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	totalData, _ := GetTotalDataSvc(keyword, roleID, status, startDate, endDate, companyID)
+
+	fullResponsePage := map[string]interface{}{
+		"total_data": totalData,
+		"data":       users,
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get all users",
+		fullResponsePage,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func GetUserByID(c *fiber.Ctx) error {
+	userID := c.Params("id")
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	user, err := FindUserByIDSvc(userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
-		nil,
+		"succeed to get a user by ID",
+		user,
 	)
 
-	return c.Status(fiber.StatusCreated).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func UpdateUserByID(c *fiber.Ctx) error {
@@ -150,66 +168,6 @@ func UploadProfileImage(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"success to upload profile image",
 		dataResponse,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func GetAllUsers(c *fiber.Ctx) error {
-	page := c.Query("page", "1")
-	limit := c.Query("limit", "10")
-	keyword := c.Query("keyword", "")
-	roleName := c.Query("role", "")
-	status := c.Query("status", "")
-	startDate := c.Query("startDate", "")
-	endDate := c.Query("endDate", "")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-
-	var roleID string
-	if roleName != "" {
-		role, err := role.GetRoleByNameSvc(roleName)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		roleID = role.ID
-	}
-
-	users, err := GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	totalData, _ := GetTotalDataSvc(keyword, roleID, status, startDate, endDate, companyID)
-
-	fullResponsePage := map[string]interface{}{
-		"total_data": totalData,
-		"data":       users,
-	}
-
-	resp := helper.ResponseSuccess(
-		"Succeed to get all users",
-		fullResponsePage,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
-func GetUserByID(c *fiber.Ctx) error {
-	userID := c.Params("id")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-
-	user, err := FindUserByIDSvc(userID, companyID)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"succeed to get a user by ID",
-		user,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
