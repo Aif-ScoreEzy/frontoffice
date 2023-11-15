@@ -152,6 +152,11 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: JWT_EMAIL_VERIFICATION_EXPIRES_MINUTES
+          - name: JWT_ACTIVATION_EXPIRES_MINUTES
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: JWT_ACTIVATION_EXPIRES_MINUTES
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
