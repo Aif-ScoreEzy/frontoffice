@@ -27,9 +27,9 @@ type GenRetailV3DataClient struct {
 }
 
 type GenRetailV3ClientReturnSuccess struct {
-	Message string                `json:"message"`
-	Success bool                  `json:"success"`
-	Data    GenRetailV3DataClient `json:"data"`
+	Message string                 `json:"message"`
+	Success bool                   `json:"success"`
+	Data    *GenRetailV3DataClient `json:"data"`
 }
 
 type GenRetailV3ClientReturnError struct {

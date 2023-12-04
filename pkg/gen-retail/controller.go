@@ -20,27 +20,16 @@ func RequestScore(c *fiber.Ctx) error {
 		dataReturn := GenRetailV3ClientReturnError{
 			Message:      genRetailResponse.Message,
 			ErrorMessage: genRetailResponse.ErrorMessage,
-			Data:         nil,
+			Data:         genRetailResponse.Data,
 		}
 
 		return c.Status(genRetailResponse.StatusCode).JSON(dataReturn)
 	}
 
-	dataReturn := GenRetailV3DataClient{
-		TransactionID:        genRetailResponse.Data.TransactionID,
-		Name:                 genRetailResponse.Data.Name,
-		IDCardNo:             genRetailResponse.Data.IDCardNo,
-		PhoneNo:              genRetailResponse.Data.PhoneNo,
-		LoanNo:               genRetailResponse.Data.LoanNo,
-		ProbabilityToDefault: genRetailResponse.Data.ProbabilityToDefault,
-		Grade:                genRetailResponse.Data.Grade,
-		Date:                 genRetailResponse.Data.Date,
-	}
-
 	resp := GenRetailV3ClientReturnSuccess{
 		Message: genRetailResponse.Message,
 		Success: true,
-		Data:    dataReturn,
+		Data:    genRetailResponse.Data,
 	}
 
 	return c.Status(genRetailResponse.StatusCode).JSON(resp)
