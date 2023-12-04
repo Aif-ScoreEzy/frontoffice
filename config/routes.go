@@ -4,6 +4,7 @@ import (
 	"front-office/middleware"
 	"front-office/pkg/auth"
 	"front-office/pkg/company"
+	genRetail "front-office/pkg/gen-retail"
 	"front-office/pkg/permission"
 	"front-office/pkg/product"
 	"front-office/pkg/role"
@@ -55,4 +56,6 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/product/:id", middleware.Auth(), product.GetProductByID)
 	api.Put("/product/:id", middleware.Auth(), middleware.IsRequestValid(product.UpdateProductRequest{}), product.UpdateProductByID)
 	api.Delete("/product/:id", middleware.Auth(), product.DeleteProductByID)
+
+	api.Post("/request-score", middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
 }
