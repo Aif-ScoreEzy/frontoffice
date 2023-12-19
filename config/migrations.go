@@ -4,6 +4,7 @@ import (
 	"front-office/config/database"
 	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/company"
+	"front-office/pkg/grading"
 	"front-office/pkg/industry"
 	"front-office/pkg/password_reset_token"
 	"front-office/pkg/permission"
@@ -25,5 +26,6 @@ func Migrate() {
 		&password_reset_token.PasswordResetToken{},
 		&company.Company{},
 		&industry.Industry{},
-		&product.Product{})
+		&product.Product{},
+		&grading.Grading{})
 }
