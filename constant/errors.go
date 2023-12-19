@@ -19,6 +19,7 @@ const (
 	InvalidActivationLink      = "invalid activation link"
 	IncorrectPassword          = "password is incorrect"
 	RequestProhibited          = "request is prohibited"
+	TokenExpired               = "Token is expired"
 
 	EmailAlreadyExists = "email already exists"
 	InvalidImageFile   = "invalid image file"

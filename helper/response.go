@@ -46,9 +46,11 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.ConfirmNewPasswordMismatch,
 		constant.ConfirmPasswordMismatch:
 		statusCode = 400
-	case constant.RequestProhibited:
+	case constant.RequestProhibited,
+		constant.TokenExpired:
 		statusCode = 401
-	case constant.DataNotFound, constant.RecordNotFound:
+	case constant.DataNotFound,
+		constant.RecordNotFound:
 		statusCode = 404
 		errorMessage = constant.DataNotFound
 	case constant.DataAlreadyExist,

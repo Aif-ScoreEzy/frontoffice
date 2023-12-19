@@ -56,9 +56,8 @@ func GetPayloadFromJWT() fiber.Handler {
 
 		userID, err := helper.ExtractUserIDFromClaims(claims)
 		if err != nil {
-			resp := helper.ResponseFailed(err.Error())
-
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
 		}
 
 		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
@@ -91,20 +90,17 @@ func AdminAuth() fiber.Handler {
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
-			resp := helper.ResponseFailed(err.Error())
-
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
 		}
 
 		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
-
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
 		if tierLevel == 2 {
 			resp := helper.ResponseFailed(constant.RequestProhibited)
-
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 

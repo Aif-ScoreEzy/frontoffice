@@ -6,7 +6,6 @@ import (
 	"front-office/pkg/company"
 	genRetail "front-office/pkg/gen-retail"
 	"front-office/pkg/permission"
-	"front-office/pkg/product"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
 
@@ -25,14 +24,17 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/change-password", middleware.Auth(), middleware.IsRequestValid(auth.ChangePasswordRequest{}), middleware.GetPayloadFromJWT(), auth.ChangePassword)
 
 	// user
-	api.Post("/register-member", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), auth.RegisterMember)
-	api.Get("/users", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.GetAllUsers)
+	api.Post("/register-member", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(user.RegisterMemberRequest{}), auth.RegisterMember)
+	api.Get("/users", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.GetAllUsers)
 	api.Get("/user/:id", middleware.Auth(), middleware.GetPayloadFromJWT(), user.GetUserByID)
 	api.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), auth.SendEmailActivation)
-	api.Put("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetPayloadFromJWT(), user.UpdateUserByID)
+	api.Put("/user/:id", middleware.AdminAuth(), middleware.IsRequestValid(user.UpdateUserRequest{}), middleware.GetPayloadFromJWT(), user.UpdateUserByID)
 	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(user.UpdateProfileRequest{}), middleware.GetPayloadFromJWT(), user.UpdateProfile)
 	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(user.UploadProfileImageRequest{}), middleware.GetPayloadFromJWT(), middleware.FileUpload(), user.UploadProfileImage)
-	api.Delete("/user/:id", middleware.Auth(), middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.DeleteUserByID)
+	api.Delete("/user/:id", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.DeleteUserByID)
+
+	// score
+	api.Post("/request-score", middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
@@ -51,11 +53,10 @@ func SetupRoutes(app *fiber.App) {
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
 
 	// product
-	api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
-	api.Get("/products", middleware.Auth(), product.GetAllProducts)
-	api.Get("/product/:id", middleware.Auth(), product.GetProductByID)
-	api.Put("/product/:id", middleware.Auth(), middleware.IsRequestValid(product.UpdateProductRequest{}), product.UpdateProductByID)
-	api.Delete("/product/:id", middleware.Auth(), product.DeleteProductByID)
+	// api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
+	// api.Get("/products", middleware.Auth(), product.GetAllProducts)
+	// api.Get("/product/:id", middleware.Auth(), product.GetProductByID)
+	// api.Put("/product/:id", middleware.Auth(), middleware.IsRequestValid(product.UpdateProductRequest{}), product.UpdateProductByID)
+	// api.Delete("/product/:id", middleware.Auth(), product.DeleteProductByID)
 
-	api.Post("/request-score", middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
 }
