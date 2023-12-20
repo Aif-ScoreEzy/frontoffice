@@ -21,6 +21,8 @@ const (
 	RequestProhibited          = "request is prohibited"
 	TokenExpired               = "Token is expired"
 
+	DuplicateGrading = "duplicate grading"
+
 	EmailAlreadyExists = "email already exists"
 	InvalidImageFile   = "invalid image file"
 	InvalidStatusValue = "invalid value for 'status'"

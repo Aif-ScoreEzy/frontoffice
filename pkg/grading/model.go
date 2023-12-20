@@ -13,8 +13,18 @@ type Grading struct {
 	MinGrade     float64         `gorm:"not null" json:"min_grade"`
 	MaxGrade     float64         `gorm:"not null" json:"max_grade"`
 	CompanyID    string          `json:"company_id"`
-	Company      company.Company `gorm:"foreignKey:CompanyID" json:"company"`
+	Company      company.Company `gorm:"foreignKey:CompanyID" json:"-"`
 	CreatedAt    time.Time       `json:"-"`
 	UpdatedAt    time.Time       `json:"-"`
 	DeletedAt    gorm.DeletedAt  `gorm:"index" json:"-"`
+}
+
+type CreateGradingRequest struct {
+	GradingLabel string  `json:"grading_label"`
+	MinGrade     float64 `json:"min_grade"`
+	MaxGrade     float64 `json:"max_grade"`
+}
+
+type CreateGradingsRequest struct {
+	CreateGradingsRequest []*CreateGradingRequest `json:"gradings"`
 }

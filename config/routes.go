@@ -5,6 +5,7 @@ import (
 	"front-office/pkg/auth"
 	"front-office/pkg/company"
 	genRetail "front-office/pkg/gen-retail"
+	"front-office/pkg/grading"
 	"front-office/pkg/permission"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
@@ -32,6 +33,9 @@ func SetupRoutes(app *fiber.App) {
 	api.Put("/edit-profile", middleware.Auth(), middleware.IsRequestValid(user.UpdateProfileRequest{}), middleware.GetPayloadFromJWT(), user.UpdateProfile)
 	api.Put("/upload-profile-image", middleware.Auth(), middleware.IsRequestValid(user.UploadProfileImageRequest{}), middleware.GetPayloadFromJWT(), middleware.FileUpload(), user.UploadProfileImage)
 	api.Delete("/user/:id", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), user.DeleteUserByID)
+
+	// grading
+	api.Post("/create-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsRequest{}), grading.CreateGradings)
 
 	// score
 	api.Post("/request-score", middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
