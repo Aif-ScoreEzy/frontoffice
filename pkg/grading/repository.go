@@ -21,3 +21,14 @@ func FindOneByGradingLabel(gradingLabel, companyID string) (*Grading, error) {
 
 	return grading, nil
 }
+
+func FindAllGradings(companyID string) ([]*Grading, error) {
+	var gradings []*Grading
+
+	query := database.DBConn.Debug().Find(&gradings, "company_id = ?", companyID)
+	if query.Error != nil {
+		return nil, query.Error
+	}
+
+	return gradings, nil
+}

@@ -29,3 +29,12 @@ func GetGradingByGradinglabelSvc(gradingLabel, companyID string) (*Grading, erro
 
 	return grading, nil
 }
+
+func GetGradingsSvc(companyID string) ([]*Grading, error) {
+	gradings, err := FindAllGradings(companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return gradings, nil
+}

@@ -36,3 +36,20 @@ func CreateGradings(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(res)
 }
+
+func GetGradings(c *fiber.Ctx) error {
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	gradings, err := GetGradingsSvc(companyID)
+	if err != nil {
+		statusCode, res := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(res)
+	}
+
+	res := helper.ResponseSuccess(
+		"succeed to get gradings",
+		gradings,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(res)
+}
