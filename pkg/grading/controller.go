@@ -66,6 +66,14 @@ func UpdateGradingsByID(c *fiber.Ctx) error {
 				return c.Status(statusCode).JSON(res)
 			}
 
+			if updateGradingRequest.GradingLabel != "" && updateGradingRequest.GradingLabel != grading.GradingLabel {
+				grading, _ = GetGradingByGradinglabelSvc(updateGradingRequest.GradingLabel, companyID)
+				if grading != nil {
+					statusCode, res := helper.GetError(constant.DuplicateGrading)
+					return c.Status(statusCode).JSON(res)
+				}
+			}
+
 			_, err := UpdateGradingSvc(updateGradingRequest, companyID)
 			if err != nil {
 				statusCode, res := helper.GetError(err.Error())
