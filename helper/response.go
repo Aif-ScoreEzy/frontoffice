@@ -35,6 +35,9 @@ func GetError(errorMessage string) (int, interface{}) {
 	switch errorMessage {
 	case constant.AlreadyVerified,
 		constant.DuplicateGrading,
+		constant.FieldGradingLabelEmpty,
+		constant.FieldMinGradeEmpty,
+		constant.FieldMaxGradeEmpty,
 		constant.FileSizeIsTooLarge,
 		constant.IncorrectPassword,
 		constant.InvalidActivationLink,

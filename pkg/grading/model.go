@@ -20,9 +20,9 @@ type Grading struct {
 }
 
 type CreateGradingRequest struct {
-	GradingLabel string  `json:"grading_label"`
-	MinGrade     float64 `json:"min_grade"`
-	MaxGrade     float64 `json:"max_grade"`
+	GradingLabel string   `json:"grading_label"`
+	MinGrade     *float64 `json:"min_grade"`
+	MaxGrade     *float64 `json:"max_grade"`
 }
 
 type CreateGradingsRequest struct {

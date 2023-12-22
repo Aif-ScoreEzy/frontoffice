@@ -20,7 +20,7 @@ func CreateGradings(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(res)
 		}
 
-		grading, err := CreateGradingsSvc(createGradingRequest, companyID)
+		grading, err := CreateGradingSvc(createGradingRequest, companyID)
 		if err != nil {
 			statusCode, res := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(res)

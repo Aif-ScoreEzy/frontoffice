@@ -1,15 +1,32 @@
 package grading
 
-import "github.com/google/uuid"
+import (
+	"errors"
+	"front-office/constant"
 
-func CreateGradingsSvc(req *CreateGradingRequest, companyID string) (*Grading, error) {
+	"github.com/google/uuid"
+)
+
+func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, error) {
 	gradingCompanyID := uuid.NewString()
+
+	if req.GradingLabel == "" {
+		return nil, errors.New(constant.FieldGradingLabelEmpty)
+	}
+
+	if req.MinGrade == nil {
+		return nil, errors.New(constant.FieldMinGradeEmpty)
+	}
+
+	if req.MaxGrade == nil {
+		return nil, errors.New(constant.FieldMaxGradeEmpty)
+	}
 
 	gradingData := &Grading{
 		ID:           gradingCompanyID,
 		GradingLabel: req.GradingLabel,
-		MinGrade:     req.MinGrade,
-		MaxGrade:     req.MaxGrade,
+		MinGrade:     *req.MinGrade,
+		MaxGrade:     *req.MaxGrade,
 		CompanyID:    companyID,
 	}
 

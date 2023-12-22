@@ -21,7 +21,10 @@ const (
 	RequestProhibited          = "request is prohibited"
 	TokenExpired               = "Token is expired"
 
-	DuplicateGrading = "duplicate grading"
+	DuplicateGrading       = "duplicate grading"
+	FieldGradingLabelEmpty = "field grading label is required"
+	FieldMinGradeEmpty     = "field min grade is required"
+	FieldMaxGradeEmpty     = "field max grade is required"
 
 	EmailAlreadyExists = "email already exists"
 	InvalidImageFile   = "invalid image file"
