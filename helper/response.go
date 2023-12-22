@@ -34,6 +34,10 @@ func GetError(errorMessage string) (int, interface{}) {
 
 	switch errorMessage {
 	case constant.AlreadyVerified,
+		constant.DuplicateGrading,
+		constant.FieldGradingLabelEmpty,
+		constant.FieldMinGradeEmpty,
+		constant.FieldMaxGradeEmpty,
 		constant.FileSizeIsTooLarge,
 		constant.IncorrectPassword,
 		constant.InvalidActivationLink,
@@ -46,9 +50,12 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.ConfirmNewPasswordMismatch,
 		constant.ConfirmPasswordMismatch:
 		statusCode = 400
-	case constant.RequestProhibited:
+	case constant.RequestProhibited,
+		constant.TokenExpired,
+		constant.UnverifiedUser:
 		statusCode = 401
-	case constant.DataNotFound, constant.RecordNotFound:
+	case constant.DataNotFound,
+		constant.RecordNotFound:
 		statusCode = 404
 		errorMessage = constant.DataNotFound
 	case constant.DataAlreadyExist,

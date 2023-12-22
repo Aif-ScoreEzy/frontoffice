@@ -259,6 +259,11 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	if !userExists.IsVerified {
+		statusCode, resp := helper.GetError(constant.UnverifiedUser)
+		return c.Status(statusCode).JSON(resp)
+	}
+
 	token, _, err := password_reset_token.CreatePasswordResetTokenSvc(userExists)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
