@@ -1,6 +1,10 @@
 package grading
 
-import "front-office/config/database"
+import (
+	"front-office/config/database"
+
+	"gorm.io/gorm"
+)
 
 func CreateGrading(grading *Grading) (*Grading, error) {
 	query := database.DBConn.Debug().Create(&grading)
@@ -53,6 +57,26 @@ func UpdateOneByID(updateGrading *UpdateGradingRequest, gradingID, companyID str
 	}
 
 	return grading, nil
+}
+
+func ReplaceAllGradings(gradings []*Grading, companyID string) error {
+	errTx := database.DBConn.Transaction(func(tx *gorm.DB) error {
+		if err := database.DBConn.Debug().Delete(&Grading{}, "company_id = ?", companyID).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Debug().Create(&gradings).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTx != nil {
+		return errTx
+	}
+
+	return nil
 }
 
 func DeleteAllGradings(companyID string) error {
