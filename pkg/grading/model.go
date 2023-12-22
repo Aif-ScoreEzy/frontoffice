@@ -28,3 +28,17 @@ type CreateGradingRequest struct {
 type CreateGradingsRequest struct {
 	CreateGradingsRequest []*CreateGradingRequest `json:"gradings"`
 }
+
+type UpdateGradingRequest struct {
+	ID           string    `json:"id"`
+	GradingLabel string    `json:"grading_label"`
+	MinGrade     *float64  `json:"min_grade"`
+	MaxGrade     *float64  `json:"max_grade"`
+	IsDeleted    bool      `json:"is_deleted"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	DeletedAt    time.Time `json:"deleted_at"`
+}
+
+type UpdateGradingsRequest struct {
+	UpdateGradingsRequest []*UpdateGradingRequest `json:"gradings"`
+}

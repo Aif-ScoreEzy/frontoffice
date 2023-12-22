@@ -11,6 +11,17 @@ func CreateGrading(grading *Grading) (*Grading, error) {
 	return grading, nil
 }
 
+func FindOneByID(gradingID, companyID string) (*Grading, error) {
+	var grading *Grading
+
+	query := database.DBConn.Debug().First(&grading, "id = ? AND company_id = ?", gradingID, companyID)
+	if query.Error != nil {
+		return nil, query.Error
+	}
+
+	return grading, nil
+}
+
 func FindOneByGradingLabel(gradingLabel, companyID string) (*Grading, error) {
 	var grading *Grading
 
@@ -31,4 +42,15 @@ func FindAllGradings(companyID string) ([]*Grading, error) {
 	}
 
 	return gradings, nil
+}
+
+func UpdateOneByID(updateGrading *UpdateGradingRequest, gradingID, companyID string) (*Grading, error) {
+	var grading *Grading
+
+	query := database.DBConn.Debug().Model(&grading).Where("id = ? AND company_id = ?", gradingID, companyID).Updates(updateGrading)
+	if query.Error != nil {
+		return nil, query.Error
+	}
+
+	return grading, nil
 }
