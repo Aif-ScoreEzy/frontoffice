@@ -51,7 +51,8 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.ConfirmPasswordMismatch:
 		statusCode = 400
 	case constant.RequestProhibited,
-		constant.TokenExpired:
+		constant.TokenExpired,
+		constant.UnverifiedUser:
 		statusCode = 401
 	case constant.DataNotFound,
 		constant.RecordNotFound:

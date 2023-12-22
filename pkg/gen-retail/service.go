@@ -11,7 +11,7 @@ import (
 func GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error) {
 	var dataResponse *GenRetailV3ModelResponse
 
-	URL := os.Getenv("GEN_RETAIL_HOST") + os.Getenv("GEN_RETAIL_V3")
+	URL := os.Getenv("AIFCORE_HOST") + os.Getenv("GEN_RETAIL_V3")
 
 	requestByte, _ := json.Marshal(requestData)
 	request, _ := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(requestByte))

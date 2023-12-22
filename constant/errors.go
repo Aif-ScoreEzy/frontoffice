@@ -19,8 +19,10 @@ const (
 	InvalidActivationLink      = "invalid activation link"
 	IncorrectPassword          = "password is incorrect"
 	RequestProhibited          = "request is prohibited"
+	UnverifiedUser             = "please check your email, you need to verify your email address before you can reset your password"
 	TokenExpired               = "Token is expired"
 
+	//grading
 	DuplicateGrading       = "duplicate grading"
 	FieldGradingLabelEmpty = "field grading label is required"
 	FieldMinGradeEmpty     = "field min grade is required"
