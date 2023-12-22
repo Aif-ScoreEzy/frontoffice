@@ -90,6 +90,42 @@ func UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, er
 	return grading, nil
 }
 
+func ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, companyID string) error {
+	var gradings []*Grading
+
+	for _, createGradingRequest := range createGradingsRequest.CreateGradingsRequest {
+		if createGradingRequest.GradingLabel == "" {
+			return errors.New(constant.FieldGradingLabelEmpty)
+		}
+
+		if createGradingRequest.MinGrade == nil {
+			return errors.New(constant.FieldMinGradeEmpty)
+		}
+
+		if createGradingRequest.MaxGrade == nil {
+			return errors.New(constant.FieldMaxGradeEmpty)
+		}
+
+		gradingID := uuid.NewString()
+		grading := &Grading{
+			ID:           gradingID,
+			GradingLabel: createGradingRequest.GradingLabel,
+			MinGrade:     *createGradingRequest.MinGrade,
+			MaxGrade:     *createGradingRequest.MaxGrade,
+			CompanyID:    companyID,
+		}
+
+		gradings = append(gradings, grading)
+	}
+
+	err := ReplaceAllGradings(gradings, companyID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteGradingsSvc(companyID string) error {
 	err := DeleteAllGradings(companyID)
 	if err != nil {
