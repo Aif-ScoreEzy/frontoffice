@@ -54,3 +54,12 @@ func UpdateOneByID(updateGrading *UpdateGradingRequest, gradingID, companyID str
 
 	return grading, nil
 }
+
+func DeleteAllGradings(companyID string) error {
+	query := database.DBConn.Debug().Delete(&Grading{}, "company_id = ?", companyID)
+	if query.Error != nil {
+		return query.Error
+	}
+
+	return nil
+}

@@ -55,48 +55,26 @@ func GetGradings(c *fiber.Ctx) error {
 }
 
 func UpdateGradingsByID(c *fiber.Ctx) error {
-	req := c.Locals("request").(*UpdateGradingsRequest)
+	req := c.Locals("request").(*CreateGradingsRequest)
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
-	for _, updateGradingRequest := range req.UpdateGradingsRequest {
-		if updateGradingRequest.ID != "" {
-			grading, _ := GetGradingByIDSvc(updateGradingRequest.ID, companyID)
-			if grading == nil {
-				statusCode, res := helper.GetError(constant.DataNotFound)
-				return c.Status(statusCode).JSON(res)
-			}
+	err := DeleteGradingsSvc(companyID)
+	if err != nil {
+		statusCode, res := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(res)
+	}
 
-			if updateGradingRequest.GradingLabel != "" && updateGradingRequest.GradingLabel != grading.GradingLabel {
-				grading, _ = GetGradingByGradinglabelSvc(updateGradingRequest.GradingLabel, companyID)
-				if grading != nil {
-					statusCode, res := helper.GetError(constant.DuplicateGrading)
-					return c.Status(statusCode).JSON(res)
-				}
-			}
+	for _, createGradingRequest := range req.CreateGradingsRequest {
+		grading, _ := GetGradingByGradinglabelSvc(createGradingRequest.GradingLabel, companyID)
+		if grading != nil {
+			statusCode, res := helper.GetError(constant.DuplicateGrading)
+			return c.Status(statusCode).JSON(res)
+		}
 
-			_, err := UpdateGradingSvc(updateGradingRequest, companyID)
-			if err != nil {
-				statusCode, res := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(res)
-			}
-		} else {
-			createGradingRequest := &CreateGradingRequest{
-				GradingLabel: updateGradingRequest.GradingLabel,
-				MinGrade:     updateGradingRequest.MinGrade,
-				MaxGrade:     updateGradingRequest.MaxGrade,
-			}
-
-			grading, _ := GetGradingByGradinglabelSvc(createGradingRequest.GradingLabel, companyID)
-			if grading != nil {
-				statusCode, res := helper.GetError(constant.DuplicateGrading)
-				return c.Status(statusCode).JSON(res)
-			}
-
-			_, err := CreateGradingSvc(createGradingRequest, companyID)
-			if err != nil {
-				statusCode, res := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(res)
-			}
+		_, err := CreateGradingSvc(createGradingRequest, companyID)
+		if err != nil {
+			statusCode, res := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(res)
 		}
 	}
 

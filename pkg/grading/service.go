@@ -9,7 +9,7 @@ import (
 )
 
 func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, error) {
-	gradingCompanyID := uuid.NewString()
+	gradingID := uuid.NewString()
 
 	if req.GradingLabel == "" {
 		return nil, errors.New(constant.FieldGradingLabelEmpty)
@@ -24,7 +24,7 @@ func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, er
 	}
 
 	gradingData := &Grading{
-		ID:           gradingCompanyID,
+		ID:           gradingID,
 		GradingLabel: req.GradingLabel,
 		MinGrade:     *req.MinGrade,
 		MaxGrade:     *req.MaxGrade,
@@ -88,4 +88,13 @@ func UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, er
 	}
 
 	return grading, nil
+}
+
+func DeleteGradingsSvc(companyID string) error {
+	err := DeleteAllGradings(companyID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
