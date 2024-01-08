@@ -42,3 +42,12 @@ type UpdateGradingRequest struct {
 type UpdateGradingsRequest struct {
 	UpdateGradingsRequest []*UpdateGradingRequest `json:"gradings"`
 }
+
+type CreateGradingNewRequest struct {
+	Grade string     `json:"grade"`
+	Value []*float64 `json:"value"`
+}
+
+type CreateGradingsNewRequest struct {
+	CreateGradingsNewRequest []*CreateGradingNewRequest `json:"gradings"`
+}

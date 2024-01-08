@@ -27,6 +27,7 @@ const (
 	FieldGradingLabelEmpty = "field grading label is required"
 	FieldMinGradeEmpty     = "field min grade is required"
 	FieldMaxGradeEmpty     = "field max grade is required"
+	FieldGradingValueEmpty = "field grading value is required"
 
 	EmailAlreadyExists = "email already exists"
 	InvalidImageFile   = "invalid image file"
