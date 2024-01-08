@@ -38,7 +38,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/create-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsRequest{}), grading.CreateGradings)
 	api.Get("/get-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), grading.GetGradings)
 	api.Put("/update-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsRequest{}), grading.ReplaceGradings)
-
+	api.Put("/update-gradings-new", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsNewRequest{}), grading.ReplaceGradingsNew)
 	// score
 	api.Post("/request-score", middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
 

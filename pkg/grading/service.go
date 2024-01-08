@@ -126,6 +126,45 @@ func ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, company
 	return nil
 }
 
+func ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, companyID string) error {
+	var gradings []*Grading
+
+	for _, createGradingRequest := range createGradingsRequest.CreateGradingsNewRequest {
+
+		if createGradingRequest.Grade == "" {
+			return errors.New(constant.FieldGradingLabelEmpty)
+		}
+
+		if len(createGradingRequest.Value) == 0 {
+			return errors.New(constant.FieldGradingValueEmpty)
+		}
+
+		gradingID := uuid.NewString()
+		// create the grading to append to the gradings
+		grading := &Grading{
+			ID:           gradingID,
+			GradingLabel: createGradingRequest.Grade,
+		}
+		for i, v := range createGradingRequest.Value {
+			if i == 0 {
+				grading.MinGrade = *v
+			}
+			if i == 1 {
+				grading.MaxGrade = *v
+			}
+		}
+		grading.CompanyID = companyID
+		gradings = append(gradings, grading)
+	}
+
+	err := ReplaceAllGradings(gradings, companyID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteGradingsSvc(companyID string) error {
 	err := DeleteAllGradings(companyID)
 	if err != nil {

@@ -78,6 +78,30 @@ func ReplaceGradings(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(res)
 }
 
+func ReplaceGradingsNew(c *fiber.Ctx) error {
+	req := c.Locals("request").(*CreateGradingsNewRequest)
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	err := ReplaceAllGradingsNewSvc(req, companyID)
+	if err != nil {
+		statusCode, res := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(res)
+	}
+
+	gradings, err := GetGradingsSvc(companyID)
+	if err != nil {
+		statusCode, res := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(res)
+	}
+
+	res := helper.ResponseSuccess(
+		"succeed to update gradings by id",
+		gradings,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(res)
+}
+
 // func UpdateGradingsByID(c *fiber.Ctx) error {
 // 	req := c.Locals("request").(*UpdateGradingsRequest)
 // 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
