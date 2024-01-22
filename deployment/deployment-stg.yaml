@@ -157,6 +157,16 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: JWT_ACTIVATION_EXPIRES_MINUTES
+          - name: AIFCORE_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: AIFCORE_HOST
+          - name: GEN_RETAIL_V3
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: GEN_RETAIL_V3
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
