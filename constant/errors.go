@@ -29,6 +29,9 @@ const (
 	FieldMaxGradeEmpty     = "field max grade is required"
 	FieldGradingValueEmpty = "field grading value is required"
 
+	//parameter settings
+	ParamSettingIsNotSet = "parameter settings is not set"
+
 	EmailAlreadyExists = "email already exists"
 	InvalidImageFile   = "invalid image file"
 	InvalidStatusValue = "invalid value for 'status'"
