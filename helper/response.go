@@ -48,7 +48,8 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.InvalidPassword,
 		constant.InvalidPasswordResetLink,
 		constant.ConfirmNewPasswordMismatch,
-		constant.ConfirmPasswordMismatch:
+		constant.ConfirmPasswordMismatch,
+		constant.ParamSettingIsNotSet:
 		statusCode = 400
 	case constant.RequestProhibited,
 		constant.TokenExpired,
