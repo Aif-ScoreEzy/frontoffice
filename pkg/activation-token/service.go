@@ -2,7 +2,8 @@ package activation_token
 
 import (
 	"errors"
-	"front-office/constant"
+
+	"front-office/common/constant"
 	"front-office/helper"
 	"os"
 	"strconv"
