@@ -45,3 +45,11 @@ func RequestScore(c *fiber.Ctx) error {
 
 	return c.Status(genRetailResponse.StatusCode).JSON(resp)
 }
+
+func DownloadCSV(c *fiber.Ctx) error {
+	opsi := c.Params("opsi")
+
+	filePath := fmt.Sprintf("./public/bulk_template/%s.csv", opsi)
+
+	return c.SendFile(filePath)
+}
