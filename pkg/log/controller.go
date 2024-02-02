@@ -7,8 +7,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetAllLogTrans(c *fiber.Ctx) error {
-	result, statusCode, errRequest := GetAllLogTransSvc()
+func GetAllLogTransByDate(c *fiber.Ctx) error {
+	date := c.Query("date")
+	companyID := c.Query("company_id")
+
+	result, statusCode, errRequest := GetAllLogTransByDateSvc(companyID, date)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)

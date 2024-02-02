@@ -9,12 +9,17 @@ import (
 	"os"
 )
 
-func GetAllLogTransSvc() (*model.AifResponse, int, error) {
+func GetAllLogTransByDateSvc(companyID, date string) (*model.AifResponse, int, error) {
 	var dataResp *model.AifResponse
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_ALL_LOG")
+	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_ALL_LOG_BY_DATE")
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("company_id", companyID)
+	q.Add("date", date)
+	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
 	response, err := client.Do(request)
