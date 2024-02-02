@@ -6,6 +6,7 @@ import (
 	"front-office/pkg/company"
 	genRetail "front-office/pkg/gen-retail"
 	"front-office/pkg/grading"
+	"front-office/pkg/log"
 	"front-office/pkg/permission"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
@@ -58,6 +59,11 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/permission/:id", middleware.Auth(), permission.GetPermissionByID)
 	api.Put("/permission/:id", middleware.Auth(), middleware.IsRequestValid(permission.PermissionRequest{}), permission.UpdatePermissionByID)
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
+
+	// log
+	api.Get("/get-logs-by-date", log.GetTransactionLogsByDate)
+	api.Get("/get-logs-by-range-date", log.GetTransactionLogsByRangeDate)
+	api.Get("/get-logs-by-month", log.GetTransactionLogsByMonth)
 
 	// product
 	// api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)

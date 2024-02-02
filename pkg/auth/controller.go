@@ -2,7 +2,7 @@ package auth
 
 import (
 	"fmt"
-	"front-office/constant"
+	"front-office/common/constant"
 	"front-office/helper"
 	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/password_reset_token"

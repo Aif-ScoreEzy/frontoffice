@@ -3,6 +3,7 @@ package genretail
 import (
 	"bytes"
 	"encoding/json"
+	"front-office/common/constant"
 	"io"
 	"net/http"
 	"os"
@@ -11,13 +12,13 @@ import (
 func GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error) {
 	var dataResponse *GenRetailV3ModelResponse
 
-	URL := os.Getenv("AIFCORE_HOST") + os.Getenv("GEN_RETAIL_V3")
+	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GEN_RETAIL_V3")
 
 	requestByte, _ := json.Marshal(requestData)
-	request, _ := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(requestByte))
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(requestByte))
 
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-API-KEY", apiKey)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	request.Header.Set(constant.XAPIKey, apiKey)
 
 	client := &http.Client{}
 	response, err := client.Do(request)

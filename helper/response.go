@@ -1,6 +1,6 @@
 package helper
 
-import "front-office/constant"
+import "front-office/common/constant"
 
 type BaseResponseSuccess struct {
 	Message string      `json:"message"`

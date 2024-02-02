@@ -2,7 +2,7 @@ package grading
 
 import (
 	"fmt"
-	"front-office/constant"
+	"front-office/common/constant"
 	"front-office/helper"
 
 	"github.com/gofiber/fiber/v2"

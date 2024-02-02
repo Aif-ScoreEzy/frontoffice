@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"front-office/constant"
+	"front-office/common/constant"
 	"front-office/helper"
 	"os"
 	"path/filepath"
