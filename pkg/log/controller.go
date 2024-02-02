@@ -44,3 +44,21 @@ func GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 
 	return c.Status(statusCode).JSON(resp)
 }
+
+func GetTransactionLogsByMonth(c *fiber.Ctx) error {
+	companyID := c.Query("company_id")
+	month := c.Query("month")
+
+	result, statusCode, errRequest := GetTransactionLogsByMonthSvc(companyID, month)
+	if errRequest != nil {
+		_, resp := helper.GetError(errRequest.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := model.AifResponse{
+		Data: result.Data,
+		Meta: result.Meta,
+	}
+
+	return c.Status(statusCode).JSON(resp)
+}

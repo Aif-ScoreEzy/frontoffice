@@ -63,6 +63,7 @@ func SetupRoutes(app *fiber.App) {
 	// log
 	api.Get("/get-logs-by-date", log.GetTransactionLogsByDate)
 	api.Get("/get-logs-by-range-date", log.GetTransactionLogsByRangeDate)
+	api.Get("/get-logs-by-month", log.GetTransactionLogsByMonth)
 
 	// product
 	// api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
