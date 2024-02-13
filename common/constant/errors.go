@@ -29,6 +29,15 @@ const (
 	FieldMaxGradeEmpty     = "field max grade is required"
 	FieldGradingValueEmpty = "field grading value is required"
 
+	// gen-retail
+	InvalidDocumentFile    = "invalid document file"
+	ErrorGettingFile       = "error getting file"
+	ErrorOpeningFile       = "error opening file"
+	ErrorReadingCSV        = "error reading CSV file"
+	HeaderTemplateNotValid = "header template is not valid"
+	ErrorReadingCSVRecords = "error reading CSV records"
+	ErrorUploadDataCSV     = "error upload data CSV file"
+
 	//parameter settings
 	ParamSettingIsNotSet = "parameter settings is not set"
 

@@ -60,3 +60,38 @@ func FileUpload() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func DocUpload() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := c.Locals("userID")
+		fmt.Println("userID: ", userID)
+
+		// get the file upload and type information
+		file, err := c.FormFile("file")
+		tempType := c.FormValue("tempType")
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		validExtensions := []string{".csv"}
+		ext := filepath.Ext(file.Filename)
+		valid := false
+		for _, allowedExt := range validExtensions {
+			if ext == allowedExt {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			statusCode, resp := helper.GetError(constant.InvalidDocumentFile)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		c.Locals("tempType", tempType)
+
+		return c.Next()
+	}
+}

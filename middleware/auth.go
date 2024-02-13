@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/user"
 	"os"
 	"strings"
 
@@ -66,6 +67,10 @@ func GetPayloadFromJWT() fiber.Handler {
 
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
+
+		// get detail user information
+		user, _ := user.FindUserByIDSvc(userID, companyID)
+		c.Locals("userDetails", user)
 
 		c.Locals("userID", userID)
 		c.Locals("companyID", companyID)
