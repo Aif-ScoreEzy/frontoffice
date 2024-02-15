@@ -34,6 +34,8 @@ func GetError(errorMessage string) (int, interface{}) {
 
 	switch errorMessage {
 	case constant.AlreadyVerified,
+		constant.ConfirmNewPasswordMismatch,
+		constant.ConfirmPasswordMismatch,
 		constant.DuplicateGrading,
 		constant.FieldGradingLabelEmpty,
 		constant.FieldMinGradeEmpty,
@@ -47,8 +49,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.InvalidImageFile,
 		constant.InvalidPassword,
 		constant.InvalidPasswordResetLink,
-		constant.ConfirmNewPasswordMismatch,
-		constant.ConfirmPasswordMismatch,
+		constant.HeaderTemplateNotValid,
 		constant.ParamSettingIsNotSet:
 		statusCode = 400
 	case constant.RequestProhibited,

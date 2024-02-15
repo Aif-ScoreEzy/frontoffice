@@ -91,8 +91,6 @@ func UploadCSV(c *fiber.Ctx) error {
 	}
 
 	// Process the header (first line)
-	fmt.Println("CSV Header:", header)
-
 	var validHeaderTemplate []string
 	if tempType == "personal" {
 		validHeaderTemplate = append(validHeaderTemplate, "loan_no", "name", "nik", "phone_number")
@@ -165,9 +163,6 @@ func GetBulkSearch(c *fiber.Ctx) error {
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	userDetails := c.Locals("userDetails").(*user.User)
 	// find user loggin detail
-
-	fmt.Println("userDetails.Role.TierLevel ", userDetails.Role.TierLevel)
-	fmt.Println("userID ", userDetails.ID)
 
 	bulkSearch, err := GetBulkSearchSvc(userDetails.Role.TierLevel, userDetails.ID, companyID)
 	if err != nil {

@@ -44,7 +44,7 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/request-score", middleware.GetPayloadFromJWT(), middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
 	api.Get("/download-csv/:opsi", middleware.GetPayloadFromJWT(), genRetail.DownloadCSV)
 	api.Put("/upload-scoring-template", middleware.Auth(), middleware.IsRequestValid(genRetail.UploadScoringRequest{}), middleware.GetPayloadFromJWT(), middleware.DocUpload(), genRetail.UploadCSV)
-	api.Get("bulk-search", middleware.GetPayloadFromJWT(), genRetail.GetBulkSearch)
+	api.Get("/bulk-search", middleware.GetPayloadFromJWT(), genRetail.GetBulkSearch)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
