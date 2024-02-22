@@ -86,6 +86,7 @@ type BulkSearchRequest struct {
 type BulkSearchResponse struct {
 	TransactionID        string  `json:"transaction_id"`
 	Name                 string  `json:"name"`
+	PIC                  string  `json:"pic"`
 	IDCardNo             string  `json:"id_card_no"`
 	PhoneNo              string  `json:"phone_no"`
 	LoanNo               string  `json:"loan_no"`

@@ -102,6 +102,14 @@ func GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchRes
 			Type:                 v.Type,
 			Date:                 v.Date,
 		}
+
+		if tierLevel != 2 {
+			// make sure only pick from the member uploads
+			if userID != v.UserID {
+				bulkSearch.PIC = v.User.Name
+			}
+		}
+
 		responseBulkSearches = append(responseBulkSearches, bulkSearch)
 	}
 
