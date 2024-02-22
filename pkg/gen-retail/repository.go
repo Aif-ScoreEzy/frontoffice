@@ -28,10 +28,10 @@ func StoreImportData(newData []*BulkSearch, userID string) error {
 	return nil
 }
 
-func GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]BulkSearch, error) {
-	var bulkSearches []BulkSearch
+func GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]*BulkSearch, error) {
+	var bulkSearches []*BulkSearch
 
-	query := database.DBConn.Debug()
+	query := database.DBConn.Debug().Preload("User")
 
 	if tierLevel == 1 {
 		// admin
@@ -51,7 +51,7 @@ func GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]BulkSearch, e
 }
 
 func CountData(tierLevel uint, userID, companyID string) (int64, error) {
-	var bulkSearches []BulkSearch
+	var bulkSearches []*BulkSearch
 	var count int64
 
 	query := database.DBConn.Debug()
