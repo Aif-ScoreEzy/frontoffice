@@ -4,6 +4,7 @@ import (
 	"front-office/config/database"
 	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/company"
+	genretail "front-office/pkg/gen-retail"
 	"front-office/pkg/grading"
 	"front-office/pkg/industry"
 	"front-office/pkg/password_reset_token"
@@ -27,5 +28,6 @@ func Migrate() {
 		&company.Company{},
 		&industry.Industry{},
 		&product.Product{},
-		&grading.Grading{})
+		&grading.Grading{},
+		&genretail.BulkSearch{})
 }

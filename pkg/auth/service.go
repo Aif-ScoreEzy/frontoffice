@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"front-office/constant"
+	"front-office/common/constant"
 	"front-office/helper"
 	activation_token "front-office/pkg/activation-token"
 	"front-office/pkg/company"

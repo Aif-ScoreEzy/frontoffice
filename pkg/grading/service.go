@@ -2,7 +2,7 @@ package grading
 
 import (
 	"errors"
-	"front-office/constant"
+	"front-office/common/constant"
 	"time"
 
 	"github.com/google/uuid"

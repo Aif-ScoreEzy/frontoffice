@@ -2,7 +2,7 @@ package user
 
 import (
 	"errors"
-	"front-office/constant"
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/role"
 	"front-office/utility/mailjet"

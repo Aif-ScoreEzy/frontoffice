@@ -81,3 +81,14 @@ func FormatWIB(currentTime time.Time) string {
 
 	return currentTime.Format("2006-01-02 15:04:05 MST")
 }
+
+func IsValidTemplateHeader(x []string, str string) bool {
+	// iterate using the for loop
+	for i := 0; i < len(x); i++ {
+		// check
+		if x[i] == str {
+			return true
+		}
+	}
+	return false
+}

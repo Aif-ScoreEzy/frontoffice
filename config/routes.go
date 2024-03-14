@@ -6,6 +6,7 @@ import (
 	"front-office/pkg/company"
 	genRetail "front-office/pkg/gen-retail"
 	"front-office/pkg/grading"
+	"front-office/pkg/log"
 	"front-office/pkg/permission"
 	"front-office/pkg/role"
 	"front-office/pkg/user"
@@ -36,11 +37,14 @@ func SetupRoutes(app *fiber.App) {
 
 	// grading
 	api.Post("/create-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsRequest{}), grading.CreateGradings)
-	api.Get("/get-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), grading.GetGradings)
+	api.Get("/get-gradings", middleware.GetPayloadFromJWT(), grading.GetGradings)
 	api.Put("/update-gradings", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsRequest{}), grading.ReplaceGradings)
 	api.Put("/update-gradings-new", middleware.AdminAuth(), middleware.GetPayloadFromJWT(), middleware.IsRequestValid(grading.CreateGradingsNewRequest{}), grading.ReplaceGradingsNew)
 	// score
 	api.Post("/request-score", middleware.GetPayloadFromJWT(), middleware.IsRequestValid(genRetail.GenRetailRequest{}), genRetail.RequestScore)
+	api.Get("/download-csv/:opsi", middleware.GetPayloadFromJWT(), genRetail.DownloadCSV)
+	api.Put("/upload-scoring-template", middleware.Auth(), middleware.IsRequestValid(genRetail.UploadScoringRequest{}), middleware.GetPayloadFromJWT(), middleware.DocUpload(), genRetail.UploadCSV)
+	api.Get("/bulk-search", middleware.GetPayloadFromJWT(), genRetail.GetBulkSearch)
 
 	// company
 	api.Put("/company/:id", middleware.Auth(), middleware.IsRequestValid(company.UpdateCompanyRequest{}), company.UpdateCompanyByID)
@@ -57,6 +61,11 @@ func SetupRoutes(app *fiber.App) {
 	api.Get("/permission/:id", middleware.Auth(), permission.GetPermissionByID)
 	api.Put("/permission/:id", middleware.Auth(), middleware.IsRequestValid(permission.PermissionRequest{}), permission.UpdatePermissionByID)
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
+
+	// log
+	api.Get("/get-logs-by-date", log.GetTransactionLogsByDate)
+	api.Get("/get-logs-by-range-date", log.GetTransactionLogsByRangeDate)
+	api.Get("/get-logs-by-month", log.GetTransactionLogsByMonth)
 
 	// product
 	// api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
