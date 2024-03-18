@@ -63,9 +63,11 @@ func SetupRoutes(app *fiber.App) {
 	api.Delete("/permission/:id", middleware.Auth(), permission.DeletePermissionByID)
 
 	// log
-	api.Get("/get-logs-by-date", log.GetTransactionLogsByDate)
-	api.Get("/get-logs-by-range-date", log.GetTransactionLogsByRangeDate)
-	api.Get("/get-logs-by-month", log.GetTransactionLogsByMonth)
+	logAPI := api.Group("/log")
+	logAPI.Get("/by-date", log.GetTransactionLogsByDate)
+	logAPI.Get("/by-range-date", log.GetTransactionLogsByRangeDate)
+	logAPI.Get("/by-month", log.GetTransactionLogsByMonth)
+	logAPI.Get("/by-name", log.GetTransactionLogsByName)
 
 	// product
 	// api.Post("/product", middleware.Auth(), middleware.IsRequestValid(product.ProductRequest{}), product.CreateProduct)
