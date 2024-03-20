@@ -43,7 +43,7 @@ func GetPayloadFromJWT() fiber.Handler {
 		if len(bearerToken) != 2 {
 			resp := helper.ResponseFailed("Invalid token")
 
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
 		token := bearerToken[1]
@@ -52,7 +52,7 @@ func GetPayloadFromJWT() fiber.Handler {
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
 		userID, err := helper.ExtractUserIDFromClaims(claims)
@@ -65,7 +65,7 @@ func GetPayloadFromJWT() fiber.Handler {
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
 		// get detail user information
