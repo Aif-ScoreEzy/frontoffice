@@ -6,17 +6,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CreatePermission(c *fiber.Ctx) error {
+func NewController(service Service) Controller {
+	return &controller{Svc: service}
+}
+
+type controller struct {
+	Svc Service
+}
+
+type Controller interface {
+	CreatePermission(c *fiber.Ctx) error
+	GetPermissionByID(c *fiber.Ctx) error
+	UpdatePermissionByID(c *fiber.Ctx) error
+	DeletePermissionByID(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) CreatePermission(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PermissionRequest)
 
-	_, err := GetPermissionByNameSvc(req.Name)
+	_, err := ctrl.Svc.GetPermissionByNameSvc(req.Name)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	permission, err := CreatePermissionSvc(*req)
+	permission, err := ctrl.Svc.CreatePermissionSvc(*req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -31,10 +46,10 @@ func CreatePermission(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func GetPermissionByID(c *fiber.Ctx) error {
+func (ctrl *controller) GetPermissionByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	permission, err := IsPermissionExistSvc(id)
+	permission, err := ctrl.Svc.IsPermissionExistSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -49,25 +64,25 @@ func GetPermissionByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func UpdatePermissionByID(c *fiber.Ctx) error {
+func (ctrl *controller) UpdatePermissionByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PermissionRequest)
 	id := c.Params("id")
 
-	_, err := IsPermissionExistSvc(id)
+	_, err := ctrl.Svc.IsPermissionExistSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	_, err = GetPermissionByNameSvc(req.Name)
+	_, err = ctrl.Svc.GetPermissionByNameSvc(req.Name)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	permission, err := UpdatePermissionByIDSvc(*req, id)
+	permission, err := ctrl.Svc.UpdatePermissionByIDSvc(*req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -82,17 +97,17 @@ func UpdatePermissionByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func DeletePermissionByID(c *fiber.Ctx) error {
+func (ctrl *controller) DeletePermissionByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := IsPermissionExistSvc(id)
+	_, err := ctrl.Svc.IsPermissionExistSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	if err := DeletePermissionByIDSvc(id); err != nil {
+	if err := ctrl.Svc.DeletePermissionByIDSvc(id); err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
