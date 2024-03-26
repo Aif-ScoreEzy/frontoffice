@@ -7,7 +7,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func UpdateCompanyByID(c *fiber.Ctx) error {
+func NewController(service Service) Controller {
+	return &controller{Svc: service}
+}
+
+type controller struct {
+	Svc Service
+}
+
+type Controller interface {
+	UpdateCompanyByID(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateCompanyRequest)
 	id := c.Params("id")
 
@@ -18,7 +30,7 @@ func UpdateCompanyByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	company, err := UpdateCompanyByIDSvc(*req, id)
+	company, err := ctrl.Svc.UpdateCompanyByIDSvc(*req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
