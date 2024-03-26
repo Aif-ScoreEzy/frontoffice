@@ -2,7 +2,7 @@ package company
 
 import (
 	"front-office/helper"
-	"front-office/pkg/industry"
+	"front-office/pkg/core/industry"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,7 +12,8 @@ func NewController(service Service) Controller {
 }
 
 type controller struct {
-	Svc Service
+	Svc         Service
+	SvcIndustry industry.Service
 }
 
 type Controller interface {
@@ -23,7 +24,7 @@ func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateCompanyRequest)
 	id := c.Params("id")
 
-	_, err := industry.IsIndustryIDExistSvc(req.IndustryID)
+	_, err := ctrl.SvcIndustry.IsIndustryIDExistSvc(req.IndustryID)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 

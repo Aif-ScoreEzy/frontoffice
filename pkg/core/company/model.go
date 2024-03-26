@@ -1,7 +1,7 @@
 package company
 
 import (
-	"front-office/pkg/industry"
+	"front-office/pkg/core/industry"
 	"time"
 
 	"gorm.io/gorm"

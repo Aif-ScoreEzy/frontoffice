@@ -2,15 +2,32 @@ package role
 
 import (
 	"front-office/helper"
-	"front-office/pkg/permission"
+	"front-office/pkg/core/permission"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func CreateRole(c *fiber.Ctx) error {
+func NewController(service Service) Controller {
+	return &controller{Svc: service}
+}
+
+type controller struct {
+	Svc           Service
+	SvcPermission permission.Service
+}
+
+type Controller interface {
+	CreateRole(c *fiber.Ctx) error
+	GetAllRoles(c *fiber.Ctx) error
+	GetRoleByID(c *fiber.Ctx) error
+	UpdateRole(c *fiber.Ctx) error
+	DeleteRole(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) CreateRole(c *fiber.Ctx) error {
 	request := c.Locals("request").(*CreateRoleRequest)
 
-	_, err := GetRoleByNameSvc(request.Name)
+	_, err := ctrl.Svc.GetRoleByNameSvc(request.Name)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -18,7 +35,7 @@ func CreateRole(c *fiber.Ctx) error {
 	}
 
 	for _, permissionData := range request.Permissions {
-		_, err := permission.IsPermissionExistSvc(permissionData.ID)
+		_, err := ctrl.SvcPermission.IsPermissionExistSvc(permissionData.ID)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
@@ -26,7 +43,7 @@ func CreateRole(c *fiber.Ctx) error {
 		}
 	}
 
-	role, err := CreateRoleSvc(request)
+	role, err := ctrl.Svc.CreateRoleSvc(request)
 	if err != nil && err.Error() == "record not found" {
 		resp := helper.ResponseFailed("Data is not found")
 
@@ -45,8 +62,8 @@ func CreateRole(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func GetAllRoles(c *fiber.Ctx) error {
-	roles, err := GetAllRolesSvc()
+func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
+	roles, err := ctrl.Svc.GetAllRolesSvc()
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -61,10 +78,10 @@ func GetAllRoles(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func GetRoleByID(c *fiber.Ctx) error {
+func (ctrl *controller) GetRoleByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	role, err := FindRoleByIDSvc(id)
+	role, err := ctrl.Svc.FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -79,25 +96,25 @@ func GetRoleByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func UpdateRole(c *fiber.Ctx) error {
+func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
-	_, err := FindRoleByIDSvc(id)
+	_, err := ctrl.Svc.FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	_, err = GetRoleByNameSvc(req.Name)
+	_, err = ctrl.Svc.GetRoleByNameSvc(req.Name)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	role, err := UpdateRoleByIDSvc(req, id)
+	role, err := ctrl.Svc.UpdateRoleByIDSvc(req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -112,17 +129,17 @@ func UpdateRole(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func DeleteRole(c *fiber.Ctx) error {
+func (ctrl *controller) DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := FindRoleByIDSvc(id)
+	_, err := ctrl.Svc.FindRoleByIDSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	if err := DeleteRoleByIDSvc(id); err != nil {
+	if err := ctrl.Svc.DeleteRoleByIDSvc(id); err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)

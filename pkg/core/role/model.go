@@ -1,7 +1,7 @@
 package role
 
 import (
-	"front-office/pkg/permission"
+	"front-office/pkg/core/permission"
 	"time"
 
 	"gorm.io/gorm"
