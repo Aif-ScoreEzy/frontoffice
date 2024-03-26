@@ -1,4 +1,4 @@
-package activation_token
+package activationtoken
 
 import (
 	"front-office/pkg/user"

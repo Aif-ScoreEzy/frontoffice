@@ -1,4 +1,4 @@
-package activation_token
+package activationtoken
 
 import (
 	"errors"
@@ -12,7 +12,22 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error) {
+func NewService(repo Repository) Service {
+	return &service{Repo: repo}
+}
+
+type service struct {
+	Repo Repository
+}
+
+type Service interface {
+	CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error)
+	ValidateActivationToken(authHeader string) (string, string, error)
+	FindActivationTokenByTokenSvc(token string) (*ActivationToken, error)
+	FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error)
+}
+
+func (svc *service) CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
 
@@ -28,7 +43,7 @@ func CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string,
 		UserID: userID,
 	}
 
-	activationToken, err = CreateActivationToken(activationToken)
+	activationToken, err = svc.Repo.CreateActivationToken(activationToken)
 	if err != nil {
 		return "", nil, err
 	}
@@ -36,7 +51,7 @@ func CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string,
 	return token, activationToken, nil
 }
 
-func ValidateActivationToken(authHeader string) (string, string, error) {
+func (svc *service) ValidateActivationToken(authHeader string) (string, string, error) {
 	secret := os.Getenv("JWT_SECRET_KEY")
 
 	bearerToken := strings.Split(authHeader, " ")
@@ -59,8 +74,8 @@ func ValidateActivationToken(authHeader string) (string, string, error) {
 	return token, userID, nil
 }
 
-func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
-	result, err := FindOneActivationTokenBytoken(token)
+func (svc *service) FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
+	result, err := svc.Repo.FindOneActivationTokenBytoken(token)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +83,8 @@ func FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
 	return result, nil
 }
 
-func FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error) {
-	result, err := FindOneActivationTokenByUserID(userID)
+func (svc *service) FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error) {
+	result, err := svc.Repo.FindOneActivationTokenByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
