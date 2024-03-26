@@ -1,4 +1,4 @@
-package password_reset_token
+package passwordresettoken
 
 import (
 	"front-office/pkg/user"
