@@ -2,16 +2,31 @@ package log
 
 import (
 	"encoding/json"
+	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"io"
 	"net/http"
-	"os"
 )
 
-func GetTransactionLogsByDateSvc(companyID, date string) (*model.AifResponse, int, error) {
+func NewService(cfg config.Config) Service {
+	return &service{Cfg: cfg}
+}
+
+type service struct {
+	Cfg config.Config
+}
+
+type Service interface {
+	GetTransactionLogsByDateSvc(companyID, date string) (*model.AifResponse, int, error)
+	GetTransactionLogsByRangeDateSvc(startDate, endDate, companyID, page string) (*model.AifResponse, int, error)
+	GetTransactionLogsByMonthSvc(companyID, month string) (*model.AifResponse, int, error)
+	GetTransactionLogsByNameSvc(companyID, name string) (*model.AifResponse, int, error)
+}
+
+func (svc *service) GetTransactionLogsByDateSvc(companyID, date string) (*model.AifResponse, int, error) {
 	var dataResp *model.AifResponse
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_LOGS_BY_DATE")
+	url := svc.Cfg.Env.AifcoreHost + "/api/log/by"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -35,9 +50,9 @@ func GetTransactionLogsByDateSvc(companyID, date string) (*model.AifResponse, in
 	return dataResp, response.StatusCode, nil
 }
 
-func GetTransactionLogsByRangeDateSvc(startDate, endDate, companyID, page string) (*model.AifResponse, int, error) {
+func (svc *service) GetTransactionLogsByRangeDateSvc(startDate, endDate, companyID, page string) (*model.AifResponse, int, error) {
 	var dataResp *model.AifResponse
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_LOGS_BY_RANGE_DATE")
+	url := svc.Cfg.Env.AifcoreHost + "/api/log/byrange"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -63,9 +78,9 @@ func GetTransactionLogsByRangeDateSvc(startDate, endDate, companyID, page string
 	return dataResp, response.StatusCode, nil
 }
 
-func GetTransactionLogsByMonthSvc(companyID, month string) (*model.AifResponse, int, error) {
+func (svc *service) GetTransactionLogsByMonthSvc(companyID, month string) (*model.AifResponse, int, error) {
 	var dataResp *model.AifResponse
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_LOGS_BY_MONTH")
+	url := svc.Cfg.Env.AifcoreHost + "/api/log/bymonth"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -89,9 +104,9 @@ func GetTransactionLogsByMonthSvc(companyID, month string) (*model.AifResponse, 
 	return dataResp, response.StatusCode, nil
 }
 
-func GetTransactionLogsByNameSvc(companyID, name string) (*model.AifResponse, int, error) {
+func (svc *service) GetTransactionLogsByNameSvc(companyID, name string) (*model.AifResponse, int, error) {
 	var dataResp *model.AifResponse
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GET_LOGS_BY_NAME")
+	url := svc.Cfg.Env.AifcoreHost + "/api/log/byname"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
