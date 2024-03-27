@@ -1,8 +1,8 @@
 package user
 
 import (
-	"front-office/pkg/company"
-	"front-office/pkg/role"
+	"front-office/pkg/core/company"
+	"front-office/pkg/core/role"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"

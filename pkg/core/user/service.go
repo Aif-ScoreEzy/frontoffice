@@ -4,14 +4,36 @@ import (
 	"errors"
 	"front-office/common/constant"
 	"front-office/helper"
-	"front-office/pkg/role"
+	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
 	"strconv"
 	"time"
 )
 
-func FindUserByEmailSvc(email string) (*User, error) {
-	user, err := FindOneByEmail(email)
+func NewService(repo Repository) Service {
+	return &service{Repo: repo}
+}
+
+type service struct {
+	Repo     Repository
+	RoleRepo role.Repository
+}
+
+type Service interface {
+	FindUserByEmailSvc(email string) (*User, error)
+	FindUserByKeySvc(key string) (*User, error)
+	FindUserByIDSvc(id string) (*User, error)
+	FindUserByIDAndCompanyIDSvc(id, companyID string) (*User, error)
+	UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error)
+	UploadProfileImageSvc(user *User, filename *string) (*User, error)
+	UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error)
+	GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error)
+	GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error)
+	DeleteUserByIDSvc(id string) error
+}
+
+func (svc *service) FindUserByEmailSvc(email string) (*User, error) {
+	user, err := svc.Repo.FindOneByEmail(email)
 	if err != nil {
 		return nil, err
 	}
@@ -19,8 +41,8 @@ func FindUserByEmailSvc(email string) (*User, error) {
 	return user, nil
 }
 
-func FindUserByKeySvc(key string) (*User, error) {
-	user, err := FindOneByKey(key)
+func (svc *service) FindUserByKeySvc(key string) (*User, error) {
+	user, err := svc.Repo.FindOneByKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +50,8 @@ func FindUserByKeySvc(key string) (*User, error) {
 	return user, nil
 }
 
-func FindUserByIDSvc(id, companyID string) (*User, error) {
-	user, err := FindOneByUserIDAndCompanyID(id, companyID)
+func (svc *service) FindUserByIDSvc(id string) (*User, error) {
+	user, err := svc.Repo.FindOneByUserID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +59,16 @@ func FindUserByIDSvc(id, companyID string) (*User, error) {
 	return user, err
 }
 
-func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
+func (svc *service) FindUserByIDAndCompanyIDSvc(id, companyID string) (*User, error) {
+	user, err := svc.Repo.FindOneByUserIDAndCompanyID(id, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+func (svc *service) UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -45,12 +76,12 @@ func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
 	}
 
 	if req.Email != nil {
-		result, _ := FindOneByUserIDAndCompanyID(user.ID, user.CompanyID)
+		result, _ := svc.Repo.FindOneByUserIDAndCompanyID(user.ID, user.CompanyID)
 		if result.Role.TierLevel == 2 {
 			return nil, errors.New(constant.RequestProhibited)
 		}
 
-		result, _ = FindUserByEmailSvc(*req.Email)
+		result, _ = svc.Repo.FindOneByEmail(*req.Email)
 		if result != nil {
 			return nil, errors.New(constant.EmailAlreadyExists)
 		}
@@ -60,7 +91,7 @@ func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, user)
+	user, err := svc.Repo.UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +99,7 @@ func UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error) {
 	return user, nil
 }
 
-func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
+func (svc *service) UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 	updateUser := map[string]interface{}{}
 
 	if filename != nil {
@@ -77,7 +108,7 @@ func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := UpdateOneByID(updateUser, user)
+	user, err := svc.Repo.UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +116,7 @@ func UploadProfileImageSvc(user *User, filename *string) (*User, error) {
 	return user, nil
 }
 
-func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
+func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
 	oldEmail := user.Email
 	currentTime := time.Now()
@@ -95,7 +126,7 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	}
 
 	if req.Email != nil {
-		userExists, _ := FindUserByEmailSvc(*req.Email)
+		userExists, _ := svc.Repo.FindOneByEmail(*req.Email)
 		if userExists != nil {
 			return nil, errors.New(constant.EmailAlreadyExists)
 		}
@@ -104,7 +135,7 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	}
 
 	if req.RoleID != nil {
-		role, err := role.FindOneByID(*req.RoleID)
+		role, err := svc.RoleRepo.FindOneByID(*req.RoleID)
 		if role == nil {
 			return nil, errors.New(constant.DataNotFound)
 		} else if err != nil {
@@ -130,7 +161,7 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 
 	updateUser["updated_at"] = currentTime
 
-	updatedUser, err := UpdateOneByID(updateUser, user)
+	updatedUser, err := svc.Repo.UpdateOneByID(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +178,7 @@ func UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	return updatedUser, nil
 }
 
-func GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
+func (svc *service) GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
@@ -180,7 +211,7 @@ func GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, co
 		endTime = helper.FormatEndTimeForSQL(endDate)
 	}
 
-	users, err := FindAll(intLimit, offset, keyword, roleID, status, startTime, endTime, companyID)
+	users, err := svc.Repo.FindAll(intLimit, offset, keyword, roleID, status, startTime, endTime, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +235,7 @@ func GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, co
 	return responseUsers, nil
 }
 
-func GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error) {
+func (svc *service) GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error) {
 	var startTime, endTime string
 	layoutPostgreSQLDate := "2006-01-02"
 	if startDate != "" {
@@ -229,12 +260,12 @@ func GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID stri
 		endTime = helper.FormatEndTimeForSQL(endDate)
 	}
 
-	count, err := GetTotalData(keyword, roleID, active, startTime, endTime, companyID)
+	count, err := svc.Repo.GetTotalData(keyword, roleID, active, startTime, endTime, companyID)
 	return count, err
 }
 
-func DeleteUserByIDSvc(id string) error {
-	err := DeleteByID(id)
+func (svc *service) DeleteUserByIDSvc(id string) error {
+	err := svc.Repo.DeleteByID(id)
 	if err != nil {
 		return err
 	}
