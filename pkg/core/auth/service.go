@@ -2,14 +2,14 @@ package auth
 
 import (
 	"errors"
+	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
-	activation_token "front-office/pkg/activation-token"
-	"front-office/pkg/company"
-	"front-office/pkg/role"
-	"front-office/pkg/user"
+	"front-office/pkg/core/activationtoken"
+	"front-office/pkg/core/company"
+	"front-office/pkg/core/role"
+	"front-office/pkg/core/user"
 	"front-office/utility/mailjet"
-	"os"
 	"strconv"
 	"time"
 
@@ -17,9 +17,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_VERIFICATION_EXPIRES_MINUTES"))
+func NewService(repo Repository) Service {
+	return &service{Repo: repo}
+}
+
+type service struct {
+	Repo     Repository
+	RepoUser user.Repository
+	RepoRole role.Repository
+	Cfg      config.Config
+}
+
+type Service interface {
+	RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
+	RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error)
+	VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error)
+	PasswordResetSvc(userID, token string, req *PasswordResetRequest) error
+	LoginSvc(req *UserLoginRequest, user *user.User) (string, error)
+	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
+}
+
+func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtVerificationExpiresMinutes)
 
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
@@ -28,7 +48,7 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
 
 	var tierLevel uint
 	if req.RoleID != "" {
-		result, err := role.FindRoleByIDSvc(req.RoleID)
+		result, err := svc.RepoRole.FindOneByID(req.RoleID)
 		if result == nil {
 			return nil, "", errors.New(constant.DataNotFound)
 		} else if err != nil {
@@ -67,13 +87,13 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
 	}
 
 	tokenID := uuid.NewString()
-	dataActivationToken := &activation_token.ActivationToken{
+	dataActivationToken := &activationtoken.ActivationToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: userID,
 	}
 
-	user, err := CreateAdmin(dataCompany, dataUser, dataActivationToken)
+	user, err := svc.Repo.CreateAdmin(dataCompany, dataUser, dataActivationToken)
 	if err != nil {
 		return user, "", err
 	}
@@ -81,12 +101,12 @@ func RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
 	return user, "", nil
 }
 
-func RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error) {
+func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error) {
 	userID := uuid.NewString()
 
 	var tierLevel uint
 	if req.RoleID != "" {
-		result, err := role.FindRoleByIDSvc(req.RoleID)
+		result, err := svc.RepoRole.FindOneByID(req.RoleID)
 		if result == nil {
 			return nil, "", errors.New(constant.DataNotFound)
 		} else if err != nil {
@@ -106,8 +126,8 @@ func RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user
 		CompanyID: companyID,
 	}
 
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, userID, dataUser.CompanyID, tierLevel)
 	if err != nil {
@@ -115,13 +135,13 @@ func RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user
 	}
 
 	tokenID := uuid.NewString()
-	dataToken := &activation_token.ActivationToken{
+	dataToken := &activationtoken.ActivationToken{
 		ID:     tokenID,
 		Token:  token,
 		UserID: userID,
 	}
 
-	user, err := CreateMember(dataUser, dataToken)
+	user, err := svc.Repo.CreateMember(dataUser, dataToken)
 	if err != nil {
 		return nil, "", err
 	}
@@ -129,7 +149,7 @@ func RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user
 	return user, token, nil
 }
 
-func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
+func (svc *service) VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return nil, errors.New(constant.InvalidPassword)
@@ -147,7 +167,7 @@ func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.Use
 	updateUser["is_verified"] = true
 	updateUser["updated_at"] = time.Now()
 
-	user, err := VerifyUserTx(updateUser, userID, token)
+	user, err := svc.Repo.VerifyUserTx(updateUser, userID, token)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +175,7 @@ func VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.Use
 	return user, nil
 }
 
-func PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
+func (svc *service) PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return errors.New(constant.InvalidPassword)
@@ -165,7 +185,7 @@ func PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
 		return errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	err := ResetPassword(userID, token, req)
+	err := svc.Repo.ResetPassword(userID, token, req)
 	if err != nil {
 		return err
 	}
@@ -173,9 +193,9 @@ func PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
 	return nil
 }
 
-func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_EXPIRES_MINUTES"))
+func (svc *service) LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
 	err := bcrypt.CompareHashAndPassword(
 		[]byte(user.Password),
 		[]byte(req.Password),
@@ -192,7 +212,7 @@ func LoginSvc(req *UserLoginRequest, user *user.User) (string, error) {
 	return token, nil
 }
 
-func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
+func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
 
 	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(req.CurrentPassword))
@@ -212,7 +232,7 @@ func ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*use
 	updateUser["password"] = user.SetPassword(req.NewPassword)
 	updateUser["updated_at"] = time.Now()
 
-	data, err := user.UpdateOneByID(updateUser, currentUser)
+	data, err := svc.RepoUser.UpdateOneByID(updateUser, currentUser)
 	if err != nil {
 		return nil, err
 	}

@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"front-office/pkg/company"
-	"front-office/pkg/role"
+	"front-office/pkg/core/company"
+	"front-office/pkg/core/role"
 	"time"
 
 	"gorm.io/gorm"
