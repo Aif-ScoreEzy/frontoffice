@@ -3,18 +3,34 @@ package genretail
 import (
 	"bytes"
 	"encoding/json"
+	"front-office/app/config"
 	"front-office/common/constant"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 )
 
-func GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error) {
+func NewService(repo Repository) Service {
+	return &service{Repo: repo}
+}
+
+type service struct {
+	Repo Repository
+	Cfg  config.Config
+}
+
+type Service interface {
+	GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error)
+	BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, companyID string) error
+	GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchResponse, error)
+	GetTotalDataBulk(tierLevel uint, userID, companyID string) (int64, error)
+}
+
+func (svc *service) GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error) {
 	var dataResponse *GenRetailV3ModelResponse
 
-	url := os.Getenv("AIFCORE_HOST") + os.Getenv("GEN_RETAIL_V3")
+	url := svc.Cfg.Env.AifcoreHost + "/api/score/genretail/v3"
 
 	requestByte, _ := json.Marshal(requestData)
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(requestByte))
@@ -37,7 +53,7 @@ func GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3Mode
 	return dataResponse, nil
 }
 
-func BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, companyID string) error {
+func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, companyID string) error {
 	var bulkSearches []*BulkSearch
 	uploadID := uuid.NewString()
 
@@ -51,7 +67,7 @@ func BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, comp
 			PhoneNo:  v.PhoneNumber,
 		}
 
-		genRetailResponse, errRequest := GenRetailV3(genRetailRequest, apiKey)
+		genRetailResponse, errRequest := svc.GenRetailV3(genRetailRequest, apiKey)
 		if errRequest != nil {
 			return errRequest
 		}
@@ -74,7 +90,7 @@ func BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, comp
 		bulkSearches = append(bulkSearches, bulkSearch)
 	}
 
-	err := StoreImportData(bulkSearches, userID)
+	err := svc.Repo.StoreImportData(bulkSearches, userID)
 	if err != nil {
 		return err
 	}
@@ -82,9 +98,9 @@ func BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, comp
 	return nil
 }
 
-func GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchResponse, error) {
+func (svc *service) GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchResponse, error) {
 
-	bulkSearches, err := GetAllBulkSearch(tierLevel, userID, companyID)
+	bulkSearches, err := svc.Repo.GetAllBulkSearch(tierLevel, userID, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -116,9 +132,7 @@ func GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchRes
 	return responseBulkSearches, nil
 }
 
-func GetTotalDataBulk(tierLevel uint, userID, companyID string) (int64, error) {
-
-	count, err := CountData(tierLevel, userID, companyID)
+func (svc *service) GetTotalDataBulk(tierLevel uint, userID, companyID string) (int64, error) {
+	count, err := svc.Repo.CountData(tierLevel, userID, companyID)
 	return count, err
-
 }

@@ -4,29 +4,45 @@ import (
 	"encoding/csv"
 	"fmt"
 	"front-office/helper"
+	"front-office/pkg/core/grading"
+	"front-office/pkg/core/user"
 	"io"
-
-	"front-office/pkg/grading"
-	"front-office/pkg/user"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 
 	"front-office/common/constant"
 )
 
-func RequestScore(c *fiber.Ctx) error {
+func NewController(service Service) Controller {
+	return &controller{Svc: service}
+}
+
+type controller struct {
+	Svc        Service
+	SvcGrading grading.Service
+}
+
+type Controller interface {
+	RequestScore(c *fiber.Ctx) error
+	DownloadCSV(c *fiber.Ctx) error
+	UploadCSV(c *fiber.Ctx) error
+	GetBulkSearch(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*GenRetailRequest)
 	apiKey := c.Get("X-API-KEY")
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
 	// make sure parameter settings are set
-	gradings, _ := grading.GetGradingsSvc(companyID)
+	gradings, _ := ctrl.SvcGrading.GetGradingsSvc(companyID)
 	if len(gradings) < 1 {
 		statusCode, resp := helper.GetError(constant.ParamSettingIsNotSet)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	genRetailResponse, errRequest := GenRetailV3(req, apiKey)
+	genRetailResponse, errRequest := ctrl.Svc.GenRetailV3(req, apiKey)
 	if errRequest != nil {
 		statusCode, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -51,7 +67,7 @@ func RequestScore(c *fiber.Ctx) error {
 	return c.Status(genRetailResponse.StatusCode).JSON(resp)
 }
 
-func DownloadCSV(c *fiber.Ctx) error {
+func (ctrl *controller) DownloadCSV(c *fiber.Ctx) error {
 	opsi := c.Params("opsi")
 
 	filePath := fmt.Sprintf("./public/bulk_template/%s.csv", opsi)
@@ -59,12 +75,12 @@ func DownloadCSV(c *fiber.Ctx) error {
 	return c.SendFile(filePath)
 }
 
-func UploadCSV(c *fiber.Ctx) error {
+func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	tempType := fmt.Sprintf("%v", c.Locals("tempType"))
 	apiKey := c.Get("X-API-KEY")
-	userDetails := c.Locals("userDetails").(*user.User)
 
 	// Get the file from the form data
 	fileHeader, err := c.FormFile("file")
@@ -131,20 +147,20 @@ func UploadCSV(c *fiber.Ctx) error {
 		storeData = append(storeData, insertNew)
 	}
 
-	processInsert := BulkSearchUploadSvc(storeData, tempType, apiKey, userID, companyID)
+	processInsert := ctrl.Svc.BulkSearchUploadSvc(storeData, tempType, apiKey, userID, companyID)
 
 	if processInsert != nil {
 		statusCode, resp := helper.GetError(constant.ErrorUploadDataCSV)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	bulkSearch, err := GetBulkSearchSvc(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := GetTotalDataBulk(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userID, companyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
@@ -159,18 +175,18 @@ func UploadCSV(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func GetBulkSearch(c *fiber.Ctx) error {
+func (ctrl *controller) GetBulkSearch(c *fiber.Ctx) error {
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 	userDetails := c.Locals("userDetails").(*user.User)
 	// find user loggin detail
 
-	bulkSearch, err := GetBulkSearchSvc(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(userDetails.Role.TierLevel, userDetails.ID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := GetTotalDataBulk(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataBulk(userDetails.Role.TierLevel, userDetails.ID, companyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,

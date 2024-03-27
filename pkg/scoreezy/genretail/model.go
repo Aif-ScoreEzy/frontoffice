@@ -1,8 +1,8 @@
 package genretail
 
 import (
-	"front-office/pkg/company"
-	"front-office/pkg/user"
+	"front-office/pkg/core/company"
+	"front-office/pkg/core/user"
 
 	"time"
 
