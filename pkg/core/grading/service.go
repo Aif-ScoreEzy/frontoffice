@@ -8,7 +8,26 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, error) {
+func NewService(repo Repository) Service {
+	return &service{Repo: repo}
+}
+
+type service struct {
+	Repo Repository
+}
+
+type Service interface {
+	CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, error)
+	GetGradingByGradinglabelSvc(gradingLabel, companyID string) (*Grading, error)
+	GetGradingByIDSvc(gradingID, companyID string) (*Grading, error)
+	GetGradingsSvc(companyID string) ([]*Grading, error)
+	UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, error)
+	ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, companyID string) error
+	ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, companyID string) error
+	DeleteGradingsSvc(companyID string) error
+}
+
+func (svc *service) CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, error) {
 	gradingID := uuid.NewString()
 
 	if req.GradingLabel == "" {
@@ -31,7 +50,7 @@ func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, er
 		CompanyID:    companyID,
 	}
 
-	grading, err := CreateGrading(gradingData)
+	grading, err := svc.Repo.CreateGrading(gradingData)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +58,8 @@ func CreateGradingSvc(req *CreateGradingRequest, companyID string) (*Grading, er
 	return grading, nil
 }
 
-func GetGradingByGradinglabelSvc(gradingLabel, companyID string) (*Grading, error) {
-	grading, err := FindOneByGradingLabel(gradingLabel, companyID)
+func (svc *service) GetGradingByGradinglabelSvc(gradingLabel, companyID string) (*Grading, error) {
+	grading, err := svc.Repo.FindOneByGradingLabel(gradingLabel, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +67,8 @@ func GetGradingByGradinglabelSvc(gradingLabel, companyID string) (*Grading, erro
 	return grading, nil
 }
 
-func GetGradingByIDSvc(gradingID, companyID string) (*Grading, error) {
-	grading, err := FindOneByID(gradingID, companyID)
+func (svc *service) GetGradingByIDSvc(gradingID, companyID string) (*Grading, error) {
+	grading, err := svc.Repo.FindOneByID(gradingID, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +76,8 @@ func GetGradingByIDSvc(gradingID, companyID string) (*Grading, error) {
 	return grading, nil
 }
 
-func GetGradingsSvc(companyID string) ([]*Grading, error) {
-	gradings, err := FindAllGradings(companyID)
+func (svc *service) GetGradingsSvc(companyID string) ([]*Grading, error) {
+	gradings, err := svc.Repo.FindAllGradings(companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +85,7 @@ func GetGradingsSvc(companyID string) ([]*Grading, error) {
 	return gradings, nil
 }
 
-func UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, error) {
+func (svc *service) UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, error) {
 	updateGrading := &UpdateGradingRequest{}
 
 	if req.IsDeleted {
@@ -82,7 +101,7 @@ func UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, er
 		}
 	}
 
-	grading, err := UpdateOneByID(updateGrading, req.ID, companyID)
+	grading, err := svc.Repo.UpdateOneByID(updateGrading, req.ID, companyID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +109,7 @@ func UpdateGradingSvc(req *UpdateGradingRequest, companyID string) (*Grading, er
 	return grading, nil
 }
 
-func ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, companyID string) error {
+func (svc *service) ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, companyID string) error {
 	var gradings []*Grading
 
 	for _, createGradingRequest := range createGradingsRequest.CreateGradingsRequest {
@@ -118,7 +137,7 @@ func ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, company
 		gradings = append(gradings, grading)
 	}
 
-	err := ReplaceAllGradings(gradings, companyID)
+	err := svc.Repo.ReplaceAllGradings(gradings, companyID)
 	if err != nil {
 		return err
 	}
@@ -126,7 +145,7 @@ func ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, company
 	return nil
 }
 
-func ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, companyID string) error {
+func (svc *service) ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, companyID string) error {
 	var gradings []*Grading
 
 	for _, createGradingRequest := range createGradingsRequest.CreateGradingsNewRequest {
@@ -157,7 +176,7 @@ func ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, c
 		gradings = append(gradings, grading)
 	}
 
-	err := ReplaceAllGradings(gradings, companyID)
+	err := svc.Repo.ReplaceAllGradings(gradings, companyID)
 	if err != nil {
 		return err
 	}
@@ -165,8 +184,8 @@ func ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, c
 	return nil
 }
 
-func DeleteGradingsSvc(companyID string) error {
-	err := DeleteAllGradings(companyID)
+func (svc *service) DeleteGradingsSvc(companyID string) error {
+	err := svc.Repo.DeleteAllGradings(companyID)
 	if err != nil {
 		return err
 	}

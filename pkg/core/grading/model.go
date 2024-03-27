@@ -1,7 +1,7 @@
 package grading
 
 import (
-	"front-office/pkg/company"
+	"front-office/pkg/core/company"
 	"time"
 
 	"gorm.io/gorm"
