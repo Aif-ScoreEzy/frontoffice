@@ -9,12 +9,12 @@ import (
 	"net/http"
 )
 
-func NewService(cfg config.Config) Service {
+func NewService(cfg *config.Config) Service {
 	return &service{Cfg: cfg}
 }
 
 type service struct {
-	Cfg config.Config
+	Cfg *config.Config
 }
 
 type Service interface {

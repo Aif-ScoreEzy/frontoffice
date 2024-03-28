@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, svcIndustry industry.Service) Controller {
+	return &controller{Svc: service, SvcIndustry: svcIndustry}
 }
 
 type controller struct {
@@ -24,11 +24,13 @@ func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateCompanyRequest)
 	id := c.Params("id")
 
-	_, err := ctrl.SvcIndustry.IsIndustryIDExistSvc(req.IndustryID)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
+	if req.IndustryID != "" {
+		_, err := ctrl.SvcIndustry.IsIndustryIDExistSvc(req.IndustryID)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
 	}
 
 	company, err := ctrl.Svc.UpdateCompanyByIDSvc(*req, id)

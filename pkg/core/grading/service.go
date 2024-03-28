@@ -149,7 +149,6 @@ func (svc *service) ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradin
 	var gradings []*Grading
 
 	for _, createGradingRequest := range createGradingsRequest.CreateGradingsNewRequest {
-
 		if createGradingRequest.Grade == "" {
 			return errors.New(constant.FieldGradingLabelEmpty)
 		}
