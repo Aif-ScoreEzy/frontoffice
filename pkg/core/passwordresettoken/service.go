@@ -1,20 +1,21 @@
 package passwordresettoken
 
 import (
+	"front-office/app/config"
 	"front-office/helper"
-	"front-office/pkg/user"
-	"os"
+	"front-office/pkg/core/user"
 	"strconv"
 
 	"github.com/google/uuid"
 )
 
-func NewService(repo Repository) Service {
-	return &service{Repo: repo}
+func NewService(repo Repository, cfg *config.Config) Service {
+	return &service{Repo: repo, Cfg: cfg}
 }
 
 type service struct {
 	Repo Repository
+	Cfg  *config.Config
 }
 
 type Service interface {
@@ -23,8 +24,8 @@ type Service interface {
 }
 
 func (svc *service) CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtResetPasswordExpiresMinutes)
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
 	if err != nil {

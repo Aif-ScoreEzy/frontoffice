@@ -1,7 +1,7 @@
 package passwordresettoken
 
 import (
-	"front-office/pkg/user"
+	"front-office/pkg/core/user"
 	"time"
 
 	"gorm.io/gorm"

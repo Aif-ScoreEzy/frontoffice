@@ -3,21 +3,22 @@ package activationtoken
 import (
 	"errors"
 
+	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
-	"os"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
-func NewService(repo Repository) Service {
-	return &service{Repo: repo}
+func NewService(repo Repository, cfg *config.Config) Service {
+	return &service{Repo: repo, Cfg: cfg}
 }
 
 type service struct {
 	Repo Repository
+	Cfg  *config.Config
 }
 
 type Service interface {
@@ -28,8 +29,8 @@ type Service interface {
 }
 
 func (svc *service) CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, userID, companyID, tierLevel)
 	if err != nil {
@@ -52,7 +53,7 @@ func (svc *service) CreateActivationTokenSvc(userID, companyID string, tierLevel
 }
 
 func (svc *service) ValidateActivationToken(authHeader string) (string, string, error) {
-	secret := os.Getenv("JWT_SECRET_KEY")
+	secret := svc.Cfg.Env.JwtSecretKey
 
 	bearerToken := strings.Split(authHeader, " ")
 	if len(bearerToken) != 2 {
