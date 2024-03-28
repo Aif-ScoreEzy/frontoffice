@@ -11,13 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewService(repo Repository) Service {
-	return &service{Repo: repo}
+func NewService(repo Repository, cfg *config.Config) Service {
+	return &service{Repo: repo, Cfg: cfg}
 }
 
 type service struct {
 	Repo Repository
-	Cfg  config.Config
+	Cfg  *config.Config
 }
 
 type Service interface {
@@ -34,7 +34,6 @@ func (svc *service) GenRetailV3(requestData *GenRetailRequest, apiKey string) (*
 
 	requestByte, _ := json.Marshal(requestData)
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(requestByte))
-
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	request.Header.Set(constant.XAPIKey, apiKey)
 

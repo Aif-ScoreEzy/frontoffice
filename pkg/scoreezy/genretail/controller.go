@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"front-office/helper"
 	"front-office/pkg/core/grading"
-	"front-office/pkg/core/user"
 	"io"
 	"strconv"
 
@@ -14,8 +13,8 @@ import (
 	"front-office/common/constant"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, svcGrading grading.Service) Controller {
+	return &controller{Svc: service, SvcGrading: svcGrading}
 }
 
 type controller struct {
@@ -176,17 +175,18 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetBulkSearch(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-	userDetails := c.Locals("userDetails").(*user.User)
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	// find user loggin detail
 
-	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetTotalDataBulk(userDetails.Role.TierLevel, userDetails.ID, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userID, companyID)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
