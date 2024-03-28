@@ -17,15 +17,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func NewService(repo Repository) Service {
-	return &service{Repo: repo}
+func NewService(
+	repo Repository,
+	repoUser user.Repository,
+	repoRole role.Repository,
+	cfg *config.Config,
+) Service {
+	return &service{
+		Repo:     repo,
+		RepoUser: repoUser,
+		RepoRole: repoRole,
+		Cfg:      cfg,
+	}
 }
 
 type service struct {
 	Repo     Repository
 	RepoUser user.Repository
 	RepoRole role.Repository
-	Cfg      config.Config
+	Cfg      *config.Config
 }
 
 type Service interface {
@@ -98,7 +108,7 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 		return user, "", err
 	}
 
-	return user, "", nil
+	return user, token, nil
 }
 
 func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error) {

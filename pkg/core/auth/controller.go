@@ -2,21 +2,33 @@ package auth
 
 import (
 	"fmt"
+	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/passwordresettoken"
 	"front-office/pkg/core/user"
 	"front-office/utility/mailjet"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(
+	service Service,
+	svcUser user.Service,
+	svcActivationToken activationtoken.Service,
+	svcPasswordResetToken passwordresettoken.Service,
+	cfg *config.Config,
+) Controller {
+	return &controller{
+		Svc:                   service,
+		SvcUser:               svcUser,
+		SvcActivationToken:    svcActivationToken,
+		SvcPasswordResetToken: svcPasswordResetToken,
+		Cfg:                   cfg,
+	}
 }
 
 type controller struct {
@@ -24,6 +36,7 @@ type controller struct {
 	SvcUser               user.Service
 	SvcActivationToken    activationtoken.Service
 	SvcPasswordResetToken passwordresettoken.Service
+	Cfg                   *config.Config
 }
 
 type Controller interface {
@@ -133,7 +146,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_ACTIVATION_EXPIRES_MINUTES"))
+	minutesToExpired, _ := strconv.Atoi(ctrl.Cfg.Env.JwtActivationExpiresMinutes)
 
 	activationToken, err := ctrl.SvcActivationToken.FindActivationTokenByTokenSvc(token)
 	if err != nil || (activationToken != nil && activationToken.Activation) {
