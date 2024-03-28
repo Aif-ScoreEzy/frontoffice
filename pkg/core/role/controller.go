@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, svcPermission permission.Service) Controller {
+	return &controller{Svc: service, SvcPermission: svcPermission}
 }
 
 type controller struct {
@@ -107,11 +107,13 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.GetRoleByNameSvc(req.Name)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
+	if req.Name != "" {
+		_, err = ctrl.Svc.GetRoleByNameSvc(req.Name)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
 
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+			return c.Status(fiber.StatusBadRequest).JSON(resp)
+		}
 	}
 
 	role, err := ctrl.Svc.UpdateRoleByIDSvc(req, id)
