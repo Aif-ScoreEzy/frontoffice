@@ -60,6 +60,7 @@ func LoadEnvironment() *Environment {
 		DbPassword:                     GetEnvironment("DB_PASSWORD"),
 		DbName:                         GetEnvironment("DB_NAME"),
 		DbPort:                         GetEnvironment("DB_PORT"),
+		DbHost:                         GetEnvironment("DB_HOST"),
 		MailjetEmail:                   GetEnvironment("MAILJET_EMAIL"),
 		MailtjetUsername:               GetEnvironment("MAILJET_USERNAME"),
 		MailjetPublicKey:               GetEnvironment("MAILJET_PUBLIC_KEY"),

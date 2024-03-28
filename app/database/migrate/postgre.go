@@ -2,16 +2,15 @@ package migrate
 
 import (
 	"front-office/app/database"
-	"front-office/pkg/activationtoken"
-	"front-office/pkg/company"
-	"front-office/pkg/genretail"
-	"front-office/pkg/grading"
-	"front-office/pkg/industry"
-	"front-office/pkg/passwordresettoken"
-	"front-office/pkg/permission"
-	"front-office/pkg/product"
-	"front-office/pkg/role"
-	"front-office/pkg/user"
+	"front-office/pkg/core/activationtoken"
+	"front-office/pkg/core/company"
+	"front-office/pkg/core/grading"
+	"front-office/pkg/core/industry"
+	"front-office/pkg/core/passwordresettoken"
+	"front-office/pkg/core/permission"
+	"front-office/pkg/core/role"
+	"front-office/pkg/core/user"
+	"front-office/pkg/scoreezy/genretail"
 	"log"
 )
 
@@ -27,7 +26,6 @@ func PostgreDB(dbase database.Database) {
 		&passwordresettoken.PasswordResetToken{},
 		&company.Company{},
 		&industry.Industry{},
-		&product.Product{},
 		&grading.Grading{},
 		&genretail.BulkSearch{},
 	)
