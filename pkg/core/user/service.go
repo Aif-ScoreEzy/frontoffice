@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-func NewService(repo Repository) Service {
-	return &service{Repo: repo}
+func NewService(repo Repository, repoRole role.Repository) Service {
+	return &service{Repo: repo, RepoRole: repoRole}
 }
 
 type service struct {
 	Repo     Repository
-	RoleRepo role.Repository
+	RepoRole role.Repository
 }
 
 type Service interface {
@@ -135,7 +135,7 @@ func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User
 	}
 
 	if req.RoleID != nil {
-		role, err := svc.RoleRepo.FindOneByID(*req.RoleID)
+		role, err := svc.RepoRole.FindOneByID(*req.RoleID)
 		if role == nil {
 			return nil, errors.New(constant.DataNotFound)
 		} else if err != nil {

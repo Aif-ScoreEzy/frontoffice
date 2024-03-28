@@ -8,8 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, svcRole role.Service) Controller {
+	return &controller{Svc: service, SvcRole: svcRole}
 }
 
 type controller struct {
