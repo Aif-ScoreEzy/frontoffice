@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
-	"front-office/pkg/user"
 	"os"
 	"strings"
 
@@ -68,12 +67,16 @@ func GetPayloadFromJWT() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		// get detail user information
-		user, _ := user.FindUserByIDSvc(userID, companyID)
-		c.Locals("userDetails", user)
+		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
 
 		c.Locals("userID", userID)
 		c.Locals("companyID", companyID)
+		c.Locals("tierLevel", tierLevel)
 
 		return c.Next()
 	}
