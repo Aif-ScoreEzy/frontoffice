@@ -21,12 +21,12 @@ type Repository interface {
 func (repo *repository) StoreImportData(newData []*BulkSearch, userID string) error {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		// remove data existing in table
-		if err := repo.DB.Debug().Delete(&BulkSearch{}, "user_id = ?", userID).Error; err != nil {
+		if err := repo.DB.Delete(&BulkSearch{}, "user_id = ?", userID).Error; err != nil {
 			return err
 		}
 
 		// replace existing with new data
-		if err := tx.Debug().Create(&newData).Error; err != nil {
+		if err := tx.Create(&newData).Error; err != nil {
 			return err
 		}
 
@@ -43,7 +43,7 @@ func (repo *repository) StoreImportData(newData []*BulkSearch, userID string) er
 func (repo *repository) GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]*BulkSearch, error) {
 	var bulkSearches []*BulkSearch
 
-	query := repo.DB.Debug().Preload("User")
+	query := repo.DB.Preload("User")
 
 	if tierLevel == 1 {
 		// admin

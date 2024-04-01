@@ -31,7 +31,9 @@ func ConnectPg(dsn string, cfg *config.Config) (*gorm.DB, error) {
 			DSN: dsn,
 		},
 	),
-		&gorm.Config{},
+		&gorm.Config{
+			// Logger: logger.Default.LogMode(logger.Info),
+		},
 	)
 
 	if err != nil {

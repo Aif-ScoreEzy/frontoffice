@@ -29,7 +29,7 @@ type Repository interface {
 func (repo *repository) FindOneByEmail(email string) (*User, error) {
 	var user *User
 
-	err := repo.DB.Debug().Preload("Role").Preload("Company").First(&user, "email = ?", email).Error
+	err := repo.DB.Preload("Role").Preload("Company").First(&user, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (repo *repository) FindOneByEmail(email string) (*User, error) {
 func (repo *repository) FindOneByUserID(id string) (*User, error) {
 	var user *User
 
-	err := repo.DB.Debug().Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
+	err := repo.DB.Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (repo *repository) FindOneByUserID(id string) (*User, error) {
 func (repo *repository) FindOneByKey(key string) (*User, error) {
 	var user *User
 
-	err := repo.DB.Debug().Preload("Role").Preload("Company").First(&user, "key = ?", key).Error
+	err := repo.DB.Preload("Role").Preload("Company").First(&user, "key = ?", key).Error
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (repo *repository) FindOneByKey(key string) (*User, error) {
 func (repo *repository) FindOneByUserIDAndCompanyID(id, companyID string) (*User, error) {
 	var user *User
 
-	err := repo.DB.Debug().Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
+	err := repo.DB.Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (repo *repository) FindOneByUserIDAndCompanyID(id, companyID string) (*User
 }
 
 func (repo *repository) UpdateOneByID(req map[string]interface{}, user *User) (*User, error) {
-	err := repo.DB.Debug().Model(&user).
+	err := repo.DB.Model(&user).
 		Where("id = ? AND company_id = ?", user.ID, user.CompanyID).Updates(req).Error
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (repo *repository) FindAll(limit, offset int, keyword, roleID, status, star
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := repo.DB.Debug().Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+	query := repo.DB.Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
 
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
@@ -110,7 +110,7 @@ func (repo *repository) FindAll(limit, offset int, keyword, roleID, status, star
 }
 
 func (repo *repository) DeleteByID(id string) error {
-	err := repo.DB.Debug().Model(&User{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
+	err := repo.DB.Model(&User{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (repo *repository) GetTotalData(keyword, roleID, status, startTime, endTime
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := repo.DB.Debug().Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+	query := repo.DB.Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
 	if roleID != "" {
 		query = query.Where("role_id = ?", roleID)
 	}

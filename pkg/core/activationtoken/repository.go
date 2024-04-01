@@ -21,7 +21,7 @@ type Repository interface {
 func (repo *repository) FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
 	var activationToken *ActivationToken
 
-	err := repo.DB.Debug().First(&activationToken, "token = ?", token).Error
+	err := repo.DB.First(&activationToken, "token = ?", token).Error
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (repo *repository) FindOneActivationTokenBytoken(token string) (*Activation
 func (repo *repository) FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
 	var activationToken *ActivationToken
 
-	err := repo.DB.Debug().First(&activationToken, "user_id = ?", userID).Error
+	err := repo.DB.First(&activationToken, "user_id = ?", userID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (repo *repository) FindOneActivationTokenByUserID(userID string) (*Activati
 }
 
 func (repo *repository) CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
-	err := repo.DB.Debug().Create(&activationToken).Error
+	err := repo.DB.Create(&activationToken).Error
 	if err != nil {
 		return nil, err
 	}

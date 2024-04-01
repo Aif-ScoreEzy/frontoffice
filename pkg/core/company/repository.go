@@ -32,7 +32,7 @@ func (repo *repository) UpdateOneByID(req Company, id string) (Company, error) {
 	var company Company
 	repo.DB.First(&company, "id = ?", id)
 
-	err := repo.DB.Debug().Model(&company).Updates(req).Error
+	err := repo.DB.Model(&company).Updates(req).Error
 	if err != nil {
 		return company, err
 	}

@@ -23,7 +23,7 @@ type Repository interface {
 }
 
 func (repo *repository) CreateGrading(grading *Grading) (*Grading, error) {
-	query := repo.DB.Debug().Create(&grading)
+	query := repo.DB.Create(&grading)
 	if query.Error != nil {
 		return nil, query.Error
 	}
@@ -34,7 +34,7 @@ func (repo *repository) CreateGrading(grading *Grading) (*Grading, error) {
 func (repo *repository) FindOneByID(gradingID, companyID string) (*Grading, error) {
 	var grading *Grading
 
-	query := repo.DB.Debug().First(&grading, "id = ? AND company_id = ?", gradingID, companyID)
+	query := repo.DB.First(&grading, "id = ? AND company_id = ?", gradingID, companyID)
 	if query.Error != nil {
 		return nil, query.Error
 	}
@@ -45,7 +45,7 @@ func (repo *repository) FindOneByID(gradingID, companyID string) (*Grading, erro
 func (repo *repository) FindOneByGradingLabel(gradingLabel, companyID string) (*Grading, error) {
 	var grading *Grading
 
-	query := repo.DB.Debug().First(&grading, "grading_label = ? AND company_id = ?", gradingLabel, companyID)
+	query := repo.DB.First(&grading, "grading_label = ? AND company_id = ?", gradingLabel, companyID)
 	if query.Error != nil {
 		return nil, query.Error
 	}
@@ -56,7 +56,7 @@ func (repo *repository) FindOneByGradingLabel(gradingLabel, companyID string) (*
 func (repo *repository) FindAllGradings(companyID string) ([]*Grading, error) {
 	var gradings []*Grading
 
-	query := repo.DB.Debug().Find(&gradings, "company_id = ?", companyID)
+	query := repo.DB.Find(&gradings, "company_id = ?", companyID)
 	if query.Error != nil {
 		return nil, query.Error
 	}
@@ -67,7 +67,7 @@ func (repo *repository) FindAllGradings(companyID string) ([]*Grading, error) {
 func (repo *repository) UpdateOneByID(updateGrading *UpdateGradingRequest, gradingID, companyID string) (*Grading, error) {
 	var grading *Grading
 
-	query := repo.DB.Debug().Model(&grading).Where("id = ? AND company_id = ?", gradingID, companyID).Updates(updateGrading)
+	query := repo.DB.Model(&grading).Where("id = ? AND company_id = ?", gradingID, companyID).Updates(updateGrading)
 	if query.Error != nil {
 		return nil, query.Error
 	}
@@ -77,11 +77,11 @@ func (repo *repository) UpdateOneByID(updateGrading *UpdateGradingRequest, gradi
 
 func (repo *repository) ReplaceAllGradings(gradings []*Grading, companyID string) error {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
-		if err := repo.DB.Debug().Delete(&Grading{}, "company_id = ?", companyID).Error; err != nil {
+		if err := repo.DB.Delete(&Grading{}, "company_id = ?", companyID).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Create(&gradings).Error; err != nil {
+		if err := tx.Create(&gradings).Error; err != nil {
 			return err
 		}
 
@@ -96,7 +96,7 @@ func (repo *repository) ReplaceAllGradings(gradings []*Grading, companyID string
 }
 
 func (repo *repository) DeleteAllGradings(companyID string) error {
-	query := repo.DB.Debug().Delete(&Grading{}, "company_id = ?", companyID)
+	query := repo.DB.Delete(&Grading{}, "company_id = ?", companyID)
 	if query.Error != nil {
 		return query.Error
 	}

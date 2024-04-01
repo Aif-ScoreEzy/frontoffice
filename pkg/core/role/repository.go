@@ -22,7 +22,7 @@ type Repository interface {
 }
 
 func (repo *repository) Create(role Role) (Role, error) {
-	result := repo.DB.Debug().Create(&role)
+	result := repo.DB.Create(&role)
 
 	repo.DB.Preload("Permissions").First(&role, "id = ?", role.ID)
 
@@ -32,7 +32,7 @@ func (repo *repository) Create(role Role) (Role, error) {
 func (repo *repository) FindAll() ([]Role, error) {
 	var roles []Role
 
-	result := repo.DB.Debug().Preload("Permissions").Find(&roles)
+	result := repo.DB.Preload("Permissions").Find(&roles)
 	if result.Error != nil {
 		return roles, result.Error
 	}
@@ -43,7 +43,7 @@ func (repo *repository) FindAll() ([]Role, error) {
 func (repo *repository) FindOneByID(id string) (*Role, error) {
 	var role *Role
 
-	err := repo.DB.Debug().Preload("Permissions").First(&role, "id = ?", id).Error
+	err := repo.DB.Preload("Permissions").First(&role, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (repo *repository) FindOneByID(id string) (*Role, error) {
 
 func (repo *repository) FindOneByName(name string) (*Role, error) {
 	var role *Role
-	result := repo.DB.Debug().First(&role, "name = ?", name)
+	result := repo.DB.First(&role, "name = ?", name)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -64,7 +64,7 @@ func (repo *repository) FindOneByName(name string) (*Role, error) {
 func (repo *repository) UpdateByID(req *Role, id string) (*Role, error) {
 	var role *Role
 
-	result := repo.DB.Debug().Model(&role).
+	result := repo.DB.Model(&role).
 		Where("id = ?", id).Updates(req)
 	if result.Error != nil {
 		return nil, result.Error
@@ -75,7 +75,7 @@ func (repo *repository) UpdateByID(req *Role, id string) (*Role, error) {
 
 func (repo *repository) Delete(id string) error {
 	var role Role
-	err := repo.DB.Debug().Where("id = ?", id).Delete(&role).Error
+	err := repo.DB.Where("id = ?", id).Delete(&role).Error
 
 	return err
 }

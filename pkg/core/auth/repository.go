@@ -35,7 +35,7 @@ func (repo *repository) CreateAdmin(company *company.Company, user *user.User, a
 			return err
 		}
 
-		if err := tx.Debug().Create(&activationToken).Error; err != nil {
+		if err := tx.Create(&activationToken).Error; err != nil {
 			return err
 		}
 
@@ -53,11 +53,11 @@ func (repo *repository) CreateAdmin(company *company.Company, user *user.User, a
 
 func (repo *repository) CreateMember(user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error) {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Debug().Create(&user).Error; err != nil {
+		if err := tx.Create(&user).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Create(&activationToken).Error; err != nil {
+		if err := tx.Create(&activationToken).Error; err != nil {
 			return err
 		}
 
@@ -73,12 +73,12 @@ func (repo *repository) CreateMember(user *user.User, activationToken *activatio
 
 func (repo *repository) ResetPassword(id, token string, req *PasswordResetRequest) error {
 	errTX := repo.DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Debug().Model(&user.User{}).Where("id = ?", id).Update("password", user.SetPassword(req.Password)).Error
+		err := tx.Model(&user.User{}).Where("id = ?", id).Update("password", user.SetPassword(req.Password)).Error
 		if err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Model(&passwordresettoken.PasswordResetToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+		if err := tx.Model(&passwordresettoken.PasswordResetToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
@@ -96,11 +96,11 @@ func (repo *repository) VerifyUserTx(req map[string]interface{}, userID, token s
 	var user *user.User
 
 	errTX := repo.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Debug().Model(&activationtoken.ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+		if err := tx.Model(&activationtoken.ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Debug().Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
+		if err := tx.Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
 			return err
 		}
 

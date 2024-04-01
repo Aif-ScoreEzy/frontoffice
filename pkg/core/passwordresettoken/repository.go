@@ -19,7 +19,7 @@ type Repository interface {
 }
 
 func (repo *repository) CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error) {
-	err := repo.DB.Debug().Create(&passwordResetToken).Error
+	err := repo.DB.Create(&passwordResetToken).Error
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (repo *repository) CreatePasswordResetToken(passwordResetToken *PasswordRes
 
 func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*PasswordResetToken, error) {
 	var result *PasswordResetToken
-	err := repo.DB.Debug().First(&result, "token = ?", token).Error
+	err := repo.DB.First(&result, "token = ?", token).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*Passwor
 func (repo *repository) FindOnePasswordResetTokenByUserID(userID string) (*PasswordResetToken, error) {
 	var passwordResetToken *PasswordResetToken
 
-	err := repo.DB.Debug().First(&passwordResetToken, "user_id = ?", userID).Error
+	err := repo.DB.First(&passwordResetToken, "user_id = ?", userID).Error
 	if err != nil {
 		return nil, err
 	}
