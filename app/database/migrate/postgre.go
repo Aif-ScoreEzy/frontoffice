@@ -10,6 +10,7 @@ import (
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/user"
+	"front-office/pkg/procat/livestatus"
 	"front-office/pkg/scoreezy/genretail"
 	"log"
 )
@@ -28,6 +29,8 @@ func PostgreDB(dbase database.Database) {
 		&industry.Industry{},
 		&grading.Grading{},
 		&genretail.BulkSearch{},
+		&livestatus.Job{},
+		&livestatus.JobDetail{},
 	)
 
 	if err != nil {
