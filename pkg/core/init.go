@@ -9,6 +9,7 @@ import (
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/user"
+	"front-office/pkg/procat/livestatus"
 	"front-office/pkg/scoreezy/genretail"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,4 +38,7 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 
 	logAPI := routeAPI.Group("logs")
 	log.SetupInit(logAPI, cfg)
+
+	productAPI := routeAPI.Group("products")
+	livestatus.SetupInit(productAPI, db)
 }
