@@ -25,7 +25,8 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	csvData, totalData, err := helper.ParseCSVFile(file)
+	expectedHeaders := []string{"phone_number"}
+	csvData, totalData, err := helper.ParseCSVFile(file, expectedHeaders)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
