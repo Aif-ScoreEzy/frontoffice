@@ -95,3 +95,30 @@ func DocUpload() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func UploadCSVFile() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		validExtensions := []string{".csv"}
+		ext := filepath.Ext(file.Filename)
+		valid := false
+		for _, allowedExt := range validExtensions {
+			if ext == allowedExt {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			statusCode, resp := helper.GetError(constant.InvalidDocumentFile)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		return c.Next()
+	}
+}
