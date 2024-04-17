@@ -9,17 +9,28 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(data *FIFRequests, totalData int) error
+	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
+	GetJobDetails(jobID uint) ([]*JobDetail, error)
 }
 
-func (svc *service) CreateJob(data *FIFRequests, totalData int) error {
+func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, error) {
 	dataJob := &Job{
 		Total: totalData,
 	}
 
-	if err := svc.Repo.CreateJobInTx(dataJob, data); err != nil {
-		return err
+	jobID, err := svc.Repo.CreateJobInTx(dataJob, data)
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return jobID, nil
+}
+
+func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobDetails, nil
 }
