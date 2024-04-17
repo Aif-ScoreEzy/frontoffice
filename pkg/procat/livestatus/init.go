@@ -1,16 +1,17 @@
 package livestatus
 
 import (
+	"front-office/app/config"
 	"front-office/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB) {
-	repository := NewRepository(db)
+func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
+	repository := NewRepository(db, cfg)
 	service := NewService(repository)
 	controller := NewController(service)
 
-	liveStatusAPI.Post("/live-status", middleware.UploadCSVFile(), controller.UploadCSV)
+	liveStatusAPI.Post("/live-status", middleware.UploadCSVFile(), controller.BulkSearch)
 }
