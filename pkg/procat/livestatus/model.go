@@ -15,10 +15,14 @@ type JobDetail struct {
 	CreatedAt   time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
-type FIFRequest struct {
+type LiveStatusRequest struct {
 	PhoneNumber string `json:"phone_number"`
+	TrxID       string `json:"trx_id"`
 }
 
-type FIFRequests struct {
-	PhoneNumbers []FIFRequest `json:"phone_numbers"`
+type LiveStatusResponse struct {
+	Success    bool        `json:"success"`
+	Data       interface{} `json:"data"`
+	Message    string      `json:"message"`
+	StatusCode int         `json:"status_code"`
 }

@@ -1,5 +1,10 @@
 package livestatus
 
+import (
+	"encoding/json"
+	"io"
+)
+
 func NewService(repo Repository) Service {
 	return &service{Repo: repo}
 }
@@ -11,6 +16,7 @@ type service struct {
 type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
+	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	DeleteJobDetail(id uint) error
 }
 
@@ -34,6 +40,22 @@ func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
 	}
 
 	return jobDetails, nil
+}
+
+func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error) {
+	response, err := svc.Repo.CallLiveStatus(liveStatusRequest, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	dataBytes, _ := io.ReadAll(response.Body)
+	defer response.Body.Close()
+
+	var liveStatusResponse *LiveStatusResponse
+	json.Unmarshal(dataBytes, &liveStatusResponse)
+	liveStatusResponse.StatusCode = response.StatusCode
+
+	return liveStatusResponse, nil
 }
 
 func (svc *service) DeleteJobDetail(id uint) error {

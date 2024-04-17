@@ -1,7 +1,11 @@
 package livestatus
 
 import (
+	"bytes"
+	"encoding/json"
 	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
 
 	"gorm.io/gorm"
 )
@@ -18,6 +22,7 @@ type repository struct {
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	DeleteJobDetail(id uint) error
 }
 
@@ -50,6 +55,18 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	}
 
 	return jobs, nil
+}
+
+func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
+	apiUrl := "http://partner-sandbox.aiforesee.id" + "/api/partner/telesign/phone-live-status"
+
+	jsonBodyValue, _ := json.Marshal(liveStatusRequest)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	request.Header.Set("X-AIF-KEY", apiKey)
+
+	client := &http.Client{}
+	return client.Do(request)
 }
 
 func (repo *repository) DeleteJobDetail(id uint) error {
