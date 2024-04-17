@@ -18,6 +18,7 @@ type repository struct {
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	DeleteJobDetail(id uint) error
 }
 
 func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest) (uint, error) {
@@ -49,4 +50,13 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	}
 
 	return jobs, nil
+}
+
+func (repo *repository) DeleteJobDetail(id uint) error {
+	err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

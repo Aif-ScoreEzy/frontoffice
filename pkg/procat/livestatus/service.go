@@ -11,6 +11,7 @@ type service struct {
 type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
+	DeleteJobDetail(id uint) error
 }
 
 func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, error) {
@@ -33,4 +34,8 @@ func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
 	}
 
 	return jobDetails, nil
+}
+
+func (svc *service) DeleteJobDetail(id uint) error {
+	return svc.Repo.DeleteJobDetail(id)
 }
