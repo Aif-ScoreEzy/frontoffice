@@ -29,5 +29,7 @@ func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]str
 		}
 	}
 
-	return csvData, len(csvData), nil
+	totalData := len(csvData) - 1
+
+	return csvData, totalData, nil
 }

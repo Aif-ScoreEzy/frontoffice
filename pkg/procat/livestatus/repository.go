@@ -1,28 +1,38 @@
 package livestatus
 
 import (
+	"bytes"
+	"encoding/json"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
+
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{DB: db, Cfg: cfg}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
-	CreateJobInTx(dataJob *Job, dataJobDetail *FIFRequests) error
+	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
+	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
+	DeleteJobDetail(id uint) error
 }
 
-func (repo *repository) CreateJobInTx(dataJob *Job, requests *FIFRequests) error {
+func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest) (uint, error) {
 	repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&dataJob).Error; err != nil {
 			return err
 		}
 
-		for _, request := range requests.PhoneNumbers {
+		for _, request := range requests {
 			dataJobDetail := &JobDetail{
 				JobID:       dataJob.ID,
 				PhoneNumber: request.PhoneNumber,
@@ -34,6 +44,36 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests *FIFRequests) error
 
 		return nil
 	})
+
+	return dataJob.ID, nil
+}
+
+func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
+	var jobs []*JobDetail
+	if err := repo.DB.Find(&jobs, "job_id = ?", jobID).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
+func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
+	apiUrl := "http://partner-sandbox.aiforesee.id" + "/api/partner/telesign/phone-live-status"
+
+	jsonBodyValue, _ := json.Marshal(liveStatusRequest)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	request.Header.Set("X-AIF-KEY", apiKey)
+
+	client := &http.Client{}
+	return client.Do(request)
+}
+
+func (repo *repository) DeleteJobDetail(id uint) error {
+	err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
