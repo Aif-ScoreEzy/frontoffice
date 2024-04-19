@@ -157,10 +157,11 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
+	keyword := c.Query("keyword", "")
 	jobID := c.Params("id")
 
 	jobIDUint, _ := strconv.ParseUint(fmt.Sprintf("%v", jobID), 10, 64)
-	jobs, err := ctrl.Svc.GetJobDetailsWithPagination(page, size, uint(jobIDUint))
+	jobs, err := ctrl.Svc.GetJobDetailsWithPagination(page, size, keyword, uint(jobIDUint))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
