@@ -23,7 +23,6 @@ type Controller interface {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
-	// apiKey := c.Get("X-AIF-KEY")
 	apiKey := ctrl.Cfg.Env.ApiKeyLiveStatus
 
 	file, err := c.FormFile("file")
@@ -87,11 +86,16 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 		// todo: jika sukses kirim ke aifcore
 
-		dataMap := liveStatusResponse.Data.(map[string]interface{})
-		errors := dataMap["errors"].([]interface{})
-		if len(errors) == 0 {
+		// todo: hapus job detail jika status code 200, untuk sementara program dibawah ini di disable
+		if liveStatusResponse.StatusCode == 200 {
 			successRequestTotal += 1
-			err = ctrl.Svc.DeleteJobDetail(jobDetail.ID)
+			// err = ctrl.Svc.DeleteJobDetail(jobDetail.ID)
+			// if err != nil {
+			// 	statusCode, resp := helper.GetError(err.Error())
+			// 	return c.Status(statusCode).JSON(resp)
+			// }
+		} else {
+			err = ctrl.Svc.UpdateJobDetail(jobID, jobDetail.Sequence)
 			if err != nil {
 				statusCode, resp := helper.GetError(err.Error())
 				return c.Status(statusCode).JSON(resp)
@@ -99,13 +103,14 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		}
 	}
 
-	// todo: jika semua request sukses, hapus job dan hapus proses update job
+	// todo: jika semua request sukses, hapus job
 	// err = ctrl.Svc.DeleteJob(jobID)
 	// if err != nil {
 	// 	statusCode, resp := helper.GetError(err.Error())
 	// 	return c.Status(statusCode).JSON(resp)
 	// }
 
+	// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
 	err = ctrl.Svc.UpdateJob(jobID, successRequestTotal)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())

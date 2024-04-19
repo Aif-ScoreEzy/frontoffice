@@ -23,6 +23,7 @@ type Service interface {
 	ProcessJobDetails(apiKey string, jobID uint, jobDetails []*JobDetail, batchSize int) ([]*LiveStatusResponse, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, total int) error
+	UpdateJobDetail(jobID uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -122,6 +123,15 @@ func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKe
 
 func (svc *service) UpdateJob(id uint, total int) error {
 	return svc.Repo.UpdateJob(id, total)
+}
+
+func (svc *service) UpdateJobDetail(jobID uint, sequence int) error {
+	request := &UpdateJobDetailRequest{
+		OnProcess: false,
+		Sequence:  sequence + 1,
+	}
+
+	return svc.Repo.UpdateJobDetail(jobID, request)
 }
 
 func (svc *service) DeleteJobDetail(id uint) error {

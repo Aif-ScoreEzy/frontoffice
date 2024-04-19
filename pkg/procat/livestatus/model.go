@@ -13,7 +13,14 @@ type JobDetail struct {
 	ID          uint      `json:"id"`
 	JobID       uint      `json:"job_id"`
 	PhoneNumber string    `json:"phone_number"`
+	OnProcess   bool      `gorm:"not null;default:true" json:"on_process"`
+	Sequence    int       `json:"sequence"`
 	CreatedAt   time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+}
+
+type UpdateJobDetailRequest struct {
+	OnProcess bool `json:"on_process"`
+	Sequence  int  `json:"sequence"`
 }
 
 type LiveStatusRequest struct {
