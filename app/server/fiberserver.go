@@ -26,9 +26,6 @@ func NewServer(cfg *config.Config, db *gorm.DB) Server {
 }
 
 func (s *fiberServer) Start() {
-	api := s.App.Group("/api/fo")
-	core.SetupInit(api, s.Cfg, s.Db)
-
 	s.App.Use(recover.New())
 	s.App.Static("/", "./public")
 	s.App.Use(cors.New(cors.Config{
@@ -37,6 +34,9 @@ func (s *fiberServer) Start() {
 		AllowCredentials: true,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 	}))
+
+	api := s.App.Group("/api/fo")
+	core.SetupInit(api, s.Cfg, s.Db)
 
 	log.Fatal(s.App.Listen(":" + s.Cfg.Env.Port))
 }
