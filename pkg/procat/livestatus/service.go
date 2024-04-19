@@ -17,9 +17,12 @@ type service struct {
 
 type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
-	GetJobs() ([]*Job, error)
+	GetJobs(page, limit string) ([]*Job, error)
+	GetJobsTotal() (int64, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
+	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	ProcessBatchJobDetails(apiKey string, jobID uint, batch []*JobDetail) ([]*LiveStatusResponse, error)
 	ProcessJobDetails(apiKey string, jobID uint, jobDetails []*JobDetail, batchSize int) ([]*LiveStatusResponse, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
@@ -43,8 +46,17 @@ func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, er
 	return jobID, nil
 }
 
-func (svc *service) GetJobs() ([]*Job, error) {
-	return svc.Repo.GetJobs()
+func (svc *service) GetJobs(page, limit string) ([]*Job, error) {
+	intPage, _ := strconv.Atoi(page)
+	intLimit, _ := strconv.Atoi(limit)
+	offset := (intPage - 1) * intLimit
+
+	return svc.Repo.GetJobs(intLimit, offset)
+}
+
+func (svc *service) GetJobsTotal() (int64, error) {
+	count, err := svc.Repo.GetJobsTotal()
+	return count, err
 }
 
 func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
@@ -67,6 +79,16 @@ func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, job
 	}
 
 	return jobDetails, nil
+}
+
+func (svc *service) GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotal(keyword, jobID)
+	return count, err
+}
+
+func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobID)
+	return count, err
 }
 
 func (svc *service) ProcessBatchJobDetails(apiKey string, jobID uint, batch []*JobDetail) ([]*LiveStatusResponse, error) {
