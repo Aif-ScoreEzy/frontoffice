@@ -140,15 +140,25 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
-	jobs, err := ctrl.Svc.GetJobs()
+	page := c.Query("page", "1")
+	size := c.Query("size", "10")
+
+	jobs, err := ctrl.Svc.GetJobs(page, size)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	totalData, _ := ctrl.Svc.GetJobsTotal()
+
+	fullResponsePage := map[string]interface{}{
+		"total_data": totalData,
+		"data":       jobs,
+	}
+
 	resp := helper.ResponseSuccess(
 		"success",
-		jobs,
+		fullResponsePage,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

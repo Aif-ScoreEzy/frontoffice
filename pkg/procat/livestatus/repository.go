@@ -21,7 +21,8 @@ type repository struct {
 
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
-	GetJobs() ([]*Job, error)
+	GetJobs(limit, offset int) ([]*Job, error)
+	GetJobsTotal() (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
@@ -56,13 +57,24 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 	return dataJob.ID, nil
 }
 
-func (repo *repository) GetJobs() ([]*Job, error) {
+func (repo *repository) GetJobs(limit, offset int) ([]*Job, error) {
 	var jobs []*Job
-	if err := repo.DB.Find(&jobs).Error; err != nil {
+	if err := repo.DB.Limit(limit).Offset(offset).Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
 	return jobs, nil
+}
+
+func (repo *repository) GetJobsTotal() (int64, error) {
+	var jobs []Job
+	var count int64
+
+	query := repo.DB
+
+	err := query.Find(&jobs).Count(&count).Error
+
+	return count, err
 }
 
 func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
