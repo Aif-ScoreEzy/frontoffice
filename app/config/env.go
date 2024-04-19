@@ -26,8 +26,9 @@ type Environment struct {
 	JwtVerificationExpiresMinutes  string
 	JwtActivationExpiresMinutes    string
 	JwtResetPasswordExpiresMinutes string
-	AifcoreHost                    string
 	PartnerServiceHost             string
+	ApiKeyLiveStatus               string
+	AifcoreHost                    string
 	GenretailV3                    string
 	GetLogByDate                   string
 	GetLogByRangeDate              string
@@ -71,8 +72,9 @@ func LoadEnvironment() *Environment {
 		JwtVerificationExpiresMinutes:  GetEnvironment("JWT_VERIFICATION_EXPIRES_MINUTES"),
 		JwtActivationExpiresMinutes:    GetEnvironment("JWT_ACTIVATION_EXPIRES_MINUTES"),
 		JwtResetPasswordExpiresMinutes: GetEnvironment("JWT_RESET_PASSWORD_EXPIRES_MINUTES"),
-		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
 		PartnerServiceHost:             GetEnvironment("PARTNER_SERVICE_HOST"),
+		ApiKeyLiveStatus:               GetEnvironment("API_KEY_LIVE_STATUS"),
+		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
 		GenretailV3:                    GetEnvironment("GEN_RETAIL_V3"),
 		GetLogByDate:                   GetEnvironment("GET_LOGS_BY_DATE"),
 		GetLogByRangeDate:              GetEnvironment("GET_LOGS_BY_RANGE_DATE"),
