@@ -2,6 +2,7 @@ package livestatus
 
 import (
 	"front-office/helper"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -52,56 +53,69 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	// var liveStatusResponse *LiveStatusResponse
-	// var liveStatusResponses []*LiveStatusResponse
-	// if countJobDetail != 0 {
 	jobDetails, err := ctrl.Svc.GetJobDetails(jobID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	batchSize := 10
-	// jobIDStr := strconv.FormatUint(uint64(jobID), 10)
-	liveStatusResponses, err := ctrl.Svc.ProcessJobDetails(apiKey, jobID, jobDetails, batchSize)
+	// batchSize := 10
+	// liveStatusResponses, err := ctrl.Svc.ProcessJobDetails(apiKey, jobID, jobDetails, batchSize)
+	// if err != nil {
+	// 	statusCode, resp := helper.GetError(err.Error())
+	// 	return c.Status(statusCode).JSON(resp)
+	// }
+
+	var successRequestTotal int
+	var liveStatusResponse *LiveStatusResponse
+	jobIDStr := strconv.FormatUint(uint64(jobID), 10)
+	for _, jobDetail := range jobDetails {
+		request := &LiveStatusRequest{
+			PhoneNumber: jobDetail.PhoneNumber,
+			TrxID:       jobIDStr,
+		}
+
+		liveStatusResponse, err = ctrl.Svc.CreateLiveStatus(request, apiKey)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		// todo: jika sukses kirim ke aifcore
+
+		dataMap := liveStatusResponse.Data.(map[string]interface{})
+		errors := dataMap["errors"].([]interface{})
+		if len(errors) == 0 {
+			successRequestTotal += 1
+			err = ctrl.Svc.DeleteJobDetail(jobDetail.ID)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
+		}
+	}
+
+	// todo: jika semua request sukses, hapus job dan hapus proses update job
+	// err = ctrl.Svc.DeleteJob(jobID)
+	// if err != nil {
+	// 	statusCode, resp := helper.GetError(err.Error())
+	// 	return c.Status(statusCode).JSON(resp)
+	// }
+
+	err = ctrl.Svc.UpdateJob(jobID, successRequestTotal)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	// for _, jobDetail := range jobDetails {
-	// 	request := &LiveStatusRequest{
-	// 		PhoneNumber: jobDetail.PhoneNumber,
-	// 		TrxID:       jobIDStr,
-	// 	}
-
-	// 	liveStatusResponse, err = ctrl.Svc.CreateLiveStatus(request, apiKey)
-	// 	if err != nil {
-	// 		statusCode, resp := helper.GetError(err.Error())
-	// 		return c.Status(statusCode).JSON(resp)
-	// 	}
-
-	// 	liveStatusResponses = append(liveStatusResponses, liveStatusResponse)
-
-	// 	err = ctrl.Svc.DeleteJobDetail(jobDetail.ID)
-	// 	if err != nil {
-	// 		statusCode, resp := helper.GetError(err.Error())
-	// 		return c.Status(statusCode).JSON(resp)
-	// 	}
-	// }
-	// }
-
-	// if liveStatusResponse.StatusCode >= 400 {
-	// 	dataReturn := helper.BaseResponseFailed{
-	// 		Message: liveStatusResponse.Message,
-	// 	}
-
-	// 	return c.Status(liveStatusResponse.StatusCode).JSON(dataReturn)
-	// }
+	dataResponse := ResponseSuccess{
+		Success:   successRequestTotal,
+		TotalData: totalData,
+	}
 
 	resp := helper.ResponseSuccess(
 		"success",
-		liveStatusResponses,
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

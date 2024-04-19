@@ -23,7 +23,9 @@ type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
+	UpdateJob(id uint, total int) error
 	DeleteJobDetail(id uint) error
+	DeleteJob(id uint) error
 }
 
 func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest) (uint, error) {
@@ -58,7 +60,7 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 }
 
 func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
-	apiUrl := "http://partner-sandbox.aiforesee.id" + "/api/partner/telesign/phone-live-status"
+	apiUrl := repo.Cfg.Env.PartnerServiceHost + "/api/partner/telesign/phone-live-status"
 
 	jsonBodyValue, _ := json.Marshal(liveStatusRequest)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
@@ -69,9 +71,24 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 	return client.Do(request)
 }
 
+func (repo *repository) UpdateJob(id uint, total int) error {
+	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("success", total).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *repository) DeleteJobDetail(id uint) error {
-	err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error
-	if err != nil {
+	if err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) DeleteJob(id uint) error {
+	if err := repo.DB.Delete(&Job{}, "id = ?", id).Error; err != nil {
 		return err
 	}
 
