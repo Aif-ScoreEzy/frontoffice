@@ -20,6 +20,8 @@ type Service interface {
 	GetJobs() ([]*Job, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
+	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	ProcessBatchJobDetails(apiKey string, jobID uint, batch []*JobDetail) ([]*LiveStatusResponse, error)
 	ProcessJobDetails(apiKey string, jobID uint, jobDetails []*JobDetail, batchSize int) ([]*LiveStatusResponse, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
@@ -67,6 +69,16 @@ func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, job
 	}
 
 	return jobDetails, nil
+}
+
+func (svc *service) GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotal(keyword, jobID)
+	return count, err
+}
+
+func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobID)
+	return count, err
 }
 
 func (svc *service) ProcessBatchJobDetails(apiKey string, jobID uint, batch []*JobDetail) ([]*LiveStatusResponse, error) {

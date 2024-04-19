@@ -24,6 +24,8 @@ type Repository interface {
 	GetJobs() ([]*Job, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
+	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
 	UpdateSucceededJobDetail(id uint, request *UpdateJobDetailRequest) error
@@ -79,6 +81,35 @@ func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, ke
 	}
 
 	return jobs, nil
+}
+
+func (repo *repository) GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error) {
+	var jobs []JobDetail
+	var count int64
+
+	query := repo.DB.Find(&jobs, "job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%")
+	err := query.Find(&jobs).Count(&count).Error
+
+	return count, err
+}
+
+func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
+	var jobs []JobDetail
+	var count int64
+
+	query := repo.DB.Find(&jobs, "job_id = ?", jobID)
+
+	if column == "subscriber_status" {
+		query = query.Where("subscriber_status = ?", keyword)
+	}
+
+	if column == "device_status" {
+		query = query.Where("device_status = ?", keyword)
+	}
+
+	err := query.Find(&jobs).Count(&count).Error
+
+	return count, err
 }
 
 func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {

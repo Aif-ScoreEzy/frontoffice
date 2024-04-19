@@ -167,9 +167,20 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	totalData, _ := ctrl.Svc.GetJobDetailsWithPaginationTotal(keyword, uint(jobIDUint))
+	subscriberStatuscon, _ := ctrl.Svc.GetJobDetailsPercentage("subscriber_status", "ACTIVE", uint(jobIDUint))
+	deviceStatusReach, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "REACHABLE", uint(jobIDUint))
+
+	fullResponsePage := map[string]interface{}{
+		"total_data":    totalData,
+		"subs_active":   subscriberStatuscon,
+		"dev_reachable": deviceStatusReach,
+		"data":          jobs,
+	}
+
 	resp := helper.ResponseSuccess(
 		"success",
-		jobs,
+		fullResponsePage,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
