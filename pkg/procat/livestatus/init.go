@@ -14,4 +14,5 @@ func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	controller := NewController(service)
 
 	liveStatusAPI.Post("/live-status", middleware.UploadCSVFile(), controller.BulkSearch)
+	liveStatusAPI.Get("/live-status", middleware.Auth(), controller.GetJobs)
 }

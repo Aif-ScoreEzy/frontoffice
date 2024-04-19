@@ -21,6 +21,7 @@ type repository struct {
 
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
+	GetJobs() ([]*Job, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
@@ -48,6 +49,15 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 	})
 
 	return dataJob.ID, nil
+}
+
+func (repo *repository) GetJobs() ([]*Job, error) {
+	var jobs []*Job
+	if err := repo.DB.Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
 }
 
 func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {

@@ -17,6 +17,7 @@ type controller struct {
 
 type Controller interface {
 	BulkSearch(c *fiber.Ctx) error
+	GetJobs(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
@@ -116,6 +117,21 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"success",
 		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
+	jobs, err := ctrl.Svc.GetJobs()
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		jobs,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
