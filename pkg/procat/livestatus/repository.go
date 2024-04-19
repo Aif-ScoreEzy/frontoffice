@@ -23,8 +23,11 @@ type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobs() ([]*Job, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
+	UpdateSucceededJobDetail(id uint, request *UpdateJobDetailRequest) error
+	UpdateFailedJobDetail(id uint, request *UpdateJobDetailRequest) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -69,6 +72,15 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	return jobs, nil
 }
 
+func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error) {
+	var jobs []*JobDetail
+	if err := repo.DB.Limit(limit).Offset(offset).Find(&jobs, "job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
 func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.PartnerServiceHost + "/api/partner/telesign/phone-live-status"
 
@@ -83,6 +95,22 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 
 func (repo *repository) UpdateJob(id uint, total int) error {
 	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("success", total).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) UpdateSucceededJobDetail(id uint, request *UpdateJobDetailRequest) error {
+	if err := repo.DB.Debug().Model(&JobDetail{}).Where("id = ?", id).Updates(request).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) UpdateFailedJobDetail(id uint, request *UpdateJobDetailRequest) error {
+	if err := repo.DB.Model(&JobDetail{}).Where("job_id = ?", id).Updates(request).Error; err != nil {
 		return err
 	}
 
