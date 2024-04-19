@@ -60,7 +60,7 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 }
 
 func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
-	apiUrl := "http://partner-sandbox.aiforesee.id" + "/api/partner/telesign/phone-live-status"
+	apiUrl := repo.Cfg.Env.PartnerServiceHost + "/api/partner/telesign/phone-live-status"
 
 	jsonBodyValue, _ := json.Marshal(liveStatusRequest)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
