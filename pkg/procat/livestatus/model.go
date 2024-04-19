@@ -5,6 +5,7 @@ import "time"
 type Job struct {
 	ID        uint      `json:"id"`
 	Total     int       `json:"total"`
+	Success   int       `json:"success"`
 	CreatedAt time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
@@ -25,4 +26,9 @@ type LiveStatusResponse struct {
 	Data       interface{} `json:"data"`
 	Message    string      `json:"message"`
 	StatusCode int         `json:"status_code"`
+}
+
+type ResponseSuccess struct {
+	Success   int `json:"success"`
+	TotalData int `json:"total_data"`
 }
