@@ -1,17 +1,19 @@
 package livestatus
 
 import (
+	"front-office/app/config"
 	"front-office/helper"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, cfg *config.Config) Controller {
+	return &controller{Svc: service, Cfg: cfg}
 }
 
 type controller struct {
+	Cfg *config.Config
 	Svc Service
 }
 
@@ -21,7 +23,8 @@ type Controller interface {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
-	apiKey := c.Get("X-AIF-KEY")
+	// apiKey := c.Get("X-AIF-KEY")
+	apiKey := ctrl.Cfg.Env.ApiKeyLiveStatus
 
 	file, err := c.FormFile("file")
 	if err != nil {
