@@ -23,6 +23,7 @@ type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
+	UpdateJob(id uint, total int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -68,6 +69,14 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 
 	client := &http.Client{}
 	return client.Do(request)
+}
+
+func (repo *repository) UpdateJob(id uint, total int) error {
+	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("success", total).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (repo *repository) DeleteJobDetail(id uint) error {
