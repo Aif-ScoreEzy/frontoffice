@@ -24,6 +24,7 @@ type Repository interface {
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	DeleteJobDetail(id uint) error
+	DeleteJob(id uint) error
 }
 
 func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest) (uint, error) {
@@ -70,8 +71,15 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 }
 
 func (repo *repository) DeleteJobDetail(id uint) error {
-	err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error
-	if err != nil {
+	if err := repo.DB.Delete(&JobDetail{}, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) DeleteJob(id uint) error {
+	if err := repo.DB.Delete(&Job{}, "id = ?", id).Error; err != nil {
 		return err
 	}
 
