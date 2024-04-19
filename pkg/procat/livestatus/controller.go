@@ -1,6 +1,7 @@
 package livestatus
 
 import (
+	"fmt"
 	"front-office/app/config"
 	"front-office/helper"
 	"strconv"
@@ -20,6 +21,7 @@ type controller struct {
 type Controller interface {
 	BulkSearch(c *fiber.Ctx) error
 	GetJobs(c *fiber.Ctx) error
+	GetJobDetails(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
@@ -132,6 +134,26 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	jobs, err := ctrl.Svc.GetJobs()
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		jobs,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
+	page := c.Query("page", "1")
+	size := c.Query("size", "10")
+	jobID := c.Params("id")
+
+	jobIDUint, _ := strconv.ParseUint(fmt.Sprintf("%v", jobID), 10, 64)
+	jobs, err := ctrl.Svc.GetJobDetailsWithPagination(page, size, uint(jobIDUint))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

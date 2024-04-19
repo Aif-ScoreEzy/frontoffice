@@ -23,6 +23,7 @@ type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobs() ([]*Job, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByJobIDWithPagination(limit, offset int, jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
 	UpdateJobDetail(jobID uint, request *UpdateJobDetailRequest) error
@@ -64,6 +65,15 @@ func (repo *repository) GetJobs() ([]*Job, error) {
 func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	var jobs []*JobDetail
 	if err := repo.DB.Find(&jobs, "job_id = ?", jobID).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
+func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, jobID uint) ([]*JobDetail, error) {
+	var jobs []*JobDetail
+	if err := repo.DB.Limit(limit).Offset(offset).Find(&jobs, "job_id = ?", jobID).Error; err != nil {
 		return nil, err
 	}
 

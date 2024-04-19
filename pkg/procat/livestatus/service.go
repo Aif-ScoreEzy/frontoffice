@@ -19,6 +19,7 @@ type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
 	GetJobs() ([]*Job, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsWithPagination(page, limit string, jobID uint) ([]*JobDetail, error)
 	ProcessBatchJobDetails(apiKey string, jobID uint, batch []*JobDetail) ([]*LiveStatusResponse, error)
 	ProcessJobDetails(apiKey string, jobID uint, jobDetails []*JobDetail, batchSize int) ([]*LiveStatusResponse, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
@@ -47,6 +48,19 @@ func (svc *service) GetJobs() ([]*Job, error) {
 
 func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
 	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobDetails, nil
+}
+
+func (svc *service) GetJobDetailsWithPagination(page, limit string, jobID uint) ([]*JobDetail, error) {
+	intPage, _ := strconv.Atoi(page)
+	intLimit, _ := strconv.Atoi(limit)
+	offset := (intPage - 1) * intLimit
+
+	jobDetails, err := svc.Repo.GetJobDetailsByJobIDWithPagination(intLimit, offset, jobID)
 	if err != nil {
 		return nil, err
 	}
