@@ -86,18 +86,25 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		// todo: jika sukses kirim ke aifcore
+		// todo: jika status code 200 kirim job detail ke aifcore
 
-		// todo: hapus job detail jika status code 200, untuk sementara program dibawah ini di disable
+		dataMap := liveStatusResponse.Data.(map[string]interface{})
+		dataLiveMap := dataMap["live"].(map[string]interface{})
+		subscriberStatus := fmt.Sprintf("%v", dataLiveMap["subscriber_status"])
+		deviceStatus := fmt.Sprintf("%v", dataLiveMap["device_status"])
+
+		// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 		if liveStatusResponse.StatusCode == 200 {
 			successRequestTotal += 1
 			// err = ctrl.Svc.DeleteJobDetail(jobDetail.ID)
-			// if err != nil {
-			// 	statusCode, resp := helper.GetError(err.Error())
-			// 	return c.Status(statusCode).JSON(resp)
-			// }
+			err = ctrl.Svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus)
+			if err != nil {
+
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
 		} else {
-			err = ctrl.Svc.UpdateJobDetail(jobID, jobDetail.Sequence)
+			err = ctrl.Svc.UpdateFailedJobDetail(jobID, jobDetail.Sequence)
 			if err != nil {
 				statusCode, resp := helper.GetError(err.Error())
 				return c.Status(statusCode).JSON(resp)
@@ -105,7 +112,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		}
 	}
 
-	// todo: jika semua request sukses, hapus job
+	// todo: jika semua request sukses, hapus job pada temp tabel
 	// err = ctrl.Svc.DeleteJob(jobID)
 	// if err != nil {
 	// 	statusCode, resp := helper.GetError(err.Error())

@@ -10,17 +10,25 @@ type Job struct {
 }
 
 type JobDetail struct {
-	ID          uint      `json:"id"`
-	JobID       uint      `json:"job_id"`
-	PhoneNumber string    `json:"phone_number"`
-	OnProcess   bool      `gorm:"not null;default:true" json:"on_process"`
-	Sequence    int       `json:"sequence"`
-	CreatedAt   time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+	ID               uint      `json:"id"`
+	JobID            uint      `json:"job_id"`
+	PhoneNumber      string    `json:"phone_number"`
+	SubscriberStatus string    `json:"subscriber_status"`
+	DeviceStatus     string    `json:"device_status"`
+	OnProcess        bool      `gorm:"not null;default:true" json:"on_process"`
+	Sequence         int       `json:"sequence"`
+	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
 type UpdateJobDetailRequest struct {
-	OnProcess bool `json:"on_process"`
-	Sequence  int  `json:"sequence"`
+	ID               uint      `json:"id"`
+	JobID            uint      `json:"job_id"`
+	PhoneNumber      string    `json:"phone_number"`
+	SubscriberStatus string    `json:"subscriber_status"`
+	DeviceStatus     string    `json:"device_status"`
+	OnProcess        bool      `json:"on_process"`
+	Sequence         int       `json:"sequence"`
+	CreatedAt        time.Time `json:"-"`
 }
 
 type LiveStatusRequest struct {

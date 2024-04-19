@@ -26,7 +26,8 @@ type Repository interface {
 	GetJobDetailsByJobIDWithPagination(limit, offset int, jobID uint) ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
-	UpdateJobDetail(jobID uint, request *UpdateJobDetailRequest) error
+	UpdateSucceededJobDetail(id uint, request *UpdateJobDetailRequest) error
+	UpdateFailedJobDetail(id uint, request *UpdateJobDetailRequest) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -100,8 +101,16 @@ func (repo *repository) UpdateJob(id uint, total int) error {
 	return nil
 }
 
-func (repo *repository) UpdateJobDetail(jobID uint, request *UpdateJobDetailRequest) error {
-	if err := repo.DB.Model(&JobDetail{}).Where("job_id = ?", jobID).Updates(request).Error; err != nil {
+func (repo *repository) UpdateSucceededJobDetail(id uint, request *UpdateJobDetailRequest) error {
+	if err := repo.DB.Debug().Model(&JobDetail{}).Where("id = ?", id).Updates(request).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) UpdateFailedJobDetail(id uint, request *UpdateJobDetailRequest) error {
+	if err := repo.DB.Model(&JobDetail{}).Where("job_id = ?", id).Updates(request).Error; err != nil {
 		return err
 	}
 

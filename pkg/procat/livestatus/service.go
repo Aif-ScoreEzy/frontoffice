@@ -24,7 +24,8 @@ type Service interface {
 	ProcessJobDetails(apiKey string, jobID uint, jobDetails []*JobDetail, batchSize int) ([]*LiveStatusResponse, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, total int) error
-	UpdateJobDetail(jobID uint, sequence int) error
+	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error
+	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -139,13 +140,22 @@ func (svc *service) UpdateJob(id uint, total int) error {
 	return svc.Repo.UpdateJob(id, total)
 }
 
-func (svc *service) UpdateJobDetail(jobID uint, sequence int) error {
+func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error {
+	request := &UpdateJobDetailRequest{
+		SubscriberStatus: subcriberStatus,
+		DeviceStatus:     deviceStatus,
+	}
+
+	return svc.Repo.UpdateSucceededJobDetail(id, request)
+}
+
+func (svc *service) UpdateFailedJobDetail(jobID uint, sequence int) error {
 	request := &UpdateJobDetailRequest{
 		OnProcess: false,
 		Sequence:  sequence + 1,
 	}
 
-	return svc.Repo.UpdateJobDetail(jobID, request)
+	return svc.Repo.UpdateFailedJobDetail(jobID, request)
 }
 
 func (svc *service) DeleteJobDetail(id uint) error {
