@@ -27,6 +27,7 @@ type Repository interface {
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
+	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetUnprocessedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
@@ -110,6 +111,16 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotal(keyword string, 
 	var count int64
 
 	query := repo.DB.Find(&jobs, "job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%")
+	err := query.Find(&jobs).Count(&count).Error
+
+	return count, err
+}
+
+func (repo *repository) GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint) (int64, error) {
+	var jobs []JobDetail
+	var count int64
+
+	query := repo.DB.Find(&jobs, "job_id = ?", jobID)
 	err := query.Find(&jobs).Count(&count).Error
 
 	return count, err
