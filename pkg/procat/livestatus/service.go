@@ -25,6 +25,7 @@ type Service interface {
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
+	GetJobDetailsWithPaginationTotalPercentage(jobID uint) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetUnprocessedJobDetails() ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
@@ -91,6 +92,11 @@ func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, job
 
 func (svc *service) GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error) {
 	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotal(keyword, jobID)
+	return count, err
+}
+
+func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobID uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID)
 	return count, err
 }
 
