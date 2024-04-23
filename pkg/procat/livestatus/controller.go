@@ -78,13 +78,6 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	// 	return c.Status(statusCode).JSON(resp)
 	// }
 
-	// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
-	err = ctrl.Svc.UpdateJob(jobID, successRequestTotal)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
 	dataResponse := ResponseSuccess{
 		Success:   successRequestTotal,
 		TotalData: totalData,
@@ -161,34 +154,29 @@ func (ctrl *controller) ReprocessUnsuccessfulJobDetails() {
 		log.Println("Error GetUnprocessedJobDetails : ", err.Error())
 	}
 
-	var jobID uint
+	if jobDetails == nil {
+		log.Println("No unprocessed job details found")
+		return
+	}
+
 	var successRequestTotal int
-	if jobDetails != nil {
-		for _, jobDetail := range jobDetails {
-			if err := ctrl.Svc.UpdateProcessedJobDetail(jobDetail.ID); err != nil {
-				log.Println("Error UpdateProcessedJobDetail : ", err.Error())
-			}
-
-			job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
-			successRequestTotal = job.Success
-			jobID = job.ID
-
-			successRequestTotal, err = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
-			if err != nil {
-				log.Println("Error ProcessJobDetails : ", err.Error())
-			}
+	for _, jobDetail := range jobDetails {
+		if err := ctrl.Svc.UpdateProcessedJobDetail(jobDetail.ID); err != nil {
+			log.Println("Error UpdateProcessedJobDetail : ", err.Error())
 		}
 
-		// todo: jika semua request sukses, hapus job pada temp tabel
-		// err = ctrl.Svc.DeleteJob(jobID)
-		// if err != nil {
-		// 	log.Println("Error DeleteJob : ", err.Error())
-		// }
+		job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
+		successRequestTotal = job.Success
 
-		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
-		err = ctrl.Svc.UpdateJob(jobID, successRequestTotal)
+		_, _ = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
 		if err != nil {
-			log.Println("Error UpdateJob : ", err.Error())
+			log.Println("Error ProcessJobDetails : ", err.Error())
 		}
 	}
+
+	// todo: jika semua request sukses, hapus job pada temp tabel
+	// err = ctrl.Svc.DeleteJob(jobID)
+	// if err != nil {
+	// 	log.Println("Error DeleteJob : ", err.Error())
+	// }
 }
