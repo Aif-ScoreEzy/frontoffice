@@ -142,6 +142,12 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 		if err != nil {
 			return 0, err
 		}
+
+		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
+		err = svc.UpdateJob(jobDetail.JobID, successRequestTotal)
+		if err != nil {
+			return 0, err
+		}
 	} else {
 		_ = svc.UpdateFailedJobDetail(jobDetail.JobID, jobDetail.Sequence)
 		if err != nil {
