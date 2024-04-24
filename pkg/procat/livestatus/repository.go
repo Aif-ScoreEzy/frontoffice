@@ -61,7 +61,7 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 
 func (repo *repository) GetJobs(limit, offset int) ([]*Job, error) {
 	var jobs []*Job
-	if err := repo.DB.Limit(limit).Offset(offset).Find(&jobs).Error; err != nil {
+	if err := repo.DB.Limit(limit).Offset(offset).Order("id desc").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
@@ -169,6 +169,17 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 func (repo *repository) UpdateJob(id uint, total int) error {
 	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("success", total).Error; err != nil {
 		return err
+	}
+
+	var job *Job
+	if err := repo.DB.First(&job, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	if job.Total == total {
+		if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("status", "done").Error; err != nil {
+			return err
+		}
 	}
 
 	return nil

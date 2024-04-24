@@ -6,6 +6,7 @@ type Job struct {
 	ID        uint      `json:"id"`
 	Total     int       `json:"total"`
 	Success   int       `json:"success"`
+	Status    string    `json:"status"`
 	CreatedAt time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
