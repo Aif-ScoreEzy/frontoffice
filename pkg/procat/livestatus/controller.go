@@ -21,7 +21,7 @@ type Controller interface {
 	BulkSearch(c *fiber.Ctx) error
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
-	ReprocessUnsuccessfulJobDetails()
+	ReprocessFailedJobDetails()
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
@@ -150,23 +150,19 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) ReprocessUnsuccessfulJobDetails() {
-	jobDetails, err := ctrl.Svc.GetUnprocessedJobDetails()
+func (ctrl *controller) ReprocessFailedJobDetails() {
+	jobDetails, err := ctrl.Svc.GetFailedJobDetails()
 	if err != nil {
-		log.Println("Error GetUnprocessedJobDetails : ", err.Error())
+		log.Println("Error GetFailedJobDetails : ", err.Error())
 	}
 
 	if jobDetails == nil {
-		log.Println("No unprocessed job details found")
+		log.Println("No failed job details found")
 		return
 	}
 
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
-		if err := ctrl.Svc.UpdateProcessedJobDetail(jobDetail.ID); err != nil {
-			log.Println("Error UpdateProcessedJobDetail : ", err.Error())
-		}
-
 		job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
 		successRequestTotal = job.Success
 

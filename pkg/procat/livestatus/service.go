@@ -2,9 +2,9 @@ package livestatus
 
 import (
 	"encoding/json"
-	"fmt"
 	"front-office/app/config"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -27,12 +27,11 @@ type Service interface {
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
-	GetUnprocessedJobDetails() ([]*JobDetail, error)
+	GetFailedJobDetails() ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, total int) error
-	UpdateProcessedJobDetail(id uint) error
-	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error
+	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
@@ -105,8 +104,8 @@ func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) 
 	return count, err
 }
 
-func (svc *service) GetUnprocessedJobDetails() ([]*JobDetail, error) {
-	jobDetails, err := svc.Repo.GetUnprocessedJobDetails()
+func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetFailedJobDetails()
 	if err != nil {
 		return nil, err
 	}
@@ -129,18 +128,60 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 
 	// todo: jika status code 200 kirim job detail ke aifcore
 
-	dataMap := liveStatusResponse.Data.(map[string]interface{})
-	dataLiveMap := dataMap["live"].(map[string]interface{})
-	subscriberStatus := fmt.Sprintf("%v", dataLiveMap["subscriber_status"])
-	deviceStatus := fmt.Sprintf("%v", dataLiveMap["device_status"])
+	dataMap, ok := liveStatusResponse.Data.(map[string]interface{})
+	if !ok {
+		log.Println("Failed to assert Data field as map[string]interface{}")
+	}
+
+	dataLiveMap, ok := dataMap["live"].(map[string]interface{})
+	if !ok {
+		log.Println("Failed to assert live field within Data as map[string]interface{}")
+	}
+
+	subscriberStatus, ok := dataLiveMap["subscriber_status"].(string)
+	if !ok {
+		log.Println("Failed to assert subscriber_status field as string")
+	}
+
+	deviceStatus, ok := dataLiveMap["device_status"].(string)
+	if !ok {
+		log.Println("Failed to assert device_status field as string")
+	}
+
+	var errorCode int
+	if errors, ok := dataMap["errors"].([]interface{}); ok {
+		for _, err := range errors {
+			if errMap, ok := err.(map[string]interface{}); ok {
+				if code, ok := errMap["code"].(float64); ok {
+					errorCode = int(code)
+				} else {
+					log.Println("Error: 'code' field is not a number")
+				}
+			}
+		}
+	}
+
+	data := &JSONB{}
+	responseBodyByte, err := json.Marshal(liveStatusResponse.Data)
+	if err == nil {
+		(*data).Scan(responseBodyByte)
+	}
 
 	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 	if liveStatusResponse.StatusCode == 200 {
+		// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
 		successRequestTotal += 1
 		// err = svc.DeleteJobDetail(jobDetail.ID)
-		err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus)
-		if err != nil {
-			return 0, err
+		if errorCode == -60001 {
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "fail", data)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "success", data)
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
@@ -178,18 +219,13 @@ func (svc *service) UpdateJob(id uint, total int) error {
 	return svc.Repo.UpdateJob(id, total)
 }
 
-func (svc *service) UpdateProcessedJobDetail(id uint) error {
+func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {
 	request := &UpdateJobDetailRequest{
-		OnProcess: true,
-	}
-
-	return svc.Repo.UpdateJobDetail(id, request)
-}
-
-func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error {
-	request := &UpdateJobDetailRequest{
+		OnProcess:        false,
 		SubscriberStatus: subcriberStatus,
 		DeviceStatus:     deviceStatus,
+		Status:           status,
+		Data:             data,
 	}
 
 	return svc.Repo.UpdateJobDetail(id, request)
@@ -197,8 +233,9 @@ func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceSta
 
 func (svc *service) UpdateFailedJobDetail(jobID uint, sequence int) error {
 	request := &UpdateJobDetailRequest{
-		OnProcess: false,
+		OnProcess: true,
 		Sequence:  sequence + 1,
+		Status:    "error",
 	}
 
 	return svc.Repo.UpdateJobDetail(jobID, request)

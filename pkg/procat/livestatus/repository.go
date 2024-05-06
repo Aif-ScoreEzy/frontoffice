@@ -29,7 +29,7 @@ type Repository interface {
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
-	GetUnprocessedJobDetails() ([]*JobDetail, error)
+	GetFailedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, total int) error
 	UpdateJobDetail(id uint, request *UpdateJobDetailRequest) error
@@ -145,9 +145,9 @@ func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID ui
 	return count, err
 }
 
-func (repo *repository) GetUnprocessedJobDetails() ([]*JobDetail, error) {
+func (repo *repository) GetFailedJobDetails() ([]*JobDetail, error) {
 	var jobDetails []*JobDetail
-	if err := repo.DB.Find(&jobDetails, "on_process = ?", false).Error; err != nil {
+	if err := repo.DB.Find(&jobDetails, "status = ?", "error").Error; err != nil {
 		return nil, err
 	}
 
