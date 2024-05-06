@@ -1,6 +1,8 @@
 package livestatus
 
-import "time"
+import (
+	"time"
+)
 
 type Job struct {
 	ID        uint      `json:"id"`
@@ -16,8 +18,9 @@ type JobDetail struct {
 	PhoneNumber      string    `json:"phone_number"`
 	SubscriberStatus string    `json:"subscriber_status"`
 	DeviceStatus     string    `json:"device_status"`
-	OnProcess        bool      `gorm:"not null;default:true" json:"on_process"`
+	OnProcess        bool      `gorm:"not null" json:"on_process"`
 	Sequence         int       `json:"sequence"`
+	Status           string    `json:"status"`
 	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
@@ -29,6 +32,7 @@ type UpdateJobDetailRequest struct {
 	DeviceStatus     string    `json:"device_status"`
 	OnProcess        bool      `json:"on_process"`
 	Sequence         int       `json:"sequence"`
+	Status           string    `json:"status"`
 	CreatedAt        time.Time `json:"-"`
 }
 

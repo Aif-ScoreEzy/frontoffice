@@ -2,9 +2,9 @@ package livestatus
 
 import (
 	"encoding/json"
-	"fmt"
 	"front-office/app/config"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -32,7 +32,7 @@ type Service interface {
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, total int) error
 	UpdateProcessedJobDetail(id uint) error
-	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error
+	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
@@ -129,18 +129,55 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 
 	// todo: jika status code 200 kirim job detail ke aifcore
 
-	dataMap := liveStatusResponse.Data.(map[string]interface{})
-	dataLiveMap := dataMap["live"].(map[string]interface{})
-	subscriberStatus := fmt.Sprintf("%v", dataLiveMap["subscriber_status"])
-	deviceStatus := fmt.Sprintf("%v", dataLiveMap["device_status"])
+	dataMap, ok := liveStatusResponse.Data.(map[string]interface{})
+	if !ok {
+		log.Println("Failed to assert Data field as map[string]interface{}")
+	}
+
+	dataLiveMap, ok := dataMap["live"].(map[string]interface{})
+	if !ok {
+		log.Println("Failed to assert live field within Data as map[string]interface{}")
+	}
+
+	subscriberStatus, ok := dataLiveMap["subscriber_status"].(string)
+	if !ok {
+		log.Println("Failed to assert subscriber_status field as string")
+	}
+
+	deviceStatus, ok := dataLiveMap["device_status"].(string)
+	if !ok {
+		log.Println("Failed to assert device_status field as string")
+	}
+
+	var errorCode int
+	if errors, ok := dataMap["errors"].([]interface{}); ok {
+		for _, err := range errors {
+			if errMap, ok := err.(map[string]interface{}); ok {
+				if code, ok := errMap["code"].(float64); ok {
+					errorCode = int(code)
+				} else {
+					log.Println("Error: 'code' field is not a number")
+				}
+			}
+		}
+	}
 
 	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 	if liveStatusResponse.StatusCode == 200 {
+		// kolom status: success, fail, error
+		// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
 		successRequestTotal += 1
 		// err = svc.DeleteJobDetail(jobDetail.ID)
-		err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus)
-		if err != nil {
-			return 0, err
+		if errorCode == -60001 {
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "fail")
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "success")
+			if err != nil {
+				return 0, err
+			}
 		}
 
 		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
@@ -186,10 +223,12 @@ func (svc *service) UpdateProcessedJobDetail(id uint) error {
 	return svc.Repo.UpdateJobDetail(id, request)
 }
 
-func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus string) error {
+func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string) error {
 	request := &UpdateJobDetailRequest{
+		OnProcess:        false,
 		SubscriberStatus: subcriberStatus,
 		DeviceStatus:     deviceStatus,
+		Status:           status,
 	}
 
 	return svc.Repo.UpdateJobDetail(id, request)
@@ -197,8 +236,9 @@ func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceSta
 
 func (svc *service) UpdateFailedJobDetail(jobID uint, sequence int) error {
 	request := &UpdateJobDetailRequest{
-		OnProcess: false,
+		OnProcess: true,
 		Sequence:  sequence + 1,
+		Status:    "error",
 	}
 
 	return svc.Repo.UpdateJobDetail(jobID, request)
