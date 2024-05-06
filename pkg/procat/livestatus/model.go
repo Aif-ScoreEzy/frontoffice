@@ -1,6 +1,9 @@
 package livestatus
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 )
 
@@ -21,6 +24,7 @@ type JobDetail struct {
 	OnProcess        bool      `gorm:"not null" json:"on_process"`
 	Sequence         int       `json:"sequence"`
 	Status           string    `json:"status"`
+	Data             *JSONB    `gorm:"type:jsonb" json:"data"`
 	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
@@ -33,6 +37,7 @@ type UpdateJobDetailRequest struct {
 	OnProcess        bool      `json:"on_process"`
 	Sequence         int       `json:"sequence"`
 	Status           string    `json:"status"`
+	Data             *JSONB    `json:"data"`
 	CreatedAt        time.Time `json:"-"`
 }
 
@@ -51,4 +56,25 @@ type LiveStatusResponse struct {
 type ResponseSuccess struct {
 	Success   int `json:"success"`
 	TotalData int `json:"total_data"`
+}
+
+type JSONB map[string]interface{}
+
+func (jsonField JSONB) Value() (driver.Value, error) {
+	return json.Marshal(jsonField)
+}
+
+func (jsonField *JSONB) Scan(value interface{}) error {
+	data, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(data, &jsonField)
+}
+
+func (j *JSONB) Encoded(value []byte) error {
+	ab := json.Unmarshal(value, j)
+
+	return ab
 }

@@ -27,12 +27,11 @@ type Service interface {
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
-	GetUnprocessedJobDetails() ([]*JobDetail, error)
+	GetFailedJobDetails() ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, total int) error
-	UpdateProcessedJobDetail(id uint) error
-	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string) error
+	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
@@ -105,8 +104,8 @@ func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) 
 	return count, err
 }
 
-func (svc *service) GetUnprocessedJobDetails() ([]*JobDetail, error) {
-	jobDetails, err := svc.Repo.GetUnprocessedJobDetails()
+func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetFailedJobDetails()
 	if err != nil {
 		return nil, err
 	}
@@ -162,19 +161,24 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 		}
 	}
 
+	data := &JSONB{}
+	responseBodyByte, err := json.Marshal(liveStatusResponse.Data)
+	if err == nil {
+		(*data).Scan(responseBodyByte)
+	}
+
 	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 	if liveStatusResponse.StatusCode == 200 {
-		// kolom status: success, fail, error
 		// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
 		successRequestTotal += 1
 		// err = svc.DeleteJobDetail(jobDetail.ID)
 		if errorCode == -60001 {
-			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "fail")
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "fail", data)
 			if err != nil {
 				return 0, err
 			}
 		} else {
-			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "success")
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, "success", data)
 			if err != nil {
 				return 0, err
 			}
@@ -215,20 +219,13 @@ func (svc *service) UpdateJob(id uint, total int) error {
 	return svc.Repo.UpdateJob(id, total)
 }
 
-func (svc *service) UpdateProcessedJobDetail(id uint) error {
-	request := &UpdateJobDetailRequest{
-		OnProcess: true,
-	}
-
-	return svc.Repo.UpdateJobDetail(id, request)
-}
-
-func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string) error {
+func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {
 	request := &UpdateJobDetailRequest{
 		OnProcess:        false,
 		SubscriberStatus: subcriberStatus,
 		DeviceStatus:     deviceStatus,
 		Status:           status,
+		Data:             data,
 	}
 
 	return svc.Repo.UpdateJobDetail(id, request)
