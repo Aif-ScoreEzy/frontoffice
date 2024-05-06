@@ -22,6 +22,6 @@ func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	// Cron Reprocess Unsuccessful Job Details
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
 	scd := gocron.NewScheduler(jakartaTime)
-	_, _ = scd.Every(5).Minute().Do(controller.ReprocessUnsuccessfulJobDetails)
+	_, _ = scd.Every(5).Minute().Do(controller.ReprocessFailedJobDetails)
 	scd.StartAsync()
 }
