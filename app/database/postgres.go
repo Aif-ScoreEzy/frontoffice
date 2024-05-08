@@ -1,11 +1,16 @@
 package database
 
 import (
+	"fmt"
 	"front-office/app/config"
 	"log"
+	"strings"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
+
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 )
 
 type postgresDb struct {
@@ -26,6 +31,32 @@ func NewPostgresDb(cfg *config.Config) Database {
 }
 
 func ConnectPg(dsn string, cfg *config.Config) (*gorm.DB, error) {
+
+	if strings.ToLower(cfg.Env.CloudProvider) == "gcp_cloudsql" {
+
+		db, err := gorm.Open(postgres.New(
+			postgres.Config{
+				DriverName: "cloudsqlpostgres",
+				DSN:        dsn,
+			}),
+			&gorm.Config{
+				NamingStrategy: schema.NamingStrategy{
+					TablePrefix:   "frontoffice.", // schema name
+					SingularTable: false,
+				},
+				// Logger: logger.Default.LogMode(logger.Info)
+			})
+
+		if err != nil {
+			log.Println("Can't Connect to DB on GCP because : ", err.Error())
+			return db, err
+		}
+		// PG = db
+		fmt.Println("Success Connect to DB on GCP")
+
+		return db, err
+	}
+
 	db, err := gorm.Open(postgres.New(
 		postgres.Config{
 			DSN: dsn,

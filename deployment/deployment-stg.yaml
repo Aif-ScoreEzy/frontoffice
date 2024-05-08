@@ -37,6 +37,7 @@ spec:
       labels:
         app: frontoffice-be
     spec:
+      automountServiceAccountToken: false
       serviceAccountName: frontoffice-ksa
       containers:
       - name: frontoffice-be
@@ -72,11 +73,11 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: FRONTEND_BASE_URL
-          - name: GCP_CLOUD_SQL
+          - name: CLOUD_PROVIDER
             valueFrom:
               configMapKeyRef:
                 name: frontoffice-be-config
-                key: GCP_CLOUD_SQL
+                key: CLOUD_PROVIDER
           - name: APP_PORT
             valueFrom:
               configMapKeyRef:
