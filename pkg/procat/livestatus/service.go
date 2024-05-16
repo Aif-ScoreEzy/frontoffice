@@ -2,7 +2,10 @@ package livestatus
 
 import (
 	"encoding/json"
+	"errors"
 	"front-office/app/config"
+	"front-office/common/constant"
+	"front-office/helper"
 	"io"
 	"log"
 	"strconv"
@@ -19,9 +22,9 @@ type service struct {
 
 type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
-	GetJobs(page, limit string) ([]*Job, error)
+	GetJobs(page, limit, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
-	GetJobsTotal() (int64, error)
+	GetJobsTotal(startDate, endDate string) (int64, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
@@ -50,20 +53,68 @@ func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, er
 	return jobID, nil
 }
 
-func (svc *service) GetJobs(page, limit string) ([]*Job, error) {
+func (svc *service) GetJobs(page, limit, startDate, endDate string) ([]*Job, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
-	return svc.Repo.GetJobs(intLimit, offset)
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return nil, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return nil, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	return svc.Repo.GetJobs(intLimit, offset, startTime, endTime)
 }
 
 func (svc *service) GetJobByID(jobID uint) (*Job, error) {
 	return svc.Repo.GetJobByID(jobID)
 }
 
-func (svc *service) GetJobsTotal() (int64, error) {
-	count, err := svc.Repo.GetJobsTotal()
+func (svc *service) GetJobsTotal(startDate, endDate string) (int64, error) {
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+	count, err := svc.Repo.GetJobsTotal(startTime, endTime)
+
 	return count, err
 }
 

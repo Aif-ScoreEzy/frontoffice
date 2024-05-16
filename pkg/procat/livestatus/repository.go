@@ -21,9 +21,9 @@ type repository struct {
 
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
-	GetJobs(limit, offset int) ([]*Job, error)
+	GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
-	GetJobsTotal() (int64, error)
+	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
@@ -59,9 +59,15 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 	return dataJob.ID, nil
 }
 
-func (repo *repository) GetJobs(limit, offset int) ([]*Job, error) {
+func (repo *repository) GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error) {
 	var jobs []*Job
-	if err := repo.DB.Limit(limit).Offset(offset).Order("id desc").Find(&jobs).Error; err != nil {
+
+	query := repo.DB
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
+
+	if err := query.Limit(limit).Offset(offset).Order("id desc").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
@@ -77,11 +83,14 @@ func (repo *repository) GetJobByID(jobID uint) (*Job, error) {
 	return job, nil
 }
 
-func (repo *repository) GetJobsTotal() (int64, error) {
+func (repo *repository) GetJobsTotal(startTime, endTime string) (int64, error) {
 	var jobs []Job
 	var count int64
 
 	query := repo.DB
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
 
 	err := query.Find(&jobs).Count(&count).Error
 
