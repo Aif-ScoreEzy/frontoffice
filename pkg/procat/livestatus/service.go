@@ -25,6 +25,9 @@ type Service interface {
 	GetJobs(page, limit, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startDate, endDate string) (int64, error)
+	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
+	GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
@@ -83,6 +86,34 @@ func (svc *service) GetJobs(page, limit, startDate, endDate string) ([]*Job, err
 	}
 
 	return svc.Repo.GetJobs(intLimit, offset, startTime, endTime)
+}
+
+func (svc *service) GetJobsTotalByRangeDate(startDate, endDate string) (int64, error) {
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	return svc.Repo.GetJobsTotalByRangeDate(startTime, endTime)
 }
 
 func (svc *service) GetJobByID(jobID uint) (*Job, error) {
@@ -150,9 +181,66 @@ func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobID uint, statu
 	return count, err
 }
 
+func (svc *service) GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error) {
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status)
+	return count, err
+}
+
 func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
 	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobID)
 	return count, err
+}
+
+func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error) {
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return 0, errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword)
 }
 
 func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {
