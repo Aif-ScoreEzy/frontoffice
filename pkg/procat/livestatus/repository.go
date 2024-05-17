@@ -21,13 +21,16 @@ type repository struct {
 
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
-	GetJobs(limit, offset int) ([]*Job, error)
+	GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error)
+	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error)
 	GetJobByID(jobID uint) (*Job, error)
-	GetJobsTotal() (int64, error)
+	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint, status string) (int64, error)
+	GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetFailedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
@@ -59,13 +62,50 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 	return dataJob.ID, nil
 }
 
-func (repo *repository) GetJobs(limit, offset int) ([]*Job, error) {
+func (repo *repository) GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error) {
 	var jobs []*Job
-	if err := repo.DB.Limit(limit).Offset(offset).Order("id desc").Find(&jobs).Error; err != nil {
+
+	query := repo.DB
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
+
+	if err := query.Limit(limit).Offset(offset).Order("id desc").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
 	return jobs, nil
+}
+
+func (repo *repository) GetJobsTotalByRangeDate(startTime, endTime string) (int64, error) {
+	var totalData int64
+
+	if err := repo.DB.Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
+		return 0, err
+	}
+
+	return totalData, nil
+}
+
+func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error) {
+	var count int64
+
+	query := repo.DB.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+
+	if column == "subscriber_status" {
+		query = query.Where("subscriber_status = ?", keyword)
+	}
+
+	if column == "device_status" {
+		query = query.Where("device_status = ?", keyword)
+	}
+
+	if column == "data" && (keyword == "MOBILE" || keyword == "FIXED_LINE") {
+		query = query.Where("data -> 'phone_type' ->> 'description' = ?", keyword)
+	}
+
+	err := query.Find(&JobDetail{}).Count(&count).Error
+	return count, err
 }
 
 func (repo *repository) GetJobByID(jobID uint) (*Job, error) {
@@ -77,11 +117,14 @@ func (repo *repository) GetJobByID(jobID uint) (*Job, error) {
 	return job, nil
 }
 
-func (repo *repository) GetJobsTotal() (int64, error) {
+func (repo *repository) GetJobsTotal(startTime, endTime string) (int64, error) {
 	var jobs []Job
 	var count int64
 
 	query := repo.DB
+	if startTime != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	}
 
 	err := query.Find(&jobs).Count(&count).Error
 
@@ -126,11 +169,22 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID u
 	return count, err
 }
 
+func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status string) (int64, error) {
+	var count int64
+
+	err := repo.DB.
+		Where("created_at BETWEEN ? AND ? AND status = ?", startTime, endTime, status).
+		Find(&JobDetail{}).
+		Count(&count).Error
+
+	return count, err
+}
+
 func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
 	var jobs []JobDetail
 	var count int64
 
-	query := repo.DB.Find(&jobs, "job_id = ?", jobID)
+	query := repo.DB.Where("job_id = ?", jobID)
 
 	if column == "subscriber_status" {
 		query = query.Where("subscriber_status = ?", keyword)

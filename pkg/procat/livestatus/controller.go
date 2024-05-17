@@ -21,6 +21,7 @@ type Controller interface {
 	BulkSearch(c *fiber.Ctx) error
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
+	GetJobsSummary(c *fiber.Ctx) error
 	ReprocessFailedJobDetails()
 }
 
@@ -94,18 +95,52 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
 
-	jobs, err := ctrl.Svc.GetJobs(page, size)
+	jobs, err := ctrl.Svc.GetJobs(page, size, startDate, endDate)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetJobsTotal()
+	totalData, _ := ctrl.Svc.GetJobsTotal(startDate, endDate)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
 		"data":       jobs,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		fullResponsePage,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
+
+	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(startDate, endDate)
+	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "subscriber_status", "ACTIVE")
+	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "device_status", "REACHABLE")
+	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "MOBILE")
+	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "FIXED_LINE")
+	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "success")
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "fail")
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "error")
+
+	fullResponsePage := JobSummaryResponse{
+		TotalData:        totalData,
+		TotalDataSuccess: totalDataPercentageSuccess,
+		TotalDataFail:    totalDataPercentageFail,
+		TotalDataError:   totalDataPercentageError,
+		SubscriberActive: totalSubscriberActive,
+		DeviceReachable:  totalDeviceReachable,
+		Mobile:           totalMobilePhone,
+		FixedLine:        totalFixedLine,
 	}
 
 	resp := helper.ResponseSuccess(

@@ -53,6 +53,17 @@ type LiveStatusResponse struct {
 	StatusCode int         `json:"status_code"`
 }
 
+type JobSummaryResponse struct {
+	TotalData        int64 `json:"total_data"`
+	TotalDataSuccess int64 `json:"total_data_percentage_success"`
+	TotalDataFail    int64 `json:"total_data_percentage_fail"`
+	TotalDataError   int64 `json:"total_data_percentage_error"`
+	SubscriberActive int64 `json:"subs_active"`
+	DeviceReachable  int64 `json:"dev_reachable"`
+	Mobile           int64 `json:"mobile"`
+	FixedLine        int64 `json:"fixed_line"`
+}
+
 type ResponseSuccess struct {
 	Success   int `json:"success"`
 	TotalData int `json:"total_data"`
