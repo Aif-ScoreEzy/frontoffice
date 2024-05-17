@@ -8,11 +8,12 @@ import (
 )
 
 type Job struct {
-	ID        uint      `json:"id"`
-	Total     int       `json:"total"`
-	Success   int       `json:"success"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+	ID        uint       `json:"id"`
+	Total     int        `json:"total"`
+	Success   int        `json:"success"`
+	Status    string     `json:"status"`
+	CreatedAt time.Time  `gorm:"not null;default:current_timestamp" json:"start_time"`
+	EndAt     *time.Time `json:"end_time"`
 }
 
 type JobDetail struct {
@@ -26,6 +27,12 @@ type JobDetail struct {
 	Status           string    `json:"status"`
 	Data             *JSONB    `gorm:"type:jsonb" json:"data"`
 	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+}
+
+type UpdateJobRequest struct {
+	Total  *int       `json:"total"`
+	Status *string    `json:"status"`
+	EndAt  *time.Time `json:"end_at"`
 }
 
 type UpdateJobDetailRequest struct {
