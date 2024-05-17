@@ -123,14 +123,14 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 
 	totalData, _ := ctrl.Svc.GetJobsTotal(startDate, endDate)
 
-	fullResponsePage := map[string]interface{}{
-		"total_data": totalData,
-		"data":       jobs,
+	data := GetJobsResponse{
+		TotalData: totalData,
+		Jobs:      jobs,
 	}
 
 	resp := helper.ResponseSuccess(
-		"success",
-		fullResponsePage,
+		"success to get jobs",
+		data,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -149,7 +149,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "fail")
 	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "error")
 
-	fullResponsePage := JobSummaryResponse{
+	data := JobSummaryResponse{
 		TotalData:        totalData,
 		TotalDataSuccess: totalDataPercentageSuccess,
 		TotalDataFail:    totalDataPercentageFail,
@@ -162,7 +162,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"success",
-		fullResponsePage,
+		data,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

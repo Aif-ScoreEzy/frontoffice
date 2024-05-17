@@ -71,6 +71,11 @@ type JobSummaryResponse struct {
 	FixedLine        int64 `json:"fixed_line"`
 }
 
+type GetJobsResponse struct {
+	TotalData int64  `json:"total_data"`
+	Jobs      []*Job `json:"jobs"`
+}
+
 type JobDetailResponse struct {
 	TotalData        int64                   `json:"total_data"`
 	TotalDataSuccess int64                   `json:"total_data_percentage_success"`
