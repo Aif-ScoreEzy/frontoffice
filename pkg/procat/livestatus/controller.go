@@ -171,19 +171,19 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "fail")
 	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "error")
 
-	fullResponsePage := map[string]interface{}{
-		"total_data":                  totalData,
-		"total_data_percentage":       totalDataPercentage,
-		"total_data_percentage_fail":  totalDataPercentageFail,
-		"total_data_percentage_error": totalDataPercentageError,
-		"subs_active":                 subscriberStatuscon,
-		"dev_reachable":               deviceStatusReach,
-		"data":                        jobs,
+	dataResponse := JobDetailResponse{
+		TotalData:        totalData,
+		TotalDataSuccess: totalDataPercentage,
+		TotalDataFail:    totalDataPercentageFail,
+		TotalDataError:   totalDataPercentageError,
+		SubscriberActive: subscriberStatuscon,
+		DeviceReachable:  deviceStatusReach,
+		JobDetails:       jobs,
 	}
 
 	resp := helper.ResponseSuccess(
-		"success",
-		fullResponsePage,
+		"success to get job details",
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

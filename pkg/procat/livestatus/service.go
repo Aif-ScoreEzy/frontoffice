@@ -29,7 +29,7 @@ type Service interface {
 	GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error)
 	GetJobDetails(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
@@ -158,7 +158,7 @@ func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error) {
+func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit

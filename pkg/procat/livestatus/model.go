@@ -64,6 +64,27 @@ type JobSummaryResponse struct {
 	FixedLine        int64 `json:"fixed_line"`
 }
 
+type JobDetailResponse struct {
+	TotalData        int64                   `json:"total_data"`
+	TotalDataSuccess int64                   `json:"total_data_percentage_success"`
+	TotalDataFail    int64                   `json:"total_data_percentage_fail"`
+	TotalDataError   int64                   `json:"total_data_percentage_error"`
+	SubscriberActive int64                   `json:"subs_active"`
+	DeviceReachable  int64                   `json:"dev_reachable"`
+	JobDetails       []*JobDetailQueryResult `json:"job_details"`
+}
+
+type JobDetailQueryResult struct {
+	ID               uint   `json:"id"`
+	JobID            uint   `json:"job_id"`
+	PhoneNumber      string `json:"phone_number"`
+	SubscriberStatus string `json:"subscriber_status"`
+	DeviceStatus     string `json:"device_status"`
+	Status           string `json:"status"`
+	Operator         string `json:"operator"`
+	PhoneType        string `json:"phone_type"`
+}
+
 type ResponseSuccess struct {
 	Success   int `json:"success"`
 	TotalData int `json:"total_data"`

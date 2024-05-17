@@ -27,7 +27,7 @@ type Repository interface {
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint, status string) (int64, error)
 	GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status string) (int64, error)
@@ -140,9 +140,16 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetail, error) {
-	var jobs []*JobDetail
-	if err := repo.DB.Limit(limit).Offset(offset).Find(&jobs, "job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").Error; err != nil {
+func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error) {
+	var jobs []*JobDetailQueryResult
+
+	if err := repo.DB.
+		Model(&JobDetail{}).
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Limit(limit).
+		Offset(offset).
+		Where("job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").
+		Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
