@@ -36,7 +36,7 @@ type Service interface {
 	GetFailedJobDetails() ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
-	UpdateJob(id uint, total int) error
+	UpdateJob(id uint, req *UpdateJobRequest) error
 	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
@@ -324,7 +324,10 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 		}
 
 		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
-		err = svc.UpdateJob(jobDetail.JobID, successRequestTotal)
+		updateReq := UpdateJobRequest{
+			Total: &successRequestTotal,
+		}
+		err = svc.UpdateJob(jobDetail.JobID, &updateReq)
 		if err != nil {
 			return 0, err
 		}
@@ -354,8 +357,22 @@ func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKe
 	return liveStatusResponse, nil
 }
 
-func (svc *service) UpdateJob(id uint, total int) error {
-	return svc.Repo.UpdateJob(id, total)
+func (svc *service) UpdateJob(id uint, req *UpdateJobRequest) error {
+	data := map[string]interface{}{}
+
+	if req.Total != nil {
+		data["success"] = *req.Total
+	}
+
+	if req.Status != nil {
+		data["status"] = *req.Status
+	}
+
+	if req.EndAt != nil {
+		data["end_at"] = *req.EndAt
+	}
+
+	return svc.Repo.UpdateJob(id, data)
 }
 
 func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {

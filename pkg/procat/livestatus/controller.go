@@ -5,6 +5,7 @@ import (
 	"front-office/helper"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -64,11 +65,27 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	}
 
 	var successRequestTotal int
-	for _, jobDetail := range jobDetails {
+	for i, jobDetail := range jobDetails {
 		successRequestTotal, err = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
+		}
+
+		if i == totalData-1 {
+			doneStatus := "done"
+			now := time.Now()
+
+			updateReq := UpdateJobRequest{
+				Status: &doneStatus,
+				EndAt:  &now,
+			}
+
+			err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
 		}
 	}
 

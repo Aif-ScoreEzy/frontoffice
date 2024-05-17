@@ -34,7 +34,7 @@ type Repository interface {
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetFailedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
-	UpdateJob(id uint, total int) error
+	UpdateJob(id uint, req map[string]interface{}) error
 	UpdateJobDetail(id uint, request *UpdateJobDetailRequest) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
@@ -227,20 +227,9 @@ func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, api
 	return client.Do(request)
 }
 
-func (repo *repository) UpdateJob(id uint, total int) error {
-	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("success", total).Error; err != nil {
+func (repo *repository) UpdateJob(id uint, req map[string]interface{}) error {
+	if err := repo.DB.Model(&Job{}).Where("id = ?", id).Updates(req).Error; err != nil {
 		return err
-	}
-
-	var job *Job
-	if err := repo.DB.First(&job, "id = ?", id).Error; err != nil {
-		return err
-	}
-
-	if job.Total == total {
-		if err := repo.DB.Model(&Job{}).Where("id = ?", id).Update("status", "done").Error; err != nil {
-			return err
-		}
 	}
 
 	return nil
