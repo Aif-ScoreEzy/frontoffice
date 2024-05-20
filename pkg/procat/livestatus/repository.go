@@ -35,7 +35,7 @@ type Repository interface {
 	GetFailedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
 	UpdateJob(id uint, req map[string]interface{}) error
-	UpdateJobDetail(id uint, request *UpdateJobDetailRequest) error
+	UpdateJobDetail(id uint, request map[string]interface{}) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 }
@@ -50,6 +50,7 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 			dataJobDetail := &JobDetail{
 				JobID:       dataJob.ID,
 				PhoneNumber: request.PhoneNumber,
+				OnProcess:   true,
 			}
 			if err := tx.Create(dataJobDetail).Error; err != nil {
 				return err
@@ -80,7 +81,7 @@ func (repo *repository) GetJobs(limit, offset int, startTime, endTime string) ([
 func (repo *repository) GetJobsTotalByRangeDate(startTime, endTime string) (int64, error) {
 	var totalData int64
 
-	if err := repo.DB.Where("created_at BETWEEN ? AND ?", startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
+	if err := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
 		return 0, err
 	}
 
@@ -90,7 +91,7 @@ func (repo *repository) GetJobsTotalByRangeDate(startTime, endTime string) (int6
 func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error) {
 	var count int64
 
-	query := repo.DB.Where("created_at BETWEEN ? AND ?", startTime, endTime)
+	query := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime)
 
 	if column == "subscriber_status" {
 		query = query.Where("subscriber_status = ?", keyword)
@@ -180,7 +181,7 @@ func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(startTi
 	var count int64
 
 	err := repo.DB.
-		Where("created_at BETWEEN ? AND ? AND status = ?", startTime, endTime, status).
+		Where("on_process = ? AND created_at BETWEEN ? AND ? AND status = ?", false, startTime, endTime, status).
 		Find(&JobDetail{}).
 		Count(&count).Error
 
@@ -235,8 +236,8 @@ func (repo *repository) UpdateJob(id uint, req map[string]interface{}) error {
 	return nil
 }
 
-func (repo *repository) UpdateJobDetail(id uint, request *UpdateJobDetailRequest) error {
-	if err := repo.DB.Model(&JobDetail{}).Where("id = ?", id).Updates(request).Error; err != nil {
+func (repo *repository) UpdateJobDetail(id uint, data map[string]interface{}) error {
+	if err := repo.DB.Model(&JobDetail{}).Where("id = ?", id).Updates(data).Error; err != nil {
 		return err
 	}
 

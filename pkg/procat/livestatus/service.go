@@ -28,7 +28,7 @@ type Service interface {
 	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
 	GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error)
-	GetJobDetails(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
@@ -149,7 +149,7 @@ func (svc *service) GetJobsTotal(startDate, endDate string) (int64, error) {
 	return count, err
 }
 
-func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
+func (svc *service) GetJobDetailsByID(jobID uint) ([]*JobDetail, error) {
 	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
 	if err != nil {
 		return nil, err
@@ -376,25 +376,24 @@ func (svc *service) UpdateJob(id uint, req *UpdateJobRequest) error {
 }
 
 func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {
-	request := &UpdateJobDetailRequest{
-		OnProcess:        false,
-		SubscriberStatus: subcriberStatus,
-		DeviceStatus:     deviceStatus,
-		Status:           status,
-		Data:             data,
-	}
+	updateJobDetail := map[string]interface{}{}
 
-	return svc.Repo.UpdateJobDetail(id, request)
+	updateJobDetail["subscriber_status"] = subcriberStatus
+	updateJobDetail["device_status"] = deviceStatus
+	updateJobDetail["status"] = status
+	updateJobDetail["on_process"] = false
+
+	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }
 
 func (svc *service) UpdateFailedJobDetail(jobID uint, sequence int) error {
-	request := &UpdateJobDetailRequest{
-		OnProcess: true,
-		Sequence:  sequence + 1,
-		Status:    "error",
-	}
+	updateJobDetail := map[string]interface{}{}
 
-	return svc.Repo.UpdateJobDetail(jobID, request)
+	updateJobDetail["on_process"] = true
+	updateJobDetail["sequence"] = sequence + 1
+	updateJobDetail["status"] = "error"
+
+	return svc.Repo.UpdateJobDetail(jobID, updateJobDetail)
 }
 
 func (svc *service) DeleteJobDetail(id uint) error {
