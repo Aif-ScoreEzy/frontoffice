@@ -1,6 +1,8 @@
 package livestatus
 
 import (
+	"bytes"
+	"encoding/csv"
 	"fmt"
 	"front-office/helper"
 	"log"
@@ -23,6 +25,7 @@ type Controller interface {
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
 	GetJobsSummary(c *fiber.Ctx) error
+	ExportJobsSummary(c *fiber.Ctx) error
 	ReprocessFailedJobDetails()
 }
 
@@ -58,7 +61,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobDetails, err := ctrl.Svc.GetJobDetails(jobID)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByID(jobID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -166,6 +169,52 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
+
+	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(startDate, endDate)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+
+	header := []string{"Phone Number", "Phone Type", "Operator", "Device Status", "Subscriber Status"}
+	if err := w.Write(header); err != nil {
+		statusCode, resp := helper.GetError("Failed to write CSV header")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	for _, record := range jobDetails {
+		row := []string{record.PhoneNumber, record.PhoneType, record.Operator, record.DeviceStatus, record.SubscriberStatus}
+		if err := w.Write(row); err != nil {
+			statusCode, resp := helper.GetError("Failed to write CSV data")
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	w.Flush()
+	if err := w.Error(); err != nil {
+		statusCode, resp := helper.GetError("Failed to flush CSV data")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var filename string
+	if endDate != "" && endDate != startDate {
+		filename = fmt.Sprintf("jobs summary %s until %s.csv", startDate, endDate)
+	} else {
+		filename = fmt.Sprintf("jobs summary %s.csv", startDate)
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {

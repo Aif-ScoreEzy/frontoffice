@@ -17,7 +17,8 @@ func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 
 	liveStatusAPI.Post("/live-status", middleware.UploadCSVFile(), controller.BulkSearch)
 	liveStatusAPI.Get("/live-status", middleware.Auth(), controller.GetJobs)
-	liveStatusAPI.Get("/live-status/job-summary", middleware.Auth(), controller.GetJobsSummary)
+	liveStatusAPI.Get("/live-status/jobs-summary", middleware.Auth(), controller.GetJobsSummary)
+	liveStatusAPI.Get("/live-status/jobs-summary/export", controller.ExportJobsSummary)
 	liveStatusAPI.Get("/live-status/:id", middleware.Auth(), controller.GetJobDetails)
 
 	// Cron Reprocess Unsuccessful Job Details

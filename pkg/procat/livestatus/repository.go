@@ -27,6 +27,7 @@ type Repository interface {
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint, status string) (int64, error)
@@ -139,6 +140,21 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	}
 
 	return jobDetails, nil
+}
+
+func (repo *repository) GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error) {
+	var jobs []*JobDetailQueryResult
+	err := repo.DB.
+		Model(&JobDetail{}).
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).
+		Find(&jobs).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
 }
 
 func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error) {
