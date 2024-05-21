@@ -206,9 +206,9 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 
 	var filename string
 	if endDate != "" && endDate != startDate {
-		filename = fmt.Sprintf("jobs summary %s until %s.csv", startDate, endDate)
+		filename = fmt.Sprintf("jobs_summary_%s_until_%s.csv", startDate, endDate)
 	} else {
-		filename = fmt.Sprintf("jobs summary %s.csv", startDate)
+		filename = fmt.Sprintf("jobs_summary_%s.csv", startDate)
 	}
 
 	c.Set("Content-Type", "text/csv")
