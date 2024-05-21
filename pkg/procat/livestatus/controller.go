@@ -1,10 +1,13 @@
 package livestatus
 
 import (
+	"bytes"
+	"encoding/csv"
 	"fmt"
 	"front-office/helper"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,6 +24,8 @@ type Controller interface {
 	BulkSearch(c *fiber.Ctx) error
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
+	GetJobsSummary(c *fiber.Ctx) error
+	ExportJobsSummary(c *fiber.Ctx) error
 	ReprocessFailedJobDetails()
 }
 
@@ -56,18 +61,34 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobDetails, err := ctrl.Svc.GetJobDetails(jobID)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByID(jobID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	var successRequestTotal int
-	for _, jobDetail := range jobDetails {
+	for i, jobDetail := range jobDetails {
 		successRequestTotal, err = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
+		}
+
+		if i == totalData-1 {
+			doneStatus := "done"
+			now := time.Now()
+
+			updateReq := UpdateJobRequest{
+				Status: &doneStatus,
+				EndAt:  &now,
+			}
+
+			err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
 		}
 	}
 
@@ -94,26 +115,106 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
 
-	jobs, err := ctrl.Svc.GetJobs(page, size)
+	jobs, err := ctrl.Svc.GetJobs(page, size, startDate, endDate)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetJobsTotal()
+	totalData, _ := ctrl.Svc.GetJobsTotal(startDate, endDate)
 
-	fullResponsePage := map[string]interface{}{
-		"total_data": totalData,
-		"data":       jobs,
+	data := GetJobsResponse{
+		TotalData: totalData,
+		Jobs:      jobs,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to get jobs",
+		data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
+
+	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(startDate, endDate)
+	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "subscriber_status", "ACTIVE")
+	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "device_status", "REACHABLE")
+	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "MOBILE")
+	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "FIXED_LINE")
+	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "success")
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "fail")
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "error")
+
+	data := JobSummaryResponse{
+		TotalData:        totalData,
+		TotalDataSuccess: totalDataPercentageSuccess,
+		TotalDataFail:    totalDataPercentageFail,
+		TotalDataError:   totalDataPercentageError,
+		SubscriberActive: totalSubscriberActive,
+		DeviceReachable:  totalDeviceReachable,
+		Mobile:           totalMobilePhone,
+		FixedLine:        totalFixedLine,
 	}
 
 	resp := helper.ResponseSuccess(
 		"success",
-		fullResponsePage,
+		data,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
+
+	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(startDate, endDate)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+
+	header := []string{"Phone Number", "Phone Type", "Operator", "Device Status", "Subscriber Status"}
+	if err := w.Write(header); err != nil {
+		statusCode, resp := helper.GetError("Failed to write CSV header")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	for _, record := range jobDetails {
+		row := []string{record.PhoneNumber, record.PhoneType, record.Operator, record.DeviceStatus, record.SubscriberStatus}
+		if err := w.Write(row); err != nil {
+			statusCode, resp := helper.GetError("Failed to write CSV data")
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	w.Flush()
+	if err := w.Error(); err != nil {
+		statusCode, resp := helper.GetError("Failed to flush CSV data")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var filename string
+	if endDate != "" && endDate != startDate {
+		filename = fmt.Sprintf("jobs_summary_%s_until_%s.csv", startDate, endDate)
+	} else {
+		filename = fmt.Sprintf("jobs_summary_%s.csv", startDate)
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
@@ -136,19 +237,19 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "fail")
 	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "error")
 
-	fullResponsePage := map[string]interface{}{
-		"total_data":                  totalData,
-		"total_data_percentage":       totalDataPercentage,
-		"total_data_percentage_fail":  totalDataPercentageFail,
-		"total_data_percentage_error": totalDataPercentageError,
-		"subs_active":                 subscriberStatuscon,
-		"dev_reachable":               deviceStatusReach,
-		"data":                        jobs,
+	dataResponse := JobDetailResponse{
+		TotalData:        totalData,
+		TotalDataSuccess: totalDataPercentage,
+		TotalDataFail:    totalDataPercentageFail,
+		TotalDataError:   totalDataPercentageError,
+		SubscriberActive: subscriberStatuscon,
+		DeviceReachable:  deviceStatusReach,
+		JobDetails:       jobs,
 	}
 
 	resp := helper.ResponseSuccess(
-		"success",
-		fullResponsePage,
+		"success to get job details",
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

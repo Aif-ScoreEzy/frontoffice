@@ -2,7 +2,10 @@ package livestatus
 
 import (
 	"encoding/json"
+	"errors"
 	"front-office/app/config"
+	"front-office/common/constant"
+	"front-office/helper"
 	"io"
 	"log"
 	"strconv"
@@ -19,18 +22,22 @@ type service struct {
 
 type Service interface {
 	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
-	GetJobs(page, limit string) ([]*Job, error)
+	GetJobs(page, limit, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
-	GetJobsTotal() (int64, error)
-	GetJobDetails(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error)
+	GetJobsTotal(startDate, endDate string) (int64, error)
+	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
+	GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error)
+	GetJobDetailsByID(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error)
+	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetFailedJobDetails() ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
-	UpdateJob(id uint, total int) error
+	UpdateJob(id uint, req *UpdateJobRequest) error
 	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
@@ -50,24 +57,43 @@ func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, er
 	return jobID, nil
 }
 
-func (svc *service) GetJobs(page, limit string) ([]*Job, error) {
+func (svc *service) GetJobs(page, limit, startDate, endDate string) ([]*Job, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
-	return svc.Repo.GetJobs(intLimit, offset)
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc.Repo.GetJobs(intLimit, offset, startTime, endTime)
+}
+
+func (svc *service) GetJobsTotalByRangeDate(startDate, endDate string) (int64, error) {
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+
+	return svc.Repo.GetJobsTotalByRangeDate(startTime, endTime)
 }
 
 func (svc *service) GetJobByID(jobID uint) (*Job, error) {
 	return svc.Repo.GetJobByID(jobID)
 }
 
-func (svc *service) GetJobsTotal() (int64, error) {
-	count, err := svc.Repo.GetJobsTotal()
+func (svc *service) GetJobsTotal(startDate, endDate string) (int64, error) {
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+	count, err := svc.Repo.GetJobsTotal(startTime, endTime)
+
 	return count, err
 }
 
-func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
+func (svc *service) GetJobDetailsByID(jobID uint) ([]*JobDetail, error) {
 	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
 	if err != nil {
 		return nil, err
@@ -76,7 +102,21 @@ func (svc *service) GetJobDetails(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetail, error) {
+func (svc *service) GetJobDetailsByRangeDate(startDate, endDate string) ([]*JobDetailQueryResult, error) {
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+
+	jobDetails, err := svc.Repo.GetJobDetailsByRangeDate(startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobDetails, nil
+}
+
+func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
@@ -99,9 +139,28 @@ func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobID uint, statu
 	return count, err
 }
 
+func (svc *service) GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error) {
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status)
+	return count, err
+}
+
 func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
 	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobID)
 	return count, err
+}
+
+func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error) {
+	startTime, endTime, err := formatTime(startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+
+	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword)
 }
 
 func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {
@@ -185,7 +244,10 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 		}
 
 		// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
-		err = svc.UpdateJob(jobDetail.JobID, successRequestTotal)
+		updateReq := UpdateJobRequest{
+			Total: &successRequestTotal,
+		}
+		err = svc.UpdateJob(jobDetail.JobID, &updateReq)
 		if err != nil {
 			return 0, err
 		}
@@ -215,30 +277,44 @@ func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKe
 	return liveStatusResponse, nil
 }
 
-func (svc *service) UpdateJob(id uint, total int) error {
-	return svc.Repo.UpdateJob(id, total)
+func (svc *service) UpdateJob(id uint, req *UpdateJobRequest) error {
+	data := map[string]interface{}{}
+
+	if req.Total != nil {
+		data["success"] = *req.Total
+	}
+
+	if req.Status != nil {
+		data["status"] = *req.Status
+	}
+
+	if req.EndAt != nil {
+		data["end_at"] = *req.EndAt
+	}
+
+	return svc.Repo.UpdateJob(id, data)
 }
 
 func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {
-	request := &UpdateJobDetailRequest{
-		OnProcess:        false,
-		SubscriberStatus: subcriberStatus,
-		DeviceStatus:     deviceStatus,
-		Status:           status,
-		Data:             data,
-	}
+	updateJobDetail := map[string]interface{}{}
 
-	return svc.Repo.UpdateJobDetail(id, request)
+	updateJobDetail["subscriber_status"] = subcriberStatus
+	updateJobDetail["device_status"] = deviceStatus
+	updateJobDetail["status"] = status
+	updateJobDetail["on_process"] = false
+	updateJobDetail["data"] = data
+
+	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }
 
 func (svc *service) UpdateFailedJobDetail(jobID uint, sequence int) error {
-	request := &UpdateJobDetailRequest{
-		OnProcess: true,
-		Sequence:  sequence + 1,
-		Status:    "error",
-	}
+	updateJobDetail := map[string]interface{}{}
 
-	return svc.Repo.UpdateJobDetail(jobID, request)
+	updateJobDetail["on_process"] = true
+	updateJobDetail["sequence"] = sequence + 1
+	updateJobDetail["status"] = "error"
+
+	return svc.Repo.UpdateJobDetail(jobID, updateJobDetail)
 }
 
 func (svc *service) DeleteJobDetail(id uint) error {
@@ -247,4 +323,32 @@ func (svc *service) DeleteJobDetail(id uint) error {
 
 func (svc *service) DeleteJob(id uint) error {
 	return svc.Repo.DeleteJob(id)
+}
+
+func formatTime(startDate, endDate string) (string, string, error) {
+	var startTime, endTime string
+	layoutPostgreDate := "2006-01-02"
+	if startDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, startDate)
+		if err != nil {
+			return "", "", errors.New(constant.InvalidDateFormat)
+		}
+
+		startTime = helper.FormatStartTimeForSQL(startDate)
+
+		if endDate == "" {
+			endTime = helper.FormatEndTimeForSQL(startDate)
+		}
+	}
+
+	if endDate != "" {
+		err := helper.ParseDate(layoutPostgreDate, endDate)
+		if err != nil {
+			return "", "", errors.New(constant.InvalidDateFormat)
+		}
+
+		endTime = helper.FormatEndTimeForSQL(endDate)
+	}
+
+	return startTime, endTime, nil
 }

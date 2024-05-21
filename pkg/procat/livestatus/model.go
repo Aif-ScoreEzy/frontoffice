@@ -8,11 +8,12 @@ import (
 )
 
 type Job struct {
-	ID        uint      `json:"id"`
-	Total     int       `json:"total"`
-	Success   int       `json:"success"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+	ID        uint       `json:"id"`
+	Total     int        `json:"total"`
+	Success   int        `json:"success"`
+	Status    string     `json:"status"`
+	CreatedAt time.Time  `gorm:"not null;default:current_timestamp" json:"start_time"`
+	EndAt     *time.Time `json:"end_time"`
 }
 
 type JobDetail struct {
@@ -26,6 +27,12 @@ type JobDetail struct {
 	Status           string    `json:"status"`
 	Data             *JSONB    `gorm:"type:jsonb" json:"data"`
 	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+}
+
+type UpdateJobRequest struct {
+	Total  *int       `json:"total"`
+	Status *string    `json:"status"`
+	EndAt  *time.Time `json:"end_at"`
 }
 
 type UpdateJobDetailRequest struct {
@@ -51,6 +58,43 @@ type LiveStatusResponse struct {
 	Data       interface{} `json:"data"`
 	Message    string      `json:"message"`
 	StatusCode int         `json:"status_code"`
+}
+
+type JobSummaryResponse struct {
+	TotalData        int64 `json:"total_data"`
+	TotalDataSuccess int64 `json:"total_data_percentage_success"`
+	TotalDataFail    int64 `json:"total_data_percentage_fail"`
+	TotalDataError   int64 `json:"total_data_percentage_error"`
+	SubscriberActive int64 `json:"subs_active"`
+	DeviceReachable  int64 `json:"dev_reachable"`
+	Mobile           int64 `json:"mobile"`
+	FixedLine        int64 `json:"fixed_line"`
+}
+
+type GetJobsResponse struct {
+	TotalData int64  `json:"total_data"`
+	Jobs      []*Job `json:"jobs"`
+}
+
+type JobDetailResponse struct {
+	TotalData        int64                   `json:"total_data"`
+	TotalDataSuccess int64                   `json:"total_data_percentage_success"`
+	TotalDataFail    int64                   `json:"total_data_percentage_fail"`
+	TotalDataError   int64                   `json:"total_data_percentage_error"`
+	SubscriberActive int64                   `json:"subs_active"`
+	DeviceReachable  int64                   `json:"dev_reachable"`
+	JobDetails       []*JobDetailQueryResult `json:"job_details"`
+}
+
+type JobDetailQueryResult struct {
+	ID               uint   `json:"id"`
+	JobID            uint   `json:"job_id"`
+	PhoneNumber      string `json:"phone_number"`
+	SubscriberStatus string `json:"subscriber_status"`
+	DeviceStatus     string `json:"device_status"`
+	Status           string `json:"status"`
+	Operator         string `json:"operator"`
+	PhoneType        string `json:"phone_type"`
 }
 
 type ResponseSuccess struct {
