@@ -21,7 +21,7 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(data []LiveStatusRequest, totalData int) (uint, error)
+	CreateJob(data []LiveStatusRequest, userID string, totalData int) (uint, error)
 	GetJobs(page, limit, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startDate, endDate string) (int64, error)
@@ -44,9 +44,10 @@ type Service interface {
 	DeleteJob(id uint) error
 }
 
-func (svc *service) CreateJob(data []LiveStatusRequest, totalData int) (uint, error) {
+func (svc *service) CreateJob(data []LiveStatusRequest, userID string, totalData int) (uint, error) {
 	dataJob := &Job{
-		Total: totalData,
+		UserID: userID,
+		Total:  totalData,
 	}
 
 	jobID, err := svc.Repo.CreateJobInTx(dataJob, data)
@@ -67,7 +68,7 @@ func (svc *service) GetJobs(page, limit, startDate, endDate string) ([]*Job, err
 		return nil, err
 	}
 
-	return svc.Repo.GetJobs(intLimit, offset, startTime, endTime)
+	return svc.Repo.GetJobs(intLimit, offset, userID, startTime, endTime)
 }
 
 func (svc *service) GetJobsTotalByRangeDate(startDate, endDate string) (int64, error) {

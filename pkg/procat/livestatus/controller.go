@@ -30,6 +30,8 @@ type Controller interface {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -55,7 +57,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		liveStatusRequests = append(liveStatusRequests, liveStatusRequest)
 	}
 
-	jobID, err := ctrl.Svc.CreateJob(liveStatusRequests, totalData)
+	jobID, err := ctrl.Svc.CreateJob(liveStatusRequests, userID, totalData)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
