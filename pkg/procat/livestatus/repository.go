@@ -21,7 +21,7 @@ type repository struct {
 
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
-	GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error)
+	GetJobs(limit, offset int, userID, startTime, endTime string) ([]*Job, error)
 	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error)
 	GetJobByID(jobID uint) (*Job, error)
@@ -64,10 +64,10 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 	return dataJob.ID, nil
 }
 
-func (repo *repository) GetJobs(limit, offset int, startTime, endTime string) ([]*Job, error) {
+func (repo *repository) GetJobs(limit, offset int, userID, startTime, endTime string) ([]*Job, error) {
 	var jobs []*Job
 
-	query := repo.DB
+	query := repo.DB.Where("user_id = ?", userID)
 	if startTime != "" {
 		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
 	}

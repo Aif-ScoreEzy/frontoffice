@@ -117,10 +117,11 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 
-	jobs, err := ctrl.Svc.GetJobs(page, size, startDate, endDate)
+	jobs, err := ctrl.Svc.GetJobs(page, size, userID, startDate, endDate)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

@@ -22,7 +22,7 @@ type service struct {
 
 type Service interface {
 	CreateJob(data []LiveStatusRequest, userID string, totalData int) (uint, error)
-	GetJobs(page, limit, startDate, endDate string) ([]*Job, error)
+	GetJobs(page, limit, userID, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startDate, endDate string) (int64, error)
 	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
@@ -58,7 +58,7 @@ func (svc *service) CreateJob(data []LiveStatusRequest, userID string, totalData
 	return jobID, nil
 }
 
-func (svc *service) GetJobs(page, limit, startDate, endDate string) ([]*Job, error) {
+func (svc *service) GetJobs(page, limit, userID, startDate, endDate string) ([]*Job, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
