@@ -25,9 +25,9 @@ type Service interface {
 	GetJobs(page, limit, userID, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startDate, endDate string) (int64, error)
-	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
-	GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error)
-	GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error)
+	GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error)
+	GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, status string) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, column, keyword string) (int64, error)
 	GetJobDetailsByID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
@@ -71,13 +71,13 @@ func (svc *service) GetJobs(page, limit, userID, startDate, endDate string) ([]*
 	return svc.Repo.GetJobs(intLimit, offset, userID, startTime, endTime)
 }
 
-func (svc *service) GetJobsTotalByRangeDate(startDate, endDate string) (int64, error) {
+func (svc *service) GetJobsTotalByRangeDate(userID, startDate, endDate string) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	return svc.Repo.GetJobsTotalByRangeDate(startTime, endTime)
+	return svc.Repo.GetJobsTotalByRangeDate(userID, startTime, endTime)
 }
 
 func (svc *service) GetJobByID(jobID uint) (*Job, error) {
@@ -140,13 +140,13 @@ func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobID uint, statu
 	return count, err
 }
 
-func (svc *service) GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, status string) (int64, error) {
+func (svc *service) GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, status string) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status)
+	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(userID, startTime, endTime, status)
 	return count, err
 }
 
@@ -155,13 +155,13 @@ func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) 
 	return count, err
 }
 
-func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, column, keyword string) (int64, error) {
+func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, column, keyword string) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword)
+	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(userID, startTime, endTime, column, keyword)
 }
 
 func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {

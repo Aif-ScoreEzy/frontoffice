@@ -22,8 +22,8 @@ type repository struct {
 type Repository interface {
 	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobs(limit, offset int, userID, startTime, endTime string) ([]*Job, error)
-	GetJobsTotalByRangeDate(startTime, endTime string) (int64, error)
-	GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error)
+	GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(userID, startTime, endTime, column, keyword string) (int64, error)
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
@@ -31,7 +31,7 @@ type Repository interface {
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint, status string) (int64, error)
-	GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status string) (int64, error)
+	GetJobDetailsTotalPercentageByStatusAndRangeDate(userID, startTime, endTime, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetFailedJobDetails() ([]*JobDetail, error)
 	CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error)
@@ -79,7 +79,7 @@ func (repo *repository) GetJobs(limit, offset int, userID, startTime, endTime st
 	return jobs, nil
 }
 
-func (repo *repository) GetJobsTotalByRangeDate(startTime, endTime string) (int64, error) {
+func (repo *repository) GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error) {
 	var totalData int64
 
 	if err := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
@@ -89,7 +89,7 @@ func (repo *repository) GetJobsTotalByRangeDate(startTime, endTime string) (int6
 	return totalData, nil
 }
 
-func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(startTime, endTime, column, keyword string) (int64, error) {
+func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(userID, startTime, endTime, column, keyword string) (int64, error) {
 	var count int64
 
 	query := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime)
@@ -193,7 +193,7 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID u
 	return count, err
 }
 
-func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(startTime, endTime, status string) (int64, error) {
+func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(userID, startTime, endTime, status string) (int64, error) {
 	var count int64
 
 	err := repo.DB.

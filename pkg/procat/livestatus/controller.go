@@ -145,15 +145,16 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
-	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(startDate, endDate)
-	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "subscriber_status", "ACTIVE")
-	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "device_status", "REACHABLE")
-	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "MOBILE")
-	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(startDate, endDate, "data", "FIXED_LINE")
-	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "success")
-	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "fail")
-	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(startDate, endDate, "error")
+	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(userID, startDate, endDate)
+	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "subscriber_status", "ACTIVE")
+	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "device_status", "REACHABLE")
+	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "data", "MOBILE")
+	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "data", "FIXED_LINE")
+	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "success")
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "fail")
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "error")
 
 	data := JobSummaryResponse{
 		TotalData:        totalData,
