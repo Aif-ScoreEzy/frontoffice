@@ -178,8 +178,9 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
 
-	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(startDate, endDate)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(userID, startDate, endDate)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

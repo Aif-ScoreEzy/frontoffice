@@ -27,7 +27,7 @@ type Repository interface {
 	GetJobByID(jobID uint) (*Job, error)
 	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error)
+	GetJobDetailsByRangeDate(userID, startTime, endTime string) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPagination(limit, offset int, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsByJobIDWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID uint, status string) (int64, error)
@@ -82,7 +82,7 @@ func (repo *repository) GetJobs(limit, offset int, userID, startTime, endTime st
 func (repo *repository) GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error) {
 	var totalData int64
 
-	if err := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
+	if err := repo.DB.Where("user_id = ? AND on_process = ? AND created_at BETWEEN ? AND ?", userID, false, startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
 		return 0, err
 	}
 
@@ -92,7 +92,7 @@ func (repo *repository) GetJobsTotalByRangeDate(userID, startTime, endTime strin
 func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(userID, startTime, endTime, column, keyword string) (int64, error) {
 	var count int64
 
-	query := repo.DB.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime)
+	query := repo.DB.Where("user_id = ? AND on_process = ? AND created_at BETWEEN ? AND ?", userID, false, startTime, endTime)
 
 	if column == "subscriber_status" {
 		query = query.Where("subscriber_status = ?", keyword)
@@ -142,12 +142,12 @@ func (repo *repository) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (repo *repository) GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error) {
+func (repo *repository) GetJobDetailsByRangeDate(userID, startTime, endTime string) ([]*JobDetailQueryResult, error) {
 	var jobs []*JobDetailQueryResult
 	err := repo.DB.
 		Model(&JobDetail{}).
 		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
-		Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).
+		Where("user_id = ? AND on_process = ? AND created_at BETWEEN ? AND ?", userID, false, startTime, endTime).
 		Find(&jobs).
 		Error
 	if err != nil {
@@ -197,7 +197,7 @@ func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(userID,
 	var count int64
 
 	err := repo.DB.
-		Where("on_process = ? AND created_at BETWEEN ? AND ? AND status = ?", false, startTime, endTime, status).
+		Where("user_id = ? AND on_process = ? AND created_at BETWEEN ? AND ? AND status = ?", userID, false, startTime, endTime, status).
 		Find(&JobDetail{}).
 		Count(&count).Error
 

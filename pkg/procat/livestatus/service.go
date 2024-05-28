@@ -29,7 +29,7 @@ type Service interface {
 	GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, status string) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, column, keyword string) (int64, error)
 	GetJobDetailsByID(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsByRangeDate(startTime, endTime string) ([]*JobDetailQueryResult, error)
+	GetJobDetailsByRangeDate(userID, startTime, endTime string) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
@@ -103,13 +103,13 @@ func (svc *service) GetJobDetailsByID(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsByRangeDate(startDate, endDate string) ([]*JobDetailQueryResult, error) {
+func (svc *service) GetJobDetailsByRangeDate(userID, startDate, endDate string) ([]*JobDetailQueryResult, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	jobDetails, err := svc.Repo.GetJobDetailsByRangeDate(startTime, endTime)
+	jobDetails, err := svc.Repo.GetJobDetailsByRangeDate(userID, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
