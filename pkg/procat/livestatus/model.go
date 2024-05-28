@@ -19,6 +19,7 @@ type Job struct {
 
 type JobDetail struct {
 	ID               uint      `json:"id"`
+	UserID           string    `json:"user_id"`
 	JobID            uint      `json:"job_id"`
 	PhoneNumber      string    `json:"phone_number"`
 	SubscriberStatus string    `json:"subscriber_status"`

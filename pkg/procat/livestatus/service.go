@@ -24,6 +24,7 @@ type Service interface {
 	CreateJob(data []LiveStatusRequest, userID string, totalData int) (uint, error)
 	GetJobs(page, limit, userID, startDate, endDate string) ([]*Job, error)
 	GetJobByID(jobID uint) (*Job, error)
+	GetJobByIDAndUserID(jobID uint, userID string) (*Job, error)
 	GetJobsTotal(startDate, endDate string) (int64, error)
 	GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error)
 	GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, status string) (int64, error)
@@ -50,7 +51,7 @@ func (svc *service) CreateJob(data []LiveStatusRequest, userID string, totalData
 		Total:  totalData,
 	}
 
-	jobID, err := svc.Repo.CreateJobInTx(dataJob, data)
+	jobID, err := svc.Repo.CreateJobInTx(userID, dataJob, data)
 	if err != nil {
 		return 0, err
 	}
@@ -82,6 +83,10 @@ func (svc *service) GetJobsTotalByRangeDate(userID, startDate, endDate string) (
 
 func (svc *service) GetJobByID(jobID uint) (*Job, error) {
 	return svc.Repo.GetJobByID(jobID)
+}
+
+func (svc *service) GetJobByIDAndUserID(jobID uint, userID string) (*Job, error) {
+	return svc.Repo.GetJobByIDAndUserID(jobID, userID)
 }
 
 func (svc *service) GetJobsTotal(startDate, endDate string) (int64, error) {

@@ -20,11 +20,12 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateJobInTx(dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
+	CreateJobInTx(userID string, dataJob *Job, dataJobDetail []LiveStatusRequest) (uint, error)
 	GetJobs(limit, offset int, userID, startTime, endTime string) ([]*Job, error)
 	GetJobsTotalByRangeDate(userID, startTime, endTime string) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(userID, startTime, endTime, column, keyword string) (int64, error)
 	GetJobByID(jobID uint) (*Job, error)
+	GetJobByIDAndUserID(jobID uint, userID string) (*Job, error)
 	GetJobsTotal(startTime, endTime string) (int64, error)
 	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByRangeDate(userID, startTime, endTime string) ([]*JobDetailQueryResult, error)
@@ -41,7 +42,7 @@ type Repository interface {
 	DeleteJob(id uint) error
 }
 
-func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest) (uint, error) {
+func (repo *repository) CreateJobInTx(userID string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
 	repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&dataJob).Error; err != nil {
 			return err
@@ -49,6 +50,7 @@ func (repo *repository) CreateJobInTx(dataJob *Job, requests []LiveStatusRequest
 
 		for _, request := range requests {
 			dataJobDetail := &JobDetail{
+				UserID:      userID,
 				JobID:       dataJob.ID,
 				PhoneNumber: request.PhoneNumber,
 				OnProcess:   true,
@@ -113,6 +115,15 @@ func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(userID, startT
 func (repo *repository) GetJobByID(jobID uint) (*Job, error) {
 	var job *Job
 	if err := repo.DB.First(&job, "id = ?", jobID).Error; err != nil {
+		return nil, err
+	}
+
+	return job, nil
+}
+
+func (repo *repository) GetJobByIDAndUserID(jobID uint, userID string) (*Job, error) {
+	var job *Job
+	if err := repo.DB.First(&job, "id = ? AND user_id = ?", jobID, userID).Error; err != nil {
 		return nil, err
 	}
 
