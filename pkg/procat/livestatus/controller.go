@@ -31,6 +31,7 @@ type Controller interface {
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -57,7 +58,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		liveStatusRequests = append(liveStatusRequests, liveStatusRequest)
 	}
 
-	jobID, err := ctrl.Svc.CreateJob(liveStatusRequests, userID, totalData)
+	jobID, err := ctrl.Svc.CreateJob(liveStatusRequests, userID, companyID, totalData)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -118,16 +119,18 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 
-	jobs, err := ctrl.Svc.GetJobs(page, size, userID, startDate, endDate)
+	jobs, err := ctrl.Svc.GetJobs(page, size, userID, companyID, startDate, endDate, uint(tierLevel))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetJobsTotal(startDate, endDate)
+	totalData, _ := ctrl.Svc.GetJobsTotal(userID, companyID, startDate, endDate, uint(tierLevel))
 
 	data := GetJobsResponse{
 		TotalData: totalData,
@@ -146,15 +149,17 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 
-	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(userID, startDate, endDate)
-	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "subscriber_status", "ACTIVE")
-	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "device_status", "REACHABLE")
-	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "data", "MOBILE")
-	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, startDate, endDate, "data", "FIXED_LINE")
-	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "success")
-	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "fail")
-	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, startDate, endDate, "error")
+	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(userID, companyID, startDate, endDate, uint(tierLevel))
+	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "subscriber_status", "ACTIVE", uint(tierLevel))
+	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "device_status", "REACHABLE", uint(tierLevel))
+	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "data", "MOBILE", uint(tierLevel))
+	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "data", "FIXED_LINE", uint(tierLevel))
+	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "success", uint(tierLevel))
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "fail", uint(tierLevel))
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "error", uint(tierLevel))
 
 	data := JobSummaryResponse{
 		TotalData:        totalData,
@@ -179,8 +184,10 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 
-	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(userID, startDate, endDate)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(userID, companyID, startDate, endDate, uint(tierLevel))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -228,9 +235,11 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	keyword := c.Query("keyword", "")
 	jobID := c.Params("id")
 	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	jobIDUint, _ := strconv.ParseUint(jobID, 10, 32)
 
-	_, err := ctrl.Svc.GetJobByIDAndUserID(uint(jobIDUint), userID)
+	_, err := ctrl.Svc.GetJobByIDAndUserID(uint(jobIDUint), uint(tierLevel), userID, companyID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

@@ -13,6 +13,7 @@ type Job struct {
 	Success   int        `json:"success"`
 	Status    string     `json:"status"`
 	UserID    string     `json:"user_id"`
+	CompanyID string     `json:"company_id"`
 	CreatedAt time.Time  `gorm:"not null;default:current_timestamp" json:"start_time"`
 	EndAt     *time.Time `json:"end_time"`
 }
@@ -20,6 +21,7 @@ type Job struct {
 type JobDetail struct {
 	ID               uint      `json:"id"`
 	UserID           string    `json:"user_id"`
+	CompanyID        string    `json:"company_id"`
 	JobID            uint      `json:"job_id"`
 	PhoneNumber      string    `json:"phone_number"`
 	SubscriberStatus string    `json:"subscriber_status"`
