@@ -15,11 +15,11 @@ func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	service := NewService(cfg, repository)
 	controller := NewController(service)
 
-	liveStatusAPI.Post("/live-status", middleware.UploadCSVFile(), controller.BulkSearch)
-	liveStatusAPI.Get("/live-status", middleware.Auth(), controller.GetJobs)
-	liveStatusAPI.Get("/live-status/jobs-summary", middleware.Auth(), controller.GetJobsSummary)
-	liveStatusAPI.Get("/live-status/jobs-summary/export", middleware.Auth(), controller.ExportJobsSummary)
-	liveStatusAPI.Get("/live-status/:id", middleware.Auth(), controller.GetJobDetails)
+	liveStatusAPI.Post("/live-status", middleware.Auth(), middleware.GetPayloadFromJWT(), middleware.UploadCSVFile(), controller.BulkSearch)
+	liveStatusAPI.Get("/live-status", middleware.Auth(), middleware.GetPayloadFromJWT(), controller.GetJobs)
+	liveStatusAPI.Get("/live-status/jobs-summary", middleware.Auth(), middleware.GetPayloadFromJWT(), controller.GetJobsSummary)
+	liveStatusAPI.Get("/live-status/jobs-summary/export", middleware.Auth(), middleware.GetPayloadFromJWT(), controller.ExportJobsSummary)
+	liveStatusAPI.Get("/live-status/:id", middleware.Auth(), middleware.GetPayloadFromJWT(), controller.GetJobDetails)
 
 	// Cron Reprocess Unsuccessful Job Details
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
