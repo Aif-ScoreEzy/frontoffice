@@ -285,7 +285,7 @@ func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID ui
 
 func (repo *repository) GetFailedJobDetails() ([]*JobDetail, error) {
 	var jobDetails []*JobDetail
-	if err := repo.DB.Find(&jobDetails, "status = ?", "error").Error; err != nil {
+	if err := repo.DB.Find(&jobDetails, "status IN (?, ?)", "error", "").Error; err != nil {
 		return nil, err
 	}
 
