@@ -43,6 +43,7 @@ type Service interface {
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
+	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
 }
 
 func (svc *service) CreateJob(data []LiveStatusRequest, userID, companyID string, totalData int) (uint, error) {
@@ -367,4 +368,13 @@ func formatTime(startDate, endDate string) (string, string, error) {
 	}
 
 	return startTime, endTime, nil
+}
+
+func (svc *service) GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error) {
+	jobDetails, err := svc.Repo.GetJobDetailsByJobIDExport(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobDetails, nil
 }

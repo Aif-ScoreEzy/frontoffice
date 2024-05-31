@@ -27,6 +27,7 @@ type Controller interface {
 	GetJobsSummary(c *fiber.Ctx) error
 	ExportJobsSummary(c *fiber.Ctx) error
 	ReprocessFailedJobDetails()
+	GetJobDetailsExport(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
@@ -303,4 +304,56 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 	// if err != nil {
 	// 	log.Println("Error DeleteJob : ", err.Error())
 	// }
+}
+
+func (ctrl *controller) GetJobDetailsExport(c *fiber.Ctx) error {
+	jobID := c.Params("id")
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
+	jobIDUint, _ := strconv.ParseUint(jobID, 10, 32)
+
+	// Get Job by ID
+	_, err := ctrl.Svc.GetJobByIDAndUserID(uint(jobIDUint), uint(tierLevel), userID, companyID)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	// Get JobDetails By JobID
+	jobDetails, err := ctrl.Svc.GetJobDetailsByJobIDExport(uint(jobIDUint))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+
+	header := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}
+	if err := w.Write(header); err != nil {
+		statusCode, resp := helper.GetError("Failed to write CSV header")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	for _, record := range jobDetails {
+		row := []string{record.PhoneNumber, record.SubscriberStatus, record.DeviceStatus, record.Status, record.Operator, record.PhoneType}
+		if err := w.Write(row); err != nil {
+			statusCode, resp := helper.GetError("Failed to write CSV data")
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	w.Flush()
+	if err := w.Error(); err != nil {
+		statusCode, resp := helper.GetError("Failed to flush CSV data")
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var filename string = fmt.Sprintf("jobs_detail_%s.csv", jobID)
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }

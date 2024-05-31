@@ -40,6 +40,7 @@ type Repository interface {
 	UpdateJobDetail(id uint, request map[string]interface{}) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
+	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
 }
 
 func (repo *repository) CreateJobInTx(userID, companyID string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
@@ -335,4 +336,18 @@ func (repo *repository) DeleteJob(id uint) error {
 	}
 
 	return nil
+}
+
+func (repo *repository) GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error) {
+	var jobs []*JobDetailQueryResult
+
+	if err := repo.DB.
+		Model(&JobDetail{}).
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Where("job_id = ?", jobID).
+		Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
 }
