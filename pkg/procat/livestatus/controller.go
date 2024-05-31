@@ -65,34 +65,40 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobDetails, err := ctrl.Svc.GetJobDetailsByID(jobID)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByJobID(jobID)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	var successRequestTotal int
-	for i, jobDetail := range jobDetails {
+	for _, jobDetail := range jobDetails {
 		successRequestTotal, err = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
+	}
 
-		if i == totalData-1 {
-			doneStatus := "done"
-			now := time.Now()
+	// jika tidak ada job details dengan status 'error', update status pada job menjadi 'done'
+	failedJobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
+	if err != nil {
+		log.Println("Error GetFailedJobDetails : ", err.Error())
+	}
 
-			updateReq := UpdateJobRequest{
-				Status: &doneStatus,
-				EndAt:  &now,
-			}
+	if failedJobDetails == nil {
+		doneStatus := "done"
+		now := time.Now()
 
-			err := ctrl.Svc.UpdateJob(jobID, &updateReq)
-			if err != nil {
-				statusCode, resp := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(resp)
-			}
+		updateReq := UpdateJobRequest{
+			Status: &doneStatus,
+			EndAt:  &now,
+		}
+
+		err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
 		}
 	}
 
@@ -278,24 +284,54 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ReprocessFailedJobDetails() {
-	jobDetails, err := ctrl.Svc.GetFailedJobDetails()
+	jobIDs, err := ctrl.Svc.GetJobWithIncompleteStatus()
 	if err != nil {
-		log.Println("Error GetFailedJobDetails : ", err.Error())
-	}
-
-	if jobDetails == nil {
-		log.Println("No failed job details found")
+		log.Println("Error GetJobWithIncompleStatus : ", err.Error())
 		return
 	}
 
-	var successRequestTotal int
-	for _, jobDetail := range jobDetails {
-		job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
-		successRequestTotal = job.Success
+	if len(jobIDs) == 0 {
+		log.Println("No incomplete job found")
+		return
+	}
 
-		_, _ = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
+	for _, jobID := range jobIDs {
+		jobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
 		if err != nil {
-			log.Println("Error ProcessJobDetails : ", err.Error())
+			log.Println("Error GetFailedJobDetails : ", err.Error())
+		}
+
+		if jobDetails == nil {
+			log.Println("No failed job details found")
+		}
+
+		for _, jobDetail := range jobDetails {
+			job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
+			_, _ = ctrl.Svc.ProcessJobDetails(jobDetail, job.Success)
+			if err != nil {
+				log.Println("Error ProcessJobDetails : ", err.Error())
+			}
+		}
+
+		// jika tidak ada lagi job detail yang diproses dalam sebuah job, update status pada job menjadi 'done'
+		jobDetailIDs, err := ctrl.Svc.GetOnProcessJobDetails(jobID)
+		if err != nil {
+			log.Println("Error GetOnProcessJobDetails : ", err.Error())
+		}
+
+		if len(jobDetailIDs) == 0 {
+			doneStatus := "done"
+			now := time.Now()
+
+			updateReq := UpdateJobRequest{
+				Status: &doneStatus,
+				EndAt:  &now,
+			}
+
+			err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+			if err != nil {
+				log.Println("Error UpdateJob : ", err.Error())
+			}
 		}
 	}
 
