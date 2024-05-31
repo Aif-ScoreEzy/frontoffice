@@ -29,13 +29,13 @@ type Service interface {
 	GetJobsTotalByRangeDate(userID, companyID, startDate, endDate string, tierLevel uint) (int64, error)
 	GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, status string, tierLevel uint) (int64, error)
 	GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, column, keyword string, tierLevel uint) (int64, error)
-	GetJobDetailsByID(jobID uint) ([]*JobDetail, error)
+	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
 	GetJobDetailsByRangeDate(userID, companyID, startTime, endTime string, tierLevel uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
-	GetFailedJobDetails() ([]*JobDetail, error)
+	GetFailedJobDetails(jobID uint) ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, req *UpdateJobRequest) error
@@ -43,6 +43,9 @@ type Service interface {
 	UpdateFailedJobDetail(id uint, sequence int) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
+	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
+	GetJobWithIncompleteStatus() ([]uint, error)
+	GetOnProcessJobDetails(jobID uint) ([]uint, error)
 }
 
 func (svc *service) CreateJob(data []LiveStatusRequest, userID, companyID string, totalData int) (uint, error) {
@@ -100,7 +103,7 @@ func (svc *service) GetJobsTotal(userID, companyID, startDate, endDate string, t
 	return count, err
 }
 
-func (svc *service) GetJobDetailsByID(jobID uint) ([]*JobDetail, error) {
+func (svc *service) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
 	if err != nil {
 		return nil, err
@@ -170,8 +173,8 @@ func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(userID, companyID,
 	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startTime, endTime, column, keyword, tierLevel)
 }
 
-func (svc *service) GetFailedJobDetails() ([]*JobDetail, error) {
-	jobDetails, err := svc.Repo.GetFailedJobDetails()
+func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetFailedJobDetails(jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -367,4 +370,21 @@ func formatTime(startDate, endDate string) (string, string, error) {
 	}
 
 	return startTime, endTime, nil
+}
+
+func (svc *service) GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error) {
+	jobDetails, err := svc.Repo.GetJobDetailsByJobIDExport(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobDetails, nil
+}
+
+func (svc *service) GetJobWithIncompleteStatus() ([]uint, error) {
+	return svc.Repo.GetJobWithIncompleteStatus()
+}
+
+func (svc *service) GetOnProcessJobDetails(jobID uint) ([]uint, error) {
+	return svc.Repo.GetOnProcessJobDetails(jobID)
 }
