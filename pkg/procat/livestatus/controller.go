@@ -73,7 +73,23 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
-		successRequestTotal, err = ctrl.Svc.ProcessJobDetails(jobDetail, successRequestTotal)
+		err = ctrl.Svc.ProcessJobDetails(jobDetail)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		// update count success pada tabel job
+		successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		updateReq := UpdateJobRequest{
+			Total: &successRequestTotal,
+		}
+		err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -306,15 +322,28 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 		}
 
 		for _, jobDetail := range jobDetails {
-			job, _ := ctrl.Svc.GetJobByID(jobDetail.JobID)
-			_, _ = ctrl.Svc.ProcessJobDetails(jobDetail, job.Success)
+			err = ctrl.Svc.ProcessJobDetails(jobDetail)
 			if err != nil {
 				log.Println("Error ProcessJobDetails : ", err.Error())
+			}
+
+			// update count success pada tabel job
+			successRequestTotal, err := ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+			if err != nil {
+				log.Println("Error CountOnProcessJobDetails : ", err.Error())
+			}
+
+			updateReq := UpdateJobRequest{
+				Total: &successRequestTotal,
+			}
+			err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
+			if err != nil {
+				log.Println("Error UpdateJob : ", err.Error())
 			}
 		}
 
 		// jika tidak ada lagi job detail yang diproses dalam sebuah job, update status pada job menjadi 'done'
-		jobDetailIDs, err := ctrl.Svc.GetOnProcessJobDetails(jobID)
+		jobDetailIDs, err := ctrl.Svc.GetOnProcessJobDetails(jobID, true)
 		if err != nil {
 			log.Println("Error GetOnProcessJobDetails : ", err.Error())
 		}
