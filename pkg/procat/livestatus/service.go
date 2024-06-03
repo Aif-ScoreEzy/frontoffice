@@ -36,7 +36,7 @@ type Service interface {
 	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
 	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
 	GetFailedJobDetails(jobID uint) ([]*JobDetail, error)
-	ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error)
+	ProcessJobDetails(jobDetail *JobDetail) error
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, req *UpdateJobRequest) error
 	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
@@ -45,7 +45,8 @@ type Service interface {
 	DeleteJob(id uint) error
 	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobWithIncompleteStatus() ([]uint, error)
-	GetOnProcessJobDetails(jobID uint) ([]uint, error)
+	GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error)
+	CountOnProcessJobDetails(jobID uint, onProcess bool) (int, error)
 }
 
 func (svc *service) CreateJob(data []LiveStatusRequest, userID, companyID string, totalData int) (uint, error) {
@@ -182,7 +183,7 @@ func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal int) (int, error) {
+func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 	apiKey := svc.Cfg.Env.ApiKeyLiveStatus
 	jobIDStr := strconv.FormatUint(uint64(jobDetail.JobID), 10)
 	request := &LiveStatusRequest{
@@ -192,13 +193,16 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// todo: jika status code 200 kirim job detail ke aifcore
 	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 	if liveStatusResponse == nil {
-		_ = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+		err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+		if err != nil {
+			return err
+		}
 	} else {
 		dataMap, ok := liveStatusResponse.Data.(map[string]interface{})
 		if !ok {
@@ -241,7 +245,6 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 
 		if liveStatusResponse.StatusCode == 200 {
 			// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
-			successRequestTotal++
 			// err = svc.DeleteJobDetail(jobDetail.ID)
 			var status string
 			if errorCode == -60001 {
@@ -251,26 +254,17 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail, successRequestTotal 
 			}
 			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, status, data)
 			if err != nil {
-				return 0, err
-			}
-
-			// todo: jika dari aifcore sudah tersedia api untuk get jobs, hapus program update job
-			updateReq := UpdateJobRequest{
-				Total: &successRequestTotal,
-			}
-			err = svc.UpdateJob(jobDetail.JobID, &updateReq)
-			if err != nil {
-				return 0, err
+				return err
 			}
 		} else {
-			_ = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+			err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
 			if err != nil {
-				return 0, err
+				return err
 			}
 		}
 	}
 
-	return successRequestTotal, nil
+	return nil
 }
 
 func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error) {
@@ -385,6 +379,15 @@ func (svc *service) GetJobWithIncompleteStatus() ([]uint, error) {
 	return svc.Repo.GetJobWithIncompleteStatus()
 }
 
-func (svc *service) GetOnProcessJobDetails(jobID uint) ([]uint, error) {
-	return svc.Repo.GetOnProcessJobDetails(jobID)
+func (svc *service) GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error) {
+	return svc.Repo.GetOnProcessJobDetails(jobID, onProcess)
+}
+
+func (svc *service) CountOnProcessJobDetails(jobID uint, onProcess bool) (int, error) {
+	count, err := svc.Repo.CountOnProcessJobDetails(jobID, onProcess)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
 }

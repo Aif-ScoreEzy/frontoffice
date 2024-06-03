@@ -42,7 +42,8 @@ type Repository interface {
 	DeleteJob(id uint) error
 	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
 	GetJobWithIncompleteStatus() ([]uint, error)
-	GetOnProcessJobDetails(jobID uint) ([]uint, error)
+	GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error)
+	CountOnProcessJobDetails(jobID uint, onProcess bool) (int64, error)
 }
 
 func (repo *repository) CreateJobInTx(userID, companyID string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
@@ -95,7 +96,7 @@ func (repo *repository) GetJobs(limit, offset int, tierLevel uint, userID, compa
 func (repo *repository) GetJobsTotalByRangeDate(userID, companyID, startTime, endTime string, tierLevel uint) (int64, error) {
 	var totalData int64
 
-	query := repo.DB
+	query := repo.DB.Model(&JobDetail{})
 
 	if tierLevel == 1 {
 		query = query.Where("company_id = ?", companyID)
@@ -103,7 +104,7 @@ func (repo *repository) GetJobsTotalByRangeDate(userID, companyID, startTime, en
 		query = query.Where("user_id = ?", userID)
 	}
 
-	if err := query.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).Find(&JobDetail{}).Count(&totalData).Error; err != nil {
+	if err := query.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).Count(&totalData).Error; err != nil {
 		return 0, err
 	}
 
@@ -113,15 +114,15 @@ func (repo *repository) GetJobsTotalByRangeDate(userID, companyID, startTime, en
 func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startTime, endTime, column, keyword string, tierLevel uint) (int64, error) {
 	var count int64
 
-	query := repo.DB
+	query := repo.DB.Model(&JobDetail{})
+
+	query = query.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime)
 
 	if tierLevel == 1 {
 		query = query.Where("company_id = ?", companyID)
 	} else {
 		query = query.Where("user_id = ?", userID)
 	}
-
-	query = query.Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime)
 
 	if column == "subscriber_status" {
 		query = query.Where("subscriber_status = ?", keyword)
@@ -135,7 +136,7 @@ func (repo *repository) GetJobDetailsPercentageByDataAndRangeDate(userID, compan
 		query = query.Where("data -> 'phone_type' ->> 'description' = ?", keyword)
 	}
 
-	err := query.Find(&JobDetail{}).Count(&count).Error
+	err := query.Count(&count).Error
 	return count, err
 }
 
@@ -170,7 +171,7 @@ func (repo *repository) GetJobsTotal(userID, companyID, startTime, endTime strin
 	var jobs []Job
 	var count int64
 
-	query := repo.DB
+	query := repo.DB.Model(&jobs)
 
 	if tierLevel == 1 {
 		query = query.Where("company_id = ?", companyID)
@@ -182,7 +183,7 @@ func (repo *repository) GetJobsTotal(userID, companyID, startTime, endTime strin
 		query = query.Where("created_at BETWEEN ? AND ?", startTime, endTime)
 	}
 
-	err := query.Find(&jobs).Count(&count).Error
+	err := query.Count(&count).Error
 
 	return count, err
 }
@@ -240,8 +241,7 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotal(keyword string, 
 	var jobs []JobDetail
 	var count int64
 
-	query := repo.DB.Find(&jobs, "job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%")
-	err := query.Find(&jobs).Count(&count).Error
+	err := repo.DB.Model(&jobs).Where("job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").Count(&count).Error
 
 	return count, err
 }
@@ -250,8 +250,8 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID u
 	var jobs []JobDetail
 	var count int64
 
-	query := repo.DB.Find(&jobs, "job_id = ? and status = ?", jobID, status)
-	err := query.Find(&jobs).Count(&count).Error
+	query := repo.DB.Model(&jobs).Where("job_id = ? and status = ?", jobID, status)
+	err := query.Count(&count).Error
 
 	return count, err
 }
@@ -259,7 +259,7 @@ func (repo *repository) GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID u
 func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(userID, companyID, startTime, endTime, status string, tierLevel uint) (int64, error) {
 	var count int64
 
-	query := repo.DB
+	query := repo.DB.Model(&JobDetail{})
 
 	if tierLevel == 1 {
 		query = query.Where("company_id = ?", companyID)
@@ -269,7 +269,6 @@ func (repo *repository) GetJobDetailsTotalPercentageByStatusAndRangeDate(userID,
 
 	err := query.
 		Where("on_process = ? AND created_at BETWEEN ? AND ? AND status = ?", false, startTime, endTime, status).
-		Find(&JobDetail{}).
 		Count(&count).Error
 
 	return count, err
@@ -279,7 +278,7 @@ func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID ui
 	var jobs []JobDetail
 	var count int64
 
-	query := repo.DB.Where("job_id = ?", jobID)
+	query := repo.DB.Model(&jobs).Where("job_id = ?", jobID)
 
 	if column == "subscriber_status" {
 		query = query.Where("subscriber_status = ?", keyword)
@@ -289,7 +288,7 @@ func (repo *repository) GetJobDetailsPercentage(column, keyword string, jobID ui
 		query = query.Where("device_status = ?", keyword)
 	}
 
-	err := query.Find(&jobs).Count(&count).Error
+	err := query.Count(&count).Error
 
 	return count, err
 }
@@ -371,11 +370,21 @@ func (repo *repository) GetJobWithIncompleteStatus() ([]uint, error) {
 	return jobIDs, nil
 }
 
-func (repo *repository) GetOnProcessJobDetails(jobID uint) ([]uint, error) {
+func (repo *repository) GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error) {
 	var jobDetailIDs []uint
-	if err := repo.DB.Model(&JobDetail{}).Select("id").Where("job_id = ? AND on_process = ?", jobID, true).Find(&jobDetailIDs).Error; err != nil {
+	if err := repo.DB.Model(&JobDetail{}).Select("id").Where("job_id = ? AND on_process = ?", jobID, onProcess).Find(&jobDetailIDs).Error; err != nil {
 		return nil, err
 	}
 
 	return jobDetailIDs, nil
+}
+
+func (repo *repository) CountOnProcessJobDetails(jobID uint, onProcess bool) (int64, error) {
+	var count int64
+
+	if err := repo.DB.Model(&JobDetail{}).Where("job_id = ? AND on_process = ?", jobID, onProcess).Count(&count).Error; err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
