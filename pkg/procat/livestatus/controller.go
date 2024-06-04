@@ -102,7 +102,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		log.Println("Error GetFailedJobDetails : ", err.Error())
 	}
 
-	if failedJobDetails == nil {
+	if failedJobDetails != nil && len(failedJobDetails) == 0 {
 		doneStatus := "done"
 		now := time.Now()
 
@@ -317,7 +317,7 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 			log.Println("Error GetFailedJobDetails : ", err.Error())
 		}
 
-		if jobDetails == nil {
+		if jobDetails != nil && len(jobDetails) == 0 {
 			log.Println("No failed job details found")
 		}
 
