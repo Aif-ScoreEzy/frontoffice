@@ -41,6 +41,7 @@ type Service interface {
 	UpdateJob(id uint, req *UpdateJobRequest) error
 	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
+	UpdateInvalidJobDetail(id uint) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
@@ -326,6 +327,15 @@ func (svc *service) UpdateFailedJobDetail(id uint, sequence int) error {
 	} else {
 		updateJobDetail["on_process"] = false
 	}
+
+	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
+}
+
+func (svc *service) UpdateInvalidJobDetail(id uint) error {
+	updateJobDetail := map[string]interface{}{}
+
+	updateJobDetail["status"] = "error"
+	updateJobDetail["on_process"] = false
 
 	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }

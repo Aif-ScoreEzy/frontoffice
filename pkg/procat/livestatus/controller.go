@@ -73,10 +73,18 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
-		err = ctrl.Svc.ProcessJobDetails(jobDetail)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+		if len(jobDetail.PhoneNumber) < 10 || !helper.IsNumeric(jobDetail.PhoneNumber) {
+			err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
+		} else {
+			err = ctrl.Svc.ProcessJobDetails(jobDetail)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
 		}
 
 		// update count success pada tabel job
