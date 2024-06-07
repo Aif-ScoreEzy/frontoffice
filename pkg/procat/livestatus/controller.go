@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/usepzaka/validator"
 )
 
 func NewController(service Service) Controller {
@@ -73,10 +74,18 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
-		err = ctrl.Svc.ProcessJobDetails(jobDetail)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+		if errValid := validator.ValidateStruct(jobDetail); errValid != nil {
+			err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID, errValid.Error())
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
+		} else {
+			err = ctrl.Svc.ProcessJobDetails(jobDetail)
+			if err != nil {
+				statusCode, resp := helper.GetError(err.Error())
+				return c.Status(statusCode).JSON(resp)
+			}
 		}
 
 		// update count success pada tabel job
