@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
 	"front-office/app/config"
 	"front-office/common/constant"
@@ -10,6 +11,7 @@ import (
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/user"
 	"front-office/utility/mailjet"
+	"io"
 	"strconv"
 	"time"
 
@@ -45,6 +47,7 @@ type Service interface {
 	PasswordResetSvc(userID, token string, req *PasswordResetRequest) error
 	LoginSvc(req *UserLoginRequest, user *user.User) (string, error)
 	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
+	LoginToAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error)
 }
 
 func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -253,4 +256,22 @@ func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswor
 	}
 
 	return data, nil
+}
+
+func (svc *service) LoginToAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error) {
+	response, err := svc.Repo.LoginToAifCoreService(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var baseResponseSuccess *helper.BaseResponseSuccess
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		json.Unmarshal(dataBytes, &baseResponseSuccess)
+		baseResponseSuccess.StatusCode = response.StatusCode
+	}
+
+	return baseResponseSuccess, nil
 }

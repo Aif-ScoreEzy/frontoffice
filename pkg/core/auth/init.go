@@ -13,7 +13,7 @@ import (
 )
 
 func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
-	repo := NewRepository(db)
+	repo := NewRepository(db, cfg)
 	repoUser := user.NewRepository(db)
 	repoRole := role.NewRepository(db)
 	repoActivationToken := activationtoken.NewRepository(db)

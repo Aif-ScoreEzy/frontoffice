@@ -56,6 +56,12 @@ type UserLoginResponse struct {
 	Token       string `json:"access_token"`
 }
 
+type LoginResponse struct {
+	Message string      `json:"message"`
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+}
+
 type SendEmailVerificationRequest struct {
 	Email string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
 }
