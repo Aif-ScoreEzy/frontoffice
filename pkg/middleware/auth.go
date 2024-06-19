@@ -5,24 +5,23 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"os"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	jwtMiddleware "github.com/gofiber/jwt/v3"
+	jwtware "github.com/gofiber/jwt/v3"
 )
 
 func Auth() func(c *fiber.Ctx) error {
-	config := jwtMiddleware.Config{
+	config := jwtware.Config{
 		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
 		ErrorHandler: jwtError,
+		TokenLookup:  "cookie:access_token",
 	}
 
-	return jwtMiddleware.New(config)
+	return jwtware.New(config)
 }
 
 func jwtError(c *fiber.Ctx, err error) error {
 	resp := helper.ResponseFailed(err.Error())
-
 	return c.Status(fiber.StatusUnauthorized).JSON(resp)
 }
 
@@ -36,16 +35,7 @@ func SetHeaderAuth(c *fiber.Ctx) error {
 func GetPayloadFromJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		authHeader := c.Get("Authorization")
-
-		bearerToken := strings.Split(authHeader, " ")
-		if len(bearerToken) != 2 {
-			resp := helper.ResponseFailed("Invalid token")
-
-			return c.Status(fiber.StatusUnauthorized).JSON(resp)
-		}
-
-		token := bearerToken[1]
+		token := c.Cookies("access_token")
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -85,16 +75,7 @@ func GetPayloadFromJWT() fiber.Handler {
 func AdminAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		authHeader := c.Get("Authorization")
-
-		bearerToken := strings.Split(authHeader, " ")
-		if len(bearerToken) != 2 {
-			resp := helper.ResponseFailed("Invalid token")
-
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
-		}
-
-		token := bearerToken[1]
+		token := c.Cookies("access_token")
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {

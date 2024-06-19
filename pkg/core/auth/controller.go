@@ -215,6 +215,16 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	minutesToExpired, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		Expires:  time.Now().Add(time.Duration(minutesToExpired) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
 	data := UserLoginResponse{
 		ID:          user.ID,
 		Name:        user.Name,
