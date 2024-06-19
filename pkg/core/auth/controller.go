@@ -49,6 +49,7 @@ type Controller interface {
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
 	LoginToAifCoreService(c *fiber.Ctx) error
+	RefreshAccessToken(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
@@ -209,17 +210,27 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.Svc.LoginSvc(req, user)
+	accessToken, refreshToken, err := ctrl.Svc.LoginSvc(req, user)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	minutesToExpired, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
-		Value:    token,
-		Expires:  time.Now().Add(time.Duration(minutesToExpired) * time.Minute),
+		Value:    accessToken,
+		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
+	refreshTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtRefreshTokenExpiresMinutes)
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(time.Duration(refreshTokenExpirationMinutes) * time.Minute),
 		HTTPOnly: true,
 		Secure:   true,
 		SameSite: "Lax",
@@ -233,7 +244,6 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		CompanyName: user.Company.CompanyName,
 		TierLevel:   user.Role.TierLevel,
 		Image:       user.Image,
-		Token:       token,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -374,6 +384,36 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"succeed to change password",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
+
+	secret := ctrl.Cfg.Env.JwtSecretKey
+	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userID, companyID, uint(tierLevel))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
+	resp := helper.ResponseSuccess(
+		"access token refreshed",
 		nil,
 	)
 

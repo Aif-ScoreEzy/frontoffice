@@ -24,7 +24,29 @@ func GenerateToken(
 	claims["exp"] = willExpiredAt.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
 
+	return t, nil
+}
+
+func GenerateRefreshToken(
+	secret string,
+	minutesToExpired int,
+	userID, companyID string,
+	tierLevel uint,
+) (string, error) {
+	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
+
+	claims := jwt.MapClaims{}
+	claims["user_id"] = userID
+	claims["company_id"] = companyID
+	claims["tier_level"] = tierLevel
+	claims["exp"] = willExpiredAt.Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", err
