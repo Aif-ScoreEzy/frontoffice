@@ -1,20 +1,26 @@
 package auth
 
 import (
+	"bytes"
+	"encoding/json"
+	"front-office/app/config"
+	"front-office/common/constant"
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/passwordresettoken"
 	"front-office/pkg/core/user"
+	"net/http"
 
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{DB: db, Cfg: cfg}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
@@ -22,6 +28,7 @@ type Repository interface {
 	CreateMember(user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error)
 	ResetPassword(id, token string, req *PasswordResetRequest) error
 	VerifyUserTx(req map[string]interface{}, userID, token string) (*user.User, error)
+	LoginToAifCoreService(req *UserLoginRequest) (*http.Response, error)
 }
 
 func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error) {
@@ -112,4 +119,15 @@ func (repo *repository) VerifyUserTx(req map[string]interface{}, userID, token s
 	}
 
 	return user, nil
+}
+
+func (repo *repository) LoginToAifCoreService(req *UserLoginRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/auth/login"
+
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+	return client.Do(request)
 }

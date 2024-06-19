@@ -48,6 +48,8 @@ type Controller interface {
 	RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
+	LoginToAifCoreService(c *fiber.Ctx) error
+	RefreshAccessToken(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
@@ -208,11 +210,31 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.Svc.LoginSvc(req, user)
+	accessToken, refreshToken, err := ctrl.Svc.LoginSvc(req, user)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
+
+	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
+	refreshTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtRefreshTokenExpiresMinutes)
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(time.Duration(refreshTokenExpirationMinutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
 
 	data := UserLoginResponse{
 		ID:          user.ID,
@@ -222,7 +244,6 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		CompanyName: user.Company.CompanyName,
 		TierLevel:   user.Role.TierLevel,
 		Image:       user.Image,
-		Token:       token,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -367,4 +388,51 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
+
+	secret := ctrl.Cfg.Env.JwtSecretKey
+	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userID, companyID, uint(tierLevel))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
+	resp := helper.ResponseSuccess(
+		"access token refreshed",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) LoginToAifCoreService(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UserLoginRequest)
+
+	res, err := ctrl.Svc.LoginToAifCoreService(req)
+	if err != nil {
+		resp := helper.ResponseFailed(err.Error())
+		return c.Status(res.StatusCode).JSON(resp)
+	}
+
+	if res.StatusCode != 200 {
+		// resp := helper.ResponseFailed(res.Message)
+		return c.Status(res.StatusCode).JSON(fiber.Map{"message": res.Message})
+	}
+
+	return c.Status(res.StatusCode).JSON(res)
 }

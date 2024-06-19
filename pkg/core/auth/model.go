@@ -53,7 +53,12 @@ type UserLoginResponse struct {
 	CompanyName string `json:"company_name"`
 	TierLevel   uint   `json:"tier_level"`
 	Image       string `json:"image"`
-	Token       string `json:"access_token"`
+}
+
+type LoginResponse struct {
+	Message string      `json:"message"`
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
 }
 
 type SendEmailVerificationRequest struct {

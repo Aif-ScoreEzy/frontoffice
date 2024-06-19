@@ -1,11 +1,15 @@
 package helper
 
-import "front-office/common/constant"
+import (
+	"front-office/common/constant"
+	"log"
+)
 
 type BaseResponseSuccess struct {
-	Message string      `json:"message"`
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data"`
+	Message    string      `json:"message"`
+	Success    bool        `json:"success"`
+	Data       interface{} `json:"data"`
+	StatusCode int         `json:"-"`
 }
 
 type BaseResponseFailed struct {
@@ -68,5 +72,6 @@ func GetError(errorMessage string) (int, interface{}) {
 	}
 
 	resp := ResponseFailed(errorMessage)
+	log.Println(errorMessage)
 	return statusCode, resp
 }
