@@ -35,6 +35,7 @@ type Environment struct {
 	GetLogByRangeDate              string
 	GetLogByMonth                  string
 	GetLogByName                   string
+	AllowingDomains                string
 }
 
 func GetEnvironment(key string) string {
@@ -82,5 +83,6 @@ func LoadEnvironment() *Environment {
 		GetLogByRangeDate:              GetEnvironment("GET_LOGS_BY_RANGE_DATE"),
 		GetLogByMonth:                  GetEnvironment("GET_LOGS_BY_MONTH"),
 		GetLogByName:                   GetEnvironment("GET_LOGS_BY_NAME"),
+		AllowingDomains:                GetEnvironment("ALLOWING_DOMAINS"),
 	}
 }
