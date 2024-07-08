@@ -47,7 +47,8 @@ type Service interface {
 	PasswordResetSvc(userID, token string, req *PasswordResetRequest) error
 	LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error)
 	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
-	LoginToAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error)
+	LoginAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error)
+	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
 
 func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -264,8 +265,26 @@ func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswor
 	return data, nil
 }
 
-func (svc *service) LoginToAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error) {
-	response, err := svc.Repo.LoginToAifCoreService(req)
+func (svc *service) LoginAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error) {
+	response, err := svc.Repo.LoginAifCoreService(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var baseResponseSuccess *helper.BaseResponseSuccess
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		json.Unmarshal(dataBytes, &baseResponseSuccess)
+		baseResponseSuccess.StatusCode = response.StatusCode
+	}
+
+	return baseResponseSuccess, nil
+}
+
+func (svc *service) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
+	response, err := svc.Repo.ChangePasswordAifCoreService(req)
 	if err != nil {
 		return nil, err
 	}

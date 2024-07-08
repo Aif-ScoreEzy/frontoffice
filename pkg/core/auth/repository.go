@@ -28,7 +28,8 @@ type Repository interface {
 	CreateMember(user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error)
 	ResetPassword(id, token string, req *PasswordResetRequest) error
 	VerifyUserTx(req map[string]interface{}, userID, token string) (*user.User, error)
-	LoginToAifCoreService(req *UserLoginRequest) (*http.Response, error)
+	LoginAifCoreService(req *UserLoginRequest) (*http.Response, error)
+	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error)
 }
 
 func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error) {
@@ -121,11 +122,22 @@ func (repo *repository) VerifyUserTx(req map[string]interface{}, userID, token s
 	return user, nil
 }
 
-func (repo *repository) LoginToAifCoreService(req *UserLoginRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/auth/login"
+func (repo *repository) LoginAifCoreService(req *UserLoginRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/login"
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+	return client.Do(request)
+}
+
+func (repo *repository) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/change-password"
+
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}

@@ -48,7 +48,7 @@ type Controller interface {
 	RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
-	LoginToAifCoreService(c *fiber.Ctx) error
+	LoginAifCoreService(c *fiber.Ctx) error
 	RefreshAccessToken(c *fiber.Ctx) error
 }
 
@@ -420,10 +420,10 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) LoginToAifCoreService(c *fiber.Ctx) error {
+func (ctrl *controller) LoginAifCoreService(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	res, err := ctrl.Svc.LoginToAifCoreService(req)
+	res, err := ctrl.Svc.LoginAifCoreService(req)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 		return c.Status(res.StatusCode).JSON(resp)
