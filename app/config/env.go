@@ -31,10 +31,6 @@ type Environment struct {
 	ApiKeyLiveStatus               string
 	AifcoreHost                    string
 	GenretailV3                    string
-	GetLogByDate                   string
-	GetLogByRangeDate              string
-	GetLogByMonth                  string
-	GetLogByName                   string
 }
 
 func GetEnvironment(key string) string {
@@ -78,9 +74,5 @@ func LoadEnvironment() *Environment {
 		ApiKeyLiveStatus:               GetEnvironment("API_KEY_LIVE_STATUS"),
 		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
 		GenretailV3:                    GetEnvironment("GEN_RETAIL_V3"),
-		GetLogByDate:                   GetEnvironment("GET_LOGS_BY_DATE"),
-		GetLogByRangeDate:              GetEnvironment("GET_LOGS_BY_RANGE_DATE"),
-		GetLogByMonth:                  GetEnvironment("GET_LOGS_BY_MONTH"),
-		GetLogByName:                   GetEnvironment("GET_LOGS_BY_NAME"),
 	}
 }
