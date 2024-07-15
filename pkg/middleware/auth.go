@@ -57,7 +57,7 @@ func GetPayloadFromJWT() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleID, err := helper.ExtractRoleIDFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
@@ -66,7 +66,7 @@ func GetPayloadFromJWT() fiber.Handler {
 
 		c.Locals("userID", userID)
 		c.Locals("companyID", companyID)
-		c.Locals("tierLevel", tierLevel)
+		c.Locals("roleID", roleID)
 
 		return c.Next()
 	}
@@ -101,7 +101,7 @@ func GetPayloadFromRefreshToken() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleID, err := helper.ExtractRoleIDFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
@@ -110,7 +110,7 @@ func GetPayloadFromRefreshToken() fiber.Handler {
 
 		c.Locals("userID", userID)
 		c.Locals("companyID", companyID)
-		c.Locals("tierLevel", tierLevel)
+		c.Locals("roleID", roleID)
 
 		return c.Next()
 	}
@@ -127,12 +127,12 @@ func AdminAuth() fiber.Handler {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleID, err := helper.ExtractRoleIDFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
-		if tierLevel == 2 {
+		if roleID == 2 {
 			resp := helper.ResponseFailed(constant.RequestProhibited)
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
