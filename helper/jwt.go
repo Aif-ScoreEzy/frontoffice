@@ -12,15 +12,15 @@ import (
 func GenerateToken(
 	secret string,
 	minutesToExpired int,
-	userID, companyID string,
-	tierLevel uint,
+	userID, companyID uint,
+	roleID uint,
 ) (string, error) {
 	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
 
 	claims := jwt.MapClaims{}
 	claims["user_id"] = userID
 	claims["company_id"] = companyID
-	claims["tier_level"] = tierLevel
+	claims["role_id"] = roleID
 	claims["exp"] = willExpiredAt.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -35,15 +35,15 @@ func GenerateToken(
 func GenerateRefreshToken(
 	secret string,
 	minutesToExpired int,
-	userID, companyID string,
-	tierLevel uint,
+	userID, companyID uint,
+	roleID uint,
 ) (string, error) {
 	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
 
 	claims := jwt.MapClaims{}
 	claims["user_id"] = userID
 	claims["company_id"] = companyID
-	claims["tier_level"] = tierLevel
+	claims["role_id"] = roleID
 	claims["exp"] = willExpiredAt.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -68,43 +68,49 @@ func ExtractClaimsFromJWT(token, secret string) (*jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ExtractUserIDFromClaims(claims *jwt.MapClaims) (string, error) {
+func ExtractUserIDFromClaims(claims *jwt.MapClaims) (uint, error) {
 	x, found := (*claims)["user_id"]
 	if found {
-		if _, ok := x.(string); !ok {
-			return "", errors.New("value can't be coerced to string")
-		}
-	} else {
-		return "", errors.New("key doesn't exist")
-	}
+		userIDStr := fmt.Sprintf("%v", x)
 
-	return (*claims)["user_id"].(string), nil
-}
-
-func ExtractCompanyIDFromClaims(claims *jwt.MapClaims) (string, error) {
-	x, found := (*claims)["company_id"]
-	if found {
-		if _, ok := x.(string); !ok {
-			return "", errors.New("value can't be coerced to string")
-		}
-	} else {
-		return "", errors.New("key doesn't exist")
-	}
-
-	return (*claims)["company_id"].(string), nil
-}
-
-func ExtractTierLevelFromClaims(claims *jwt.MapClaims) (uint, error) {
-	x, found := (*claims)["tier_level"]
-	if found {
-		tierLevelStr := fmt.Sprintf("%v", x)
-
-		tierLevel, err := strconv.ParseUint(tierLevelStr, 10, 32)
+		roleID, err := strconv.ParseUint(userIDStr, 10, 32)
 		if err != nil {
 			return 0, err
 		}
 
-		return uint(tierLevel), nil
+		return uint(roleID), nil
+	} else {
+		return 0, errors.New("key doesn't exist")
+	}
+}
+
+func ExtractCompanyIDFromClaims(claims *jwt.MapClaims) (uint, error) {
+	x, found := (*claims)["company_id"]
+	if found {
+		companyIDStr := fmt.Sprintf("%v", x)
+
+		roleID, err := strconv.ParseUint(companyIDStr, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+
+		return uint(roleID), nil
+	} else {
+		return 0, errors.New("key doesn't exist")
+	}
+}
+
+func ExtractRoleIDFromClaims(claims *jwt.MapClaims) (uint, error) {
+	x, found := (*claims)["role_id"]
+	if found {
+		roleIDStr := fmt.Sprintf("%v", x)
+
+		roleID, err := strconv.ParseUint(roleIDStr, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+
+		return uint(roleID), nil
 	} else {
 		return 0, errors.New("key doesn't exist")
 	}
