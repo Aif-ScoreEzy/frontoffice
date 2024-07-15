@@ -30,6 +30,33 @@ type User struct {
 	DeletedAt   gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
+type MstMember struct {
+	MemberID          uint               `json:"member_id" gorm:"primaryKey;autoIncrement"`
+	Name              string             `json:"name" validate:"required,alphaspace, min(3)"`
+	Username          string             `json:"username" gorm:"unique"`
+	Email             string             `json:"email" gorm:"unique" validate:"required,email"`
+	Password          string             `json:"password"`
+	Phone             string             `json:"phone"`
+	Key               string             `json:"-" gorm:"uniqueIndex"`
+	Active            bool               `json:"active"`
+	ParentId          string             `json:"parent_id"`
+	CompanyId         uint               `json:"company_id"`
+	MstCompany        company.MstCompany `json:"company" gorm:"foreignKey:CompanyId"`
+	RoleId            uint               `json:"role_id"`
+	Role              role.MstRole       `json:"role" gorm:"foreignKey:RoleId"`
+	Status            bool               `json:"status"`
+	MailStatus        string             `json:"mail_status" gorm:"default:pending"`
+	AccountType       string             `json:"account_type"`
+	ProductPermission string             `json:"product_permission"`
+	IsVerified        bool               `json:"is_verified"`
+	Image             string             `json:"image" gorm:"default:default-profile-image.jpg"`
+	QuotaType         int8               `json:"quota_type"` //0: none, 1: Quota Total 2: Quota per product
+	Quota             int                `json:"quota"`
+	CreatedAt         time.Time          `json:"-"`
+	UpdatedAt         time.Time          `json:"-"`
+	DeletedAt         gorm.DeletedAt     `json:"-" gorm:"index"`
+}
+
 type UserResponse struct {
 	ID         string          `json:"id"`
 	Name       string          `json:"name"`
@@ -102,4 +129,11 @@ func SetPassword(password string) string {
 	password = string(hashedPass)
 
 	return password
+}
+
+type FindUserAifCoreResponse struct {
+	Message    string     `json:"message"`
+	Success    bool       `json:"success"`
+	Data       *MstMember `json:"data"`
+	StatusCode int        `json:"-"`
 }
