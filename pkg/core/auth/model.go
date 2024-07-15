@@ -46,10 +46,10 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID          string `json:"id"`
+	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	Email       string `json:"email"`
-	CompanyID   string `json:"company_id"`
+	CompanyID   uint   `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	TierLevel   uint   `json:"tier_level"`
 	Image       string `json:"image"`

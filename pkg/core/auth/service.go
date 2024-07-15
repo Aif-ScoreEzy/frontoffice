@@ -45,9 +45,9 @@ type Service interface {
 	RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error)
 	VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error)
 	PasswordResetSvc(userID, token string, req *PasswordResetRequest) error
-	LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error)
+	// LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error)
 	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
-	LoginAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error)
+	LoginAifCoreService(req *UserLoginRequest, user *user.MstMember) (string, string, error)
 	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
 
@@ -95,7 +95,7 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 
 	dataUser.Password = user.SetPassword(req.Password)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, companyID, tierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, 1, 1, tierLevel)
 	if err != nil {
 		return nil, "", err
 	}
@@ -143,7 +143,7 @@ func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, dataUser.CompanyID, tierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, 1, 1, tierLevel)
 	if err != nil {
 		return nil, "", err
 	}
@@ -207,30 +207,31 @@ func (svc *service) PasswordResetSvc(userID, token string, req *PasswordResetReq
 	return nil
 }
 
-func (svc *service) LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error) {
-	secret := svc.Cfg.Env.JwtSecretKey
-	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
-	err := bcrypt.CompareHashAndPassword(
-		[]byte(user.Password),
-		[]byte(req.Password),
-	)
-	if err != nil {
-		return "", "", errors.New(constant.InvalidEmailOrPassword)
-	}
+// func (svc *service) LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error) {
+// 	secret := svc.Cfg.Env.JwtSecretKey
 
-	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", "", err
-	}
+// 	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
+// 	err := bcrypt.CompareHashAndPassword(
+// 		[]byte(user.Password),
+// 		[]byte(req.Password),
+// 	)
+// 	if err != nil {
+// 		return "", "", errors.New(constant.InvalidEmailOrPassword)
+// 	}
 
-	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", "", err
-	}
+// 	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
 
-	return accessToken, refreshToken, nil
-}
+// 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
+// 	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+
+// 	return accessToken, refreshToken, nil
+// }
 
 func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
@@ -265,22 +266,30 @@ func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswor
 	return data, nil
 }
 
-func (svc *service) LoginAifCoreService(req *UserLoginRequest) (*helper.BaseResponseSuccess, error) {
-	response, err := svc.Repo.LoginAifCoreService(req)
+func (svc *service) LoginAifCoreService(req *UserLoginRequest, user *user.MstMember) (string, string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+
+	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
+	err := bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.Password),
+	)
 	if err != nil {
-		return nil, err
+		return "", "", errors.New(constant.InvalidEmailOrPassword)
 	}
 
-	var baseResponseSuccess *helper.BaseResponseSuccess
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		json.Unmarshal(dataBytes, &baseResponseSuccess)
-		baseResponseSuccess.StatusCode = response.StatusCode
+	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.MemberID, user.CompanyId, user.Role.RoleID)
+	if err != nil {
+		return "", "", err
 	}
 
-	return baseResponseSuccess, nil
+	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
+	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.MemberID, user.CompanyId, user.Role.RoleID)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (svc *service) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {

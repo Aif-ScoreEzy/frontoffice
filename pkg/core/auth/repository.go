@@ -128,6 +128,7 @@ func (repo *repository) LoginAifCoreService(req *UserLoginRequest) (*http.Respon
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	// request.Header.Set("X-MODULE-KEY", repo.Cfg.Env.ModuleKey)
 
 	client := &http.Client{}
 	return client.Do(request)
