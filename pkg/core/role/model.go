@@ -17,6 +17,18 @@ type Role struct {
 	DeletedAt   gorm.DeletedAt          `gorm:"index" json:"-"`
 }
 
+type MstRole struct {
+	RoleID      uint            `json:"role_id" gorm:"primaryKey;autoIncrement"`
+	Name        string          `json:"name"`
+	Permissions []MstPermission `json:"permissions" gorm:"many2many:ref_role_permissions"`
+}
+
+type MstPermission struct {
+	PermissionID uint   `json:"permission_id" gorm:"primaryKey;autoIncrement"`
+	Slug         string `json:"slug"`
+	Name         string `json:"name"`
+}
+
 type CreateRoleRequest struct {
 	Name        string                  `json:"name" validate:"required~Field Name is required"`
 	Permissions []permission.Permission `json:"permissions" validate:"required~Field Permissions is required"`
