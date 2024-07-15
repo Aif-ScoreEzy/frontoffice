@@ -10,7 +10,7 @@ import (
 )
 
 func SetupInit(userAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
-	repo := NewRepository(db)
+	repo := NewRepository(db, cfg)
 	repoRole := role.NewRepository(db)
 	service := NewService(repo, repoRole)
 	serviceRole := role.NewService(repoRole)

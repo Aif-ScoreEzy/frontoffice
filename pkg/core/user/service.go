@@ -1,11 +1,13 @@
 package user
 
 import (
+	"encoding/json"
 	"errors"
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
+	"io"
 	"strconv"
 	"time"
 )
@@ -30,6 +32,7 @@ type Service interface {
 	GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error)
 	GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error)
 	DeleteUserByIDSvc(id string) error
+	FindUserByEmailAifCore(email string) (*FindUserAifCoreResponse, error)
 }
 
 func (svc *service) FindUserByEmailSvc(email string) (*User, error) {
@@ -271,4 +274,22 @@ func (svc *service) DeleteUserByIDSvc(id string) error {
 	}
 
 	return nil
+}
+
+func (svc *service) FindUserByEmailAifCore(email string) (*FindUserAifCoreResponse, error) {
+	res, err := svc.Repo.FindOneByEmailAifCore(email)
+	if err != nil {
+		return nil, err
+	}
+
+	var baseResponseSuccess *FindUserAifCoreResponse
+	if res != nil {
+		dataBytes, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		json.Unmarshal(dataBytes, &baseResponseSuccess)
+		baseResponseSuccess.StatusCode = res.StatusCode
+	}
+
+	return baseResponseSuccess, nil
 }

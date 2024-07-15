@@ -1,18 +1,23 @@
 package user
 
 import (
+	"fmt"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
 	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{DB: db, Cfg: cfg}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
@@ -24,6 +29,7 @@ type Repository interface {
 	FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, companyID string) ([]User, error)
 	DeleteByID(id string) error
 	GetTotalData(keyword, roleID, status, startTime, endTime, companyID string) (int64, error)
+	FindOneByEmailAifCore(email string) (*http.Response, error)
 }
 
 func (repo *repository) FindOneByEmail(email string) (*User, error) {
@@ -141,4 +147,18 @@ func (repo *repository) GetTotalData(keyword, roleID, status, startTime, endTime
 	err := query.Find(&users).Count(&count).Error
 
 	return count, err
+}
+
+func (repo *repository) FindOneByEmailAifCore(email string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/by`, repo.Cfg.Env.AifcoreHost)
+
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("email", email)
+	request.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+	return client.Do(request)
 }
