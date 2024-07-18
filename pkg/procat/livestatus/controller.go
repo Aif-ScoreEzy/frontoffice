@@ -106,25 +106,39 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	}
 
 	// jika tidak ada job details dengan status 'error', update status pada job menjadi 'done'
-	failedJobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
-	if err != nil {
-		log.Println("Error GetFailedJobDetails : ", err.Error())
+	// failedJobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
+	// if err != nil {
+	// 	log.Println("Error GetFailedJobDetails : ", err.Error())
+	// }
+
+	// if failedJobDetails != nil && len(failedJobDetails) == 0 {
+	// 	doneStatus := "done"
+	// 	now := time.Now()
+
+	// 	updateReq := UpdateJobRequest{
+	// 		Status: &doneStatus,
+	// 		EndAt:  &now,
+	// 	}
+
+	// 	err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+	// 	if err != nil {
+	// 		statusCode, resp := helper.GetError(err.Error())
+	// 		return c.Status(statusCode).JSON(resp)
+	// 	}
+	// }
+
+	doneStatus := "done"
+	now := time.Now()
+
+	updateReq := UpdateJobRequest{
+		Status: &doneStatus,
+		EndAt:  &now,
 	}
 
-	if failedJobDetails != nil && len(failedJobDetails) == 0 {
-		doneStatus := "done"
-		now := time.Now()
-
-		updateReq := UpdateJobRequest{
-			Status: &doneStatus,
-			EndAt:  &now,
-		}
-
-		err := ctrl.Svc.UpdateJob(jobID, &updateReq)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
+	err = ctrl.Svc.UpdateJob(jobID, &updateReq)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	// todo: jika semua request sukses, hapus job pada temp tabel
