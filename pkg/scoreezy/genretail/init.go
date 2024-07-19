@@ -16,8 +16,8 @@ func SetupInit(genRetailAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	serviceGrading := grading.NewService(repoGrading)
 	controller := NewController(service, serviceGrading)
 
-	genRetailAPI.Post("/request-score", middleware.GetPayloadFromJWT(), middleware.IsRequestValid(GenRetailRequest{}), controller.RequestScore)
-	genRetailAPI.Get("/download-csv/:opsi", middleware.GetPayloadFromJWT(), controller.DownloadCSV)
-	genRetailAPI.Put("/upload-scoring-template", middleware.Auth(), middleware.IsRequestValid(UploadScoringRequest{}), middleware.GetPayloadFromJWT(), middleware.DocUpload(), controller.UploadCSV)
-	genRetailAPI.Get("/bulk-search", middleware.GetPayloadFromJWT(), controller.GetBulkSearch)
+	genRetailAPI.Post("/request-score", middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(GenRetailRequest{}), controller.RequestScore)
+	genRetailAPI.Get("/download-csv/:opsi", middleware.GetJWTPayloadFromCookie(), controller.DownloadCSV)
+	genRetailAPI.Put("/upload-scoring-template", middleware.Auth(), middleware.IsRequestValid(UploadScoringRequest{}), middleware.GetJWTPayloadFromCookie(), middleware.DocUpload(), controller.UploadCSV)
+	genRetailAPI.Get("/bulk-search", middleware.GetJWTPayloadFromCookie(), controller.GetBulkSearch)
 }
