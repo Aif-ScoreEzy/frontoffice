@@ -7,6 +7,7 @@ import (
 	"front-office/helper"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -72,37 +73,46 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(jobDetails))
+
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
-		if errValid := validator.ValidateStruct(jobDetail); errValid != nil {
-			err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID, errValid.Error())
-			if err != nil {
-				statusCode, resp := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(resp)
-			}
-		} else {
-			err = ctrl.Svc.ProcessJobDetails(jobDetail)
-			if err != nil {
-				statusCode, resp := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(resp)
-			}
-		}
+		wg.Add(1)
+		go func(jobDetail *JobDetail) {
+			defer wg.Done()
 
-		// update count success pada tabel job
-		successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
+			var err error
+			if errValid := validator.ValidateStruct(jobDetail); errValid != nil {
+				err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID, errValid.Error())
+				if err != nil {
+					errChan <- err
+					return
+				}
+			} else {
+				err = ctrl.Svc.ProcessJobDetails(jobDetail)
+				if err != nil {
+					errChan <- err
+					return
+				}
+			}
 
-		updateReq := UpdateJobRequest{
-			Total: &successRequestTotal,
-		}
-		err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
+			// update count success pada tabel job
+			successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			updateReq := UpdateJobRequest{
+				Total: &successRequestTotal,
+			}
+			err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}(jobDetail)
 	}
 
 	// jika tidak ada job details dengan status 'error', update status pada job menjadi 'done'
@@ -126,6 +136,21 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	// 		return c.Status(statusCode).JSON(resp)
 	// 	}
 	// }
+
+	wg.Wait()
+	close(errChan)
+
+	select {
+	case err := <-errChan:
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	default:
+		{
+			fmt.Println("No errors found in job processing")
+		}
+	}
 
 	doneStatus := "done"
 	now := time.Now()
