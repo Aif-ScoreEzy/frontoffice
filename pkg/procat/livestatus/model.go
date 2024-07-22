@@ -23,12 +23,13 @@ type JobDetail struct {
 	UserID           string    `json:"user_id"`
 	CompanyID        string    `json:"company_id"`
 	JobID            uint      `json:"job_id"`
-	PhoneNumber      string    `json:"phone_number"`
+	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
 	SubscriberStatus string    `json:"subscriber_status"`
 	DeviceStatus     string    `json:"device_status"`
 	OnProcess        bool      `gorm:"not null" json:"on_process"`
 	Sequence         int       `json:"sequence"`
 	Status           string    `json:"status"`
+	Message          *string   `json:"message"`
 	Data             *JSONB    `gorm:"type:jsonb" json:"data"`
 	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }

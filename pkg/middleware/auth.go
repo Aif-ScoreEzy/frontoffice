@@ -5,24 +5,25 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"os"
-	"strings"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
-	jwtMiddleware "github.com/gofiber/jwt/v3"
+	jwtware "github.com/gofiber/jwt/v3"
 )
 
 func Auth() func(c *fiber.Ctx) error {
-	config := jwtMiddleware.Config{
+	config := jwtware.Config{
 		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
 		ErrorHandler: jwtError,
+		TokenLookup:  "cookie:access_token",
 	}
 
-	return jwtMiddleware.New(config)
+	return jwtware.New(config)
 }
 
 func jwtError(c *fiber.Ctx, err error) error {
 	resp := helper.ResponseFailed(err.Error())
-
 	return c.Status(fiber.StatusUnauthorized).JSON(resp)
 }
 
@@ -33,19 +34,26 @@ func SetHeaderAuth(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func GetPayloadFromJWT() fiber.Handler {
+func SetCookiePasswordResetToken(c *fiber.Ctx) error {
+	token := c.Params("token")
+	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "password_reset_cookie",
+		Value:    token,
+		Expires:  time.Now().Add(time.Duration(minutesToExpired) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+
+	return c.Next()
+}
+
+func GetJWTPayloadFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		authHeader := c.Get("Authorization")
-
-		bearerToken := strings.Split(authHeader, " ")
-		if len(bearerToken) != 2 {
-			resp := helper.ResponseFailed("Invalid token")
-
-			return c.Status(fiber.StatusUnauthorized).JSON(resp)
-		}
-
-		token := bearerToken[1]
+		token := c.Cookies("access_token")
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -82,19 +90,94 @@ func GetPayloadFromJWT() fiber.Handler {
 	}
 }
 
+func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		secret := os.Getenv("JWT_SECRET_KEY")
+		token := c.Cookies("password_reset_cookie")
+
+		claims, err := helper.ExtractClaimsFromJWT(token, secret)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		userID, err := helper.ExtractUserIDFromClaims(claims)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		c.Locals("userID", userID)
+		c.Locals("companyID", companyID)
+		c.Locals("tierLevel", tierLevel)
+
+		return c.Next()
+	}
+}
+
+func GetPayloadFromRefreshToken() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		secret := os.Getenv("JWT_SECRET_KEY")
+		token := c.Cookies("refresh_token")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no refresh token provided",
+			})
+		}
+
+		claims, err := helper.ExtractClaimsFromJWT(token, secret)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		userID, err := helper.ExtractUserIDFromClaims(claims)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
+		c.Locals("userID", userID)
+		c.Locals("companyID", companyID)
+		c.Locals("tierLevel", tierLevel)
+
+		return c.Next()
+	}
+}
+
 func AdminAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		authHeader := c.Get("Authorization")
-
-		bearerToken := strings.Split(authHeader, " ")
-		if len(bearerToken) != 2 {
-			resp := helper.ResponseFailed("Invalid token")
-
-			return c.Status(fiber.StatusBadRequest).JSON(resp)
-		}
-
-		token := bearerToken[1]
+		token := c.Cookies("access_token")
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {

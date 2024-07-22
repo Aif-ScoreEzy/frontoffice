@@ -41,6 +41,7 @@ type Service interface {
 	UpdateJob(id uint, req *UpdateJobRequest) error
 	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
 	UpdateFailedJobDetail(id uint, sequence int) error
+	UpdateInvalidJobDetail(id uint, errMessage string) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
 	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
@@ -193,6 +194,8 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
+		svc.UpdateInvalidJobDetail(jobDetail.ID, "can not connected to server")
+
 		return err
 	}
 
@@ -318,14 +321,24 @@ func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceSta
 func (svc *service) UpdateFailedJobDetail(id uint, sequence int) error {
 	updateJobDetail := map[string]interface{}{}
 
-	maximumAttempts := 3
-	if sequence != maximumAttempts {
-		updateJobDetail["sequence"] = sequence + 1
-		updateJobDetail["on_process"] = true
-		updateJobDetail["status"] = "error"
-	} else {
-		updateJobDetail["on_process"] = false
-	}
+	// maximumAttempts := 3
+	// if sequence != maximumAttempts {
+	// 	updateJobDetail["sequence"] = sequence + 1
+	// 	updateJobDetail["on_process"] = true
+	// 	updateJobDetail["status"] = "error"
+	// } else {
+	updateJobDetail["on_process"] = false
+	// }
+
+	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
+}
+
+func (svc *service) UpdateInvalidJobDetail(id uint, errMessage string) error {
+	updateJobDetail := map[string]interface{}{}
+
+	updateJobDetail["status"] = "error"
+	updateJobDetail["on_process"] = false
+	updateJobDetail["message"] = errMessage
 
 	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }

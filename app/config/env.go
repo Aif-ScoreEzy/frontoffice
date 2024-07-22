@@ -24,6 +24,7 @@ type Environment struct {
 	MailjetSecretKey               string
 	JwtSecretKey                   string
 	JwtExpiresMinutes              string
+	JwtRefreshTokenExpiresMinutes  string
 	JwtVerificationExpiresMinutes  string
 	JwtActivationExpiresMinutes    string
 	JwtResetPasswordExpiresMinutes string
@@ -35,6 +36,7 @@ type Environment struct {
 	GetLogByRangeDate              string
 	GetLogByMonth                  string
 	GetLogByName                   string
+	AllowingDomains                string
 }
 
 func GetEnvironment(key string) string {
@@ -71,6 +73,7 @@ func LoadEnvironment() *Environment {
 		MailjetSecretKey:               GetEnvironment("MAILJET_SECRET_KEY"),
 		JwtSecretKey:                   GetEnvironment("JWT_SECRET_KEY"),
 		JwtExpiresMinutes:              GetEnvironment("JWT_EXPIRES_MINUTES"),
+		JwtRefreshTokenExpiresMinutes:  GetEnvironment("JWT_REFRESH_EXPIRES_MINUTES"),
 		JwtVerificationExpiresMinutes:  GetEnvironment("JWT_VERIFICATION_EXPIRES_MINUTES"),
 		JwtActivationExpiresMinutes:    GetEnvironment("JWT_ACTIVATION_EXPIRES_MINUTES"),
 		JwtResetPasswordExpiresMinutes: GetEnvironment("JWT_RESET_PASSWORD_EXPIRES_MINUTES"),
@@ -82,5 +85,6 @@ func LoadEnvironment() *Environment {
 		GetLogByRangeDate:              GetEnvironment("GET_LOGS_BY_RANGE_DATE"),
 		GetLogByMonth:                  GetEnvironment("GET_LOGS_BY_MONTH"),
 		GetLogByName:                   GetEnvironment("GET_LOGS_BY_NAME"),
+		AllowingDomains:                GetEnvironment("ALLOWING_DOMAINS"),
 	}
 }
