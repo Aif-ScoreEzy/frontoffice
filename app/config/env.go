@@ -10,6 +10,7 @@ import (
 
 type Environment struct {
 	Env                            string
+	CloudProvider                  string
 	FrontendBaseUrl                string
 	Port                           string
 	DbUser                         string
@@ -58,6 +59,7 @@ func LoadEnvironment() *Environment {
 
 	return &Environment{
 		Env:                            GetEnvironment("APP_ENV"),
+		CloudProvider:                  GetEnvironment("CLOUD_PROVIDER"),
 		FrontendBaseUrl:                GetEnvironment("FRONTEND_BASE_URL"),
 		Port:                           GetEnvironment("APP_PORT"),
 		DbUser:                         GetEnvironment("DB_USER"),
