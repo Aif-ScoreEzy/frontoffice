@@ -44,7 +44,7 @@ type Controller interface {
 	RegisterMember(c *fiber.Ctx) error
 	VerifyUser(c *fiber.Ctx) error
 	// Login(c *fiber.Ctx) error
-	// SendEmailActivation(c *fiber.Ctx) error
+	SendEmailActivation(c *fiber.Ctx) error
 	// RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
@@ -75,7 +75,7 @@ func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateUserByIDSvc(req, newUser)
+		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, newUser)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -86,7 +86,7 @@ func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
 	}
 
 	dataResponse := RegisterAdminResponse{
-		ID:      newUser.ID,
+		Id:      newUser.Id,
 		Name:    newUser.Name,
 		Email:   newUser.Email,
 		Phone:   newUser.Phone,
@@ -106,7 +106,7 @@ func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
 
 func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*user.RegisterMemberRequest)
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	userExists, _ := ctrl.SvcUser.FindUserByEmailSvc(req.Email)
 	if userExists != nil {
@@ -114,7 +114,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	result, token, err := ctrl.Svc.RegisterMemberSvc(req, companyID)
+	result, token, err := ctrl.Svc.RegisterMemberSvc(req, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -127,7 +127,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateUserByIDSvc(req, result)
+		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, result)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -157,7 +157,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	userExists, err := ctrl.SvcUser.FindUserByIDSvc(activationToken.UserID)
+	userExists, err := ctrl.SvcUser.FindUserByIdSvc(activationToken.UserId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -172,7 +172,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateUserByIDSvc(req, userExists)
+		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, userExists)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -182,7 +182,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.VerifyUserTxSvc(userExists.ID, token, req)
+	_, err = ctrl.Svc.VerifyUserTxSvc(userExists.Id, token, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -238,10 +238,10 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 // 	})
 
 // 	data := UserLoginResponse{
-// 		ID:          user.ID,
+// 		Id:          user.Id,
 // 		Name:        user.Name,
 // 		Email:       user.Email,
-// 		CompanyID:   user.CompanyID,
+// 		CompanyId:   user.CompanyId,
 // 		CompanyName: user.Company.CompanyName,
 // 		TierLevel:   user.Role.TierLevel,
 // 		Image:       user.Image,
@@ -255,57 +255,51 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 // 	return c.Status(fiber.StatusOK).JSON(resp)
 // }
 
-// func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
-// 	email := c.Params("email")
-// 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
+	email := c.Params("email")
 
-// 	userExists, err := ctrl.SvcUser.FindUserByEmailSvc(email)
-// 	if err != nil {
-// 		statusCode, resp := helper.GetError(err.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
+	userExists, err := ctrl.SvcUser.FindUserByEmailAifCore(email)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
 
-// 	userExists, err = ctrl.SvcUser.FindUserByIDAndCompanyIDSvc(userExists.ID, companyID)
-// 	if err != nil {
-// 		statusCode, resp := helper.GetError(err.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
+	if userExists.Data.IsVerified {
+		statusCode, resp := helper.GetError(constant.AlreadyVerified)
+		return c.Status(statusCode).JSON(resp)
+	}
 
-// 	if userExists.IsVerified {
-// 		statusCode, resp := helper.GetError(constant.AlreadyVerified)
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
+	token, _, err := ctrl.SvcActivationToken.CreateActivationTokenSvc(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
 
-// 	token, _, err := ctrl.SvcActivationToken.CreateActivationTokenSvc(userExists.ID, userExists.CompanyID, userExists.Role.TierLevel)
-// 	if err != nil {
-// 		statusCode, resp := helper.GetError(err.Error())
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
+	err = mailjet.SendEmailActivation(email, token)
+	if err != nil {
 
-// 	err = mailjet.SendEmailActivation(email, token)
-// 	if err != nil {
-// 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
-// 		return c.Status(statusCode).JSON(resp)
-// 	} else {
-// 		pending := "pending"
-// 		req := &user.UpdateUserRequest{
-// 			Status: &pending,
-// 		}
+		statusCode, resp := helper.GetError(constant.SendEmailFailed)
+		return c.Status(statusCode).JSON(resp)
+	} else {
+		pending := "pending"
+		req := &user.UpdateUserRequest{
+			Status: &pending,
+		}
 
-// 		_, err = ctrl.SvcUser.UpdateUserByIDSvc(req, userExists)
-// 		if err != nil {
-// 			statusCode, resp := helper.GetError(err.Error())
-// 			return c.Status(statusCode).JSON(resp)
-// 		}
-// 	}
+		err = ctrl.SvcUser.UpdateUserByIdAifCore(req, userExists.Data.MemberId)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
 
-// 	resp := helper.ResponseSuccess(
-// 		fmt.Sprintf("we've sent an email to %s with a link to activate the account", email),
-// 		nil,
-// 	)
+	resp := helper.ResponseSuccess(
+		fmt.Sprintf("we've sent an email to %s with a link to activate the account", email),
+		nil,
+	)
 
-// 	return c.Status(fiber.StatusOK).JSON(resp)
-// }
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
 
 // func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 // 	req := c.Locals("request").(*RequestPasswordResetRequest)
@@ -342,7 +336,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 // }
 
 func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
@@ -352,7 +346,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = ctrl.Svc.PasswordResetSvc(userID, token, req)
+	err = ctrl.Svc.PasswordResetSvc(userId, token, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -368,10 +362,10 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 
 func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	userExists, err := ctrl.SvcUser.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	userExists, err := ctrl.SvcUser.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -392,13 +386,13 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 }
 
 // func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
-// 	userID := fmt.Sprintf("%v", c.Locals("userID"))
-// 	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+// 	userId := fmt.Sprintf("%v", c.Locals("userId"))
+// 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 // 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 
 // 	secret := ctrl.Cfg.Env.JwtSecretKey
 // 	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
-// 	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userID, companyID, uint(tierLevel))
+// 	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userId, companyId, uint(tierLevel))
 // 	if err != nil {
 // 		statusCode, resp := helper.GetError(err.Error())
 // 		return c.Status(statusCode).JSON(resp)
@@ -463,10 +457,10 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 
 	user := res.Data
 	data := UserLoginResponse{
-		ID:          user.MemberID,
+		Id:          user.MemberId,
 		Name:        user.Name,
 		Email:       user.Email,
-		CompanyID:   user.CompanyId,
+		CompanyId:   user.CompanyId,
 		CompanyName: user.MstCompany.CompanyName,
 		TierLevel:   user.RoleId,
 		Image:       user.Image,
