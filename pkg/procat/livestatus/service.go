@@ -273,6 +273,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error) {
 	response, err := svc.Repo.CallLiveStatus(liveStatusRequest, apiKey)
 	if err != nil {
+		log.Println("Error : ", err.Error())
 		return nil, err
 	}
 
