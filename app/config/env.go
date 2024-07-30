@@ -10,6 +10,7 @@ import (
 
 type Environment struct {
 	Env                            string
+	CloudProvider                  string
 	FrontendBaseUrl                string
 	Port                           string
 	DbUser                         string
@@ -31,6 +32,7 @@ type Environment struct {
 	ApiKeyLiveStatus               string
 	AifcoreHost                    string
 	GenretailV3                    string
+	AllowingDomains                string
 }
 
 func GetEnvironment(key string) string {
@@ -53,6 +55,7 @@ func LoadEnvironment() *Environment {
 
 	return &Environment{
 		Env:                            GetEnvironment("APP_ENV"),
+		CloudProvider:                  GetEnvironment("CLOUD_PROVIDER"),
 		FrontendBaseUrl:                GetEnvironment("FRONTEND_BASE_URL"),
 		Port:                           GetEnvironment("APP_PORT"),
 		DbUser:                         GetEnvironment("DB_USER"),
@@ -74,5 +77,6 @@ func LoadEnvironment() *Environment {
 		ApiKeyLiveStatus:               GetEnvironment("API_KEY_LIVE_STATUS"),
 		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
 		GenretailV3:                    GetEnvironment("GEN_RETAIL_V3"),
+		AllowingDomains:                GetEnvironment("ALLOWING_DOMAINS"),
 	}
 }

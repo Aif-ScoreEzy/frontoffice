@@ -44,6 +44,7 @@ type Controller interface {
 	RegisterMember(c *fiber.Ctx) error
 	VerifyUser(c *fiber.Ctx) error
 	// Login(c *fiber.Ctx) error
+	Logout(c *fiber.Ctx) error
 	SendEmailActivation(c *fiber.Ctx) error
 	// RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
@@ -254,6 +255,34 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 
 // 	return c.Status(fiber.StatusOK).JSON(resp)
 // }
+
+func (ctrl *controller) Logout(c *fiber.Ctx) error {
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",              // Empty value
+		Expires:  time.Unix(0, 0), // Expired time (epoch)
+		HTTPOnly: true,            // HTTPOnly for security
+		Secure:   true,
+		SameSite: "Lax", // Adjust as needed
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    "",              // Empty value
+		Expires:  time.Unix(0, 0), // Expired time (epoch)
+		HTTPOnly: true,            // HTTPOnly for security
+		Secure:   true,
+		SameSite: "Lax", // Adjust as needed
+	})
+
+	resp := helper.ResponseSuccess(
+		"succeed to logout",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
 
 func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")

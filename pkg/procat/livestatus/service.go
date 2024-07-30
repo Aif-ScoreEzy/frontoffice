@@ -321,14 +321,14 @@ func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceSta
 func (svc *service) UpdateFailedJobDetail(id uint, sequence int) error {
 	updateJobDetail := map[string]interface{}{}
 
-	maximumAttempts := 3
-	if sequence != maximumAttempts {
-		updateJobDetail["sequence"] = sequence + 1
-		updateJobDetail["on_process"] = true
-		updateJobDetail["status"] = "error"
-	} else {
-		updateJobDetail["on_process"] = false
-	}
+	// maximumAttempts := 3
+	// if sequence != maximumAttempts {
+	// 	updateJobDetail["sequence"] = sequence + 1
+	// 	updateJobDetail["on_process"] = true
+	// 	updateJobDetail["status"] = "error"
+	// } else {
+	updateJobDetail["on_process"] = false
+	// }
 
 	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }
