@@ -1,25 +1,33 @@
 package activationtoken
 
 import (
+	"bytes"
+	"encoding/json"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
+
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{DB: db, Cfg: cfg}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
-	FindOneActivationTokenBytoken(token string) (*ActivationToken, error)
-	FindOneActivationTokenByUserID(userID string) (*ActivationToken, error)
-	CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error)
+	FindOneActivationTokenBytoken(token string) (*MstActivationToken, error)
+	FindOneActivationTokenByUserId(userId string) (*MstActivationToken, error)
+	CreateActivationToken(activationToken *MstActivationToken) (*MstActivationToken, error)
+	CreateActivationTokenAifCore(req *CreateActivationTokenRequest, userId string) (*http.Response, error)
 }
 
-func (repo *repository) FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
+func (repo *repository) FindOneActivationTokenBytoken(token string) (*MstActivationToken, error) {
+	var activationToken *MstActivationToken
 
 	err := repo.DB.First(&activationToken, "token = ?", token).Error
 	if err != nil {
@@ -29,10 +37,10 @@ func (repo *repository) FindOneActivationTokenBytoken(token string) (*Activation
 	return activationToken, nil
 }
 
-func (repo *repository) FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
+func (repo *repository) FindOneActivationTokenByUserId(userId string) (*MstActivationToken, error) {
+	var activationToken *MstActivationToken
 
-	err := repo.DB.First(&activationToken, "user_id = ?", userID).Error
+	err := repo.DB.First(&activationToken, "user_id = ?", userId).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +48,22 @@ func (repo *repository) FindOneActivationTokenByUserID(userID string) (*Activati
 	return activationToken, nil
 }
 
-func (repo *repository) CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
+func (repo *repository) CreateActivationToken(activationToken *MstActivationToken) (*MstActivationToken, error) {
 	err := repo.DB.Create(&activationToken).Error
 	if err != nil {
 		return nil, err
 	}
 
 	return activationToken, nil
+}
+
+func (repo *repository) CreateActivationTokenAifCore(req *CreateActivationTokenRequest, userId string) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/activationtoken/" + userId
+
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+	return client.Do(request)
 }

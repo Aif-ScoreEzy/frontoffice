@@ -1,15 +1,15 @@
 package activationtoken
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
+	"strconv"
 
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
-	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 func NewService(repo Repository, cfg *config.Config) Service {
@@ -22,60 +22,67 @@ type service struct {
 }
 
 type Service interface {
-	CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error)
-	ValidateActivationToken(authHeader string) (string, string, error)
-	FindActivationTokenByTokenSvc(token string) (*ActivationToken, error)
-	FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error)
+	CreateActivationTokenSvc(userId, companyId uint, tierLevel uint) (string, *CreateActivationTokenResponse, error)
+	ValidateActivationToken(authHeader string) (string, uint, error)
+	FindActivationTokenByTokenSvc(token string) (*MstActivationToken, error)
+	FindActivationTokenByUserIdSvc(userId string) (*MstActivationToken, error)
 }
 
-func (svc *service) CreateActivationTokenSvc(userID, companyID string, tierLevel uint) (string, *ActivationToken, error) {
+func (svc *service) CreateActivationTokenSvc(userId, companyId, roleId uint) (string, *CreateActivationTokenResponse, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userID, companyID, tierLevel)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId)
 	if err != nil {
 		return "", nil, err
 	}
 
-	tokenID := uuid.NewString()
-	activationToken := &ActivationToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: userID,
+	req := &CreateActivationTokenRequest{
+		Token: token,
 	}
 
-	activationToken, err = svc.Repo.CreateActivationToken(activationToken)
+	userIdStr := helper.ConvertUintToString(userId)
+	res, err := svc.Repo.CreateActivationTokenAifCore(req, userIdStr)
 	if err != nil {
 		return "", nil, err
 	}
 
-	return token, activationToken, nil
+	var baseResponseSuccess *CreateActivationTokenResponse
+	if res != nil {
+		dataBytes, _ := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		json.Unmarshal(dataBytes, &baseResponseSuccess)
+		baseResponseSuccess.StatusCode = res.StatusCode
+	}
+
+	return token, baseResponseSuccess, nil
 }
 
-func (svc *service) ValidateActivationToken(authHeader string) (string, string, error) {
+func (svc *service) ValidateActivationToken(authHeader string) (string, uint, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 
 	bearerToken := strings.Split(authHeader, " ")
 	if len(bearerToken) != 2 {
-		return "", "", errors.New(constant.InvalidActivationLink)
+		return "", 0, errors.New(constant.InvalidActivationLink)
 	}
 
 	token := bearerToken[1]
 
 	claims, err := helper.ExtractClaimsFromJWT(token, secret)
 	if err != nil {
-		return "", "", errors.New(constant.InvalidActivationLink)
+		return "", 0, errors.New(constant.InvalidActivationLink)
 	}
 
-	userID, err := helper.ExtractUserIDFromClaims(claims)
+	userId, err := helper.ExtractUserIdFromClaims(claims)
 	if err != nil {
-		return "", "", errors.New(constant.InvalidActivationLink)
+		return "", 0, errors.New(constant.InvalidActivationLink)
 	}
 
-	return token, userID, nil
+	return token, userId, nil
 }
 
-func (svc *service) FindActivationTokenByTokenSvc(token string) (*ActivationToken, error) {
+func (svc *service) FindActivationTokenByTokenSvc(token string) (*MstActivationToken, error) {
 	result, err := svc.Repo.FindOneActivationTokenBytoken(token)
 	if err != nil {
 		return nil, err
@@ -84,8 +91,8 @@ func (svc *service) FindActivationTokenByTokenSvc(token string) (*ActivationToke
 	return result, nil
 }
 
-func (svc *service) FindActivationTokenByUserIDSvc(userID string) (*ActivationToken, error) {
-	result, err := svc.Repo.FindOneActivationTokenByUserID(userID)
+func (svc *service) FindActivationTokenByUserIdSvc(userId string) (*MstActivationToken, error) {
+	result, err := svc.Repo.FindOneActivationTokenByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
