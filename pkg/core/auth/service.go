@@ -42,9 +42,9 @@ type service struct {
 
 type Service interface {
 	RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
-	RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error)
-	VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error)
-	PasswordResetSvc(userID, token string, req *PasswordResetRequest) error
+	RegisterMemberSvc(req *user.RegisterMemberRequest, companyId string) (*user.User, string, error)
+	VerifyUserTxSvc(userId, token string, req *PasswordResetRequest) (*user.User, error)
+	PasswordResetSvc(userId, token string, req *PasswordResetRequest) error
 	// LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error)
 	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
 	LoginAifCoreService(req *UserLoginRequest, user *user.MstMember) (string, string, error)
@@ -61,8 +61,8 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 	}
 
 	var tierLevel uint
-	if req.RoleID != "" {
-		result, err := svc.RepoRole.FindOneByID(req.RoleID)
+	if req.RoleId != "" {
+		result, err := svc.RepoRole.FindOneById(req.RoleId)
 		if result == nil {
 			return nil, "", errors.New(constant.DataNotFound)
 		} else if err != nil {
@@ -72,25 +72,25 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 		}
 	}
 
-	companyID := uuid.NewString()
+	companyId := uuid.NewString()
 	dataCompany := &company.Company{
-		ID:              companyID,
+		Id:              companyId,
 		CompanyName:     req.CompanyName,
 		CompanyAddress:  req.CompanyAddress,
 		CompanyPhone:    req.CompanyPhone,
 		AgreementNumber: req.AgreementNumber,
 		PaymentScheme:   req.PaymentScheme,
-		IndustryID:      req.IndustryID,
+		IndustryId:      req.IndustryId,
 	}
 
-	userID := uuid.NewString()
+	userId := uuid.NewString()
 	dataUser := &user.User{
-		ID:     userID,
+		Id:     userId,
 		Name:   req.Name,
 		Email:  req.Email,
 		Phone:  req.Phone,
 		Key:    helper.GenerateAPIKey(),
-		RoleID: req.RoleID,
+		RoleId: req.RoleId,
 	}
 
 	dataUser.Password = user.SetPassword(req.Password)
@@ -100,11 +100,11 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 		return nil, "", err
 	}
 
-	tokenID := uuid.NewString()
-	dataActivationToken := &activationtoken.ActivationToken{
-		ID:     tokenID,
+	tokenId := uuid.NewString()
+	dataActivationToken := &activationtoken.MstActivationToken{
+		Id:     tokenId,
 		Token:  token,
-		UserID: userID,
+		UserId: userId,
 	}
 
 	user, err := svc.Repo.CreateAdmin(dataCompany, dataUser, dataActivationToken)
@@ -115,12 +115,12 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 	return user, token, nil
 }
 
-func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID string) (*user.User, string, error) {
-	userID := uuid.NewString()
+func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyId string) (*user.User, string, error) {
+	userId := uuid.NewString()
 
 	var tierLevel uint
-	if req.RoleID != "" {
-		result, err := svc.RepoRole.FindOneByID(req.RoleID)
+	if req.RoleId != "" {
+		result, err := svc.RepoRole.FindOneById(req.RoleId)
 		if result == nil {
 			return nil, "", errors.New(constant.DataNotFound)
 		} else if err != nil {
@@ -131,13 +131,13 @@ func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID
 	}
 
 	dataUser := &user.User{
-		ID:        userID,
+		Id:        userId,
 		Name:      req.Name,
 		Email:     req.Email,
 		Key:       helper.GenerateAPIKey(),
 		Image:     "default-profile-image.jpg",
-		RoleID:    req.RoleID,
-		CompanyID: companyID,
+		RoleId:    req.RoleId,
+		CompanyId: companyId,
 	}
 
 	secret := svc.Cfg.Env.JwtSecretKey
@@ -148,11 +148,11 @@ func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID
 		return nil, "", err
 	}
 
-	tokenID := uuid.NewString()
-	dataToken := &activationtoken.ActivationToken{
-		ID:     tokenID,
+	tokenId := uuid.NewString()
+	dataToken := &activationtoken.MstActivationToken{
+		Id:     tokenId,
 		Token:  token,
-		UserID: userID,
+		UserId: userId,
 	}
 
 	user, err := svc.Repo.CreateMember(dataUser, dataToken)
@@ -163,7 +163,7 @@ func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyID
 	return user, token, nil
 }
 
-func (svc *service) VerifyUserTxSvc(userID, token string, req *PasswordResetRequest) (*user.User, error) {
+func (svc *service) VerifyUserTxSvc(userId, token string, req *PasswordResetRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return nil, errors.New(constant.InvalidPassword)
@@ -181,7 +181,7 @@ func (svc *service) VerifyUserTxSvc(userID, token string, req *PasswordResetRequ
 	updateUser["is_verified"] = true
 	updateUser["updated_at"] = time.Now()
 
-	user, err := svc.Repo.VerifyUserTx(updateUser, userID, token)
+	user, err := svc.Repo.VerifyUserTx(updateUser, userId, token)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (svc *service) VerifyUserTxSvc(userID, token string, req *PasswordResetRequ
 	return user, nil
 }
 
-func (svc *service) PasswordResetSvc(userID, token string, req *PasswordResetRequest) error {
+func (svc *service) PasswordResetSvc(userId, token string, req *PasswordResetRequest) error {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return errors.New(constant.InvalidPassword)
@@ -199,7 +199,7 @@ func (svc *service) PasswordResetSvc(userID, token string, req *PasswordResetReq
 		return errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	err := svc.Repo.ResetPassword(userID, token, req)
+	err := svc.Repo.ResetPassword(userId, token, req)
 	if err != nil {
 		return err
 	}
@@ -219,13 +219,13 @@ func (svc *service) PasswordResetSvc(userID, token string, req *PasswordResetReq
 // 		return "", "", errors.New(constant.InvalidEmailOrPassword)
 // 	}
 
-// 	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
+// 	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.Id, user.CompanyId, user.Role.TierLevel)
 // 	if err != nil {
 // 		return "", "", err
 // 	}
 
 // 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-// 	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.ID, user.CompanyID, user.Role.TierLevel)
+// 	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.Id, user.CompanyId, user.Role.TierLevel)
 // 	if err != nil {
 // 		return "", "", err
 // 	}
@@ -253,7 +253,7 @@ func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswor
 	updateUser["password"] = user.SetPassword(req.NewPassword)
 	updateUser["updated_at"] = time.Now()
 
-	data, err := svc.RepoUser.UpdateOneByID(updateUser, currentUser)
+	data, err := svc.RepoUser.UpdateOneById(updateUser, currentUser)
 	if err != nil {
 		return nil, err
 	}
@@ -278,13 +278,13 @@ func (svc *service) LoginAifCoreService(req *UserLoginRequest, user *user.MstMem
 		return "", "", errors.New(constant.InvalidEmailOrPassword)
 	}
 
-	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.MemberID, user.CompanyId, user.Role.RoleID)
+	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.MemberId, user.CompanyId, user.Role.RoleId)
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.MemberID, user.CompanyId, user.Role.RoleID)
+	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.MemberId, user.CompanyId, user.Role.RoleId)
 	if err != nil {
 		return "", "", err
 	}

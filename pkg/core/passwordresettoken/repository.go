@@ -15,7 +15,7 @@ type repository struct {
 type Repository interface {
 	CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error)
 	FindOnePasswordResetTokenByToken(token string) (*PasswordResetToken, error)
-	FindOnePasswordResetTokenByUserID(userID string) (*PasswordResetToken, error)
+	FindOnePasswordResetTokenByUserId(userId string) (*PasswordResetToken, error)
 }
 
 func (repo *repository) CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error) {
@@ -37,10 +37,10 @@ func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*Passwor
 	return result, nil
 }
 
-func (repo *repository) FindOnePasswordResetTokenByUserID(userID string) (*PasswordResetToken, error) {
+func (repo *repository) FindOnePasswordResetTokenByUserId(userId string) (*PasswordResetToken, error) {
 	var passwordResetToken *PasswordResetToken
 
-	err := repo.DB.First(&passwordResetToken, "user_id = ?", userID).Error
+	err := repo.DB.First(&passwordResetToken, "user_id = ?", userId).Error
 	if err != nil {
 		return nil, err
 	}

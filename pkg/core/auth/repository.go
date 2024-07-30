@@ -24,21 +24,21 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error)
-	CreateMember(user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error)
+	CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
+	CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
 	ResetPassword(id, token string, req *PasswordResetRequest) error
-	VerifyUserTx(req map[string]interface{}, userID, token string) (*user.User, error)
+	VerifyUserTx(req map[string]interface{}, userId, token string) (*user.User, error)
 	LoginAifCoreService(req *UserLoginRequest) (*http.Response, error)
 	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error)
 }
 
-func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error) {
+func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
 		}
 
-		user.CompanyID = company.ID
+		user.CompanyId = company.Id
 		if err := tx.Create(&user).Error; err != nil {
 			return err
 		}
@@ -59,7 +59,7 @@ func (repo *repository) CreateAdmin(company *company.Company, user *user.User, a
 	return user, errTx
 }
 
-func (repo *repository) CreateMember(user *user.User, activationToken *activationtoken.ActivationToken) (*user.User, error) {
+func (repo *repository) CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
 			return err
@@ -100,15 +100,15 @@ func (repo *repository) ResetPassword(id, token string, req *PasswordResetReques
 	return nil
 }
 
-func (repo *repository) VerifyUserTx(req map[string]interface{}, userID, token string) (*user.User, error) {
+func (repo *repository) VerifyUserTx(req map[string]interface{}, userId, token string) (*user.User, error) {
 	var user *user.User
 
 	errTX := repo.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&activationtoken.ActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
+		if err := tx.Model(&activationtoken.MstActivationToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Model(&user).Where("id = ?", userID).Updates(req).Error; err != nil {
+		if err := tx.Model(&user).Where("id = ?", userId).Updates(req).Error; err != nil {
 			return err
 		}
 

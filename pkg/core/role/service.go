@@ -15,16 +15,16 @@ type service struct {
 type Service interface {
 	CreateRoleSvc(req *CreateRoleRequest) (Role, error)
 	GetAllRolesSvc() ([]Role, error)
-	FindRoleByIDSvc(id string) (*Role, error)
+	FindRoleByIdSvc(id string) (*Role, error)
 	GetRoleByNameSvc(name string) (*Role, error)
-	UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error)
-	DeleteRoleByIDSvc(id string) error
+	UpdateRoleByIdSvc(req *UpdateRoleRequest, id string) (*Role, error)
+	DeleteRoleByIdSvc(id string) error
 }
 
 func (svc *service) CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
-	roleID := uuid.NewString()
+	roleId := uuid.NewString()
 	dataReq := Role{
-		ID:          roleID,
+		Id:          roleId,
 		Name:        req.Name,
 		Permissions: req.Permissions,
 		TierLevel:   req.TierLevel,
@@ -47,8 +47,8 @@ func (svc *service) GetAllRolesSvc() ([]Role, error) {
 	return roles, nil
 }
 
-func (svc *service) FindRoleByIDSvc(id string) (*Role, error) {
-	result, err := svc.Repo.FindOneByID(id)
+func (svc *service) FindRoleByIdSvc(id string) (*Role, error) {
+	result, err := svc.Repo.FindOneById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (svc *service) GetRoleByNameSvc(name string) (*Role, error) {
 	return result, nil
 }
 
-func (svc *service) UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error) {
+func (svc *service) UpdateRoleByIdSvc(req *UpdateRoleRequest, id string) (*Role, error) {
 	dataReq := &Role{}
 
 	if req.Name != "" {
@@ -76,7 +76,7 @@ func (svc *service) UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role,
 		dataReq.Permissions = req.Permissions
 	}
 
-	role, err := svc.Repo.UpdateByID(dataReq, id)
+	role, err := svc.Repo.UpdateById(dataReq, id)
 	if err != nil {
 		return role, err
 	}
@@ -84,7 +84,7 @@ func (svc *service) UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role,
 	return role, nil
 }
 
-func (svc *service) DeleteRoleByIDSvc(id string) error {
+func (svc *service) DeleteRoleByIdSvc(id string) error {
 	err := svc.Repo.Delete(id)
 	if err != nil {
 		return err

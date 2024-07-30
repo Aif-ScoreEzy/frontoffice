@@ -12,7 +12,7 @@ import (
 
 func FileUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userID := c.Locals("userID")
+		userId := c.Locals("userId")
 
 		file, err := c.FormFile("image")
 		if err != nil {
@@ -40,7 +40,7 @@ func FileUpload() fiber.Handler {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		filename := fmt.Sprintf("%s%s", userID, ext)
+		filename := fmt.Sprintf("%s%s", userId, ext)
 		filePath := fmt.Sprintf("./public/%s", filename)
 
 		if _, err := os.Stat(filePath); err == nil {
@@ -63,8 +63,8 @@ func FileUpload() fiber.Handler {
 
 func DocUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userID := c.Locals("userID")
-		fmt.Println("userID: ", userID)
+		userId := c.Locals("userId")
+		fmt.Println("userId: ", userId)
 
 		// get the file upload and type information
 		file, err := c.FormFile("file")

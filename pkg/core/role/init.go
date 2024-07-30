@@ -17,7 +17,7 @@ func SetupInit(roleAPI fiber.Router, db *gorm.DB) {
 
 	roleAPI.Post("/", middleware.Auth(), middleware.IsRequestValid(CreateRoleRequest{}), controller.CreateRole)
 	roleAPI.Get("/", middleware.Auth(), controller.GetAllRoles)
-	roleAPI.Get("/:id", middleware.Auth(), controller.GetRoleByID)
+	roleAPI.Get("/:id", middleware.Auth(), controller.GetRoleById)
 	roleAPI.Put("/:id", middleware.Auth(), middleware.IsRequestValid(UpdateRoleRequest{}), controller.UpdateRole)
 	roleAPI.Delete("/:id", middleware.Auth(), controller.DeleteRole)
 }

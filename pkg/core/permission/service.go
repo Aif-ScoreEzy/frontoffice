@@ -16,14 +16,14 @@ type Service interface {
 	CreatePermissionSvc(permissionReq PermissionRequest) (Permission, error)
 	IsPermissionExistSvc(id string) (Permission, error)
 	GetPermissionByNameSvc(name string) (Permission, error)
-	UpdatePermissionByIDSvc(req PermissionRequest, id string) (Permission, error)
-	DeletePermissionByIDSvc(id string) error
+	UpdatePermissionByIdSvc(req PermissionRequest, id string) (Permission, error)
+	DeletePermissionByIdSvc(id string) error
 }
 
 func (svc *service) CreatePermissionSvc(permissionReq PermissionRequest) (Permission, error) {
-	permissionID := uuid.NewString()
+	permissionId := uuid.NewString()
 	dataPermission := Permission{
-		ID:   permissionID,
+		Id:   permissionId,
 		Name: permissionReq.Name,
 	}
 
@@ -37,10 +37,10 @@ func (svc *service) CreatePermissionSvc(permissionReq PermissionRequest) (Permis
 
 func (svc *service) IsPermissionExistSvc(id string) (Permission, error) {
 	permission := Permission{
-		ID: id,
+		Id: id,
 	}
 
-	result, err := svc.Repo.FindOneByID(permission)
+	result, err := svc.Repo.FindOneById(permission)
 
 	return result, err
 }
@@ -54,8 +54,8 @@ func (svc *service) GetPermissionByNameSvc(name string) (Permission, error) {
 	return result, nil
 }
 
-func (svc *service) UpdatePermissionByIDSvc(req PermissionRequest, id string) (Permission, error) {
-	result, err := svc.Repo.UpdateByID(req, id)
+func (svc *service) UpdatePermissionByIdSvc(req PermissionRequest, id string) (Permission, error) {
+	result, err := svc.Repo.UpdateById(req, id)
 	if err != nil {
 		return result, err
 	}
@@ -63,7 +63,7 @@ func (svc *service) UpdatePermissionByIDSvc(req PermissionRequest, id string) (P
 	return result, nil
 }
 
-func (svc *service) DeletePermissionByIDSvc(id string) error {
+func (svc *service) DeletePermissionByIdSvc(id string) error {
 	err := svc.Repo.Delete(id)
 	if err != nil {
 		return err

@@ -8,7 +8,7 @@ import (
 )
 
 type Role struct {
-	ID          string                  `gorm:"primarykey" json:"id"`
+	Id          string                  `gorm:"primarykey" json:"id"`
 	Name        string                  `gorm:"not null" json:"name"`
 	Permissions []permission.Permission `gorm:"many2many:role_permissions" json:"permissions"`
 	TierLevel   uint                    `gorm:"not null" json:"tier_level"`
@@ -18,13 +18,13 @@ type Role struct {
 }
 
 type MstRole struct {
-	RoleID      uint            `json:"role_id" gorm:"primaryKey;autoIncrement"`
+	RoleId      uint            `json:"role_id" gorm:"primaryKey;autoIncrement"`
 	Name        string          `json:"name"`
 	Permissions []MstPermission `json:"permissions" gorm:"many2many:ref_role_permissions"`
 }
 
 type MstPermission struct {
-	PermissionID uint   `json:"permission_id" gorm:"primaryKey;autoIncrement"`
+	PermissionId uint   `json:"permission_id" gorm:"primaryKey;autoIncrement"`
 	Slug         string `json:"slug"`
 	Name         string `json:"name"`
 }
@@ -36,7 +36,7 @@ type CreateRoleRequest struct {
 }
 
 type CreateRoleResponse struct {
-	ID          string                  `json:"-"`
+	Id          string                  `json:"-"`
 	Name        string                  `json:"name"`
 	Permissions []permission.Permission `json:"permissions"`
 	TierLevel   uint                    `json:"tier_level"`
@@ -46,7 +46,7 @@ type CreateRoleResponse struct {
 }
 
 type UpdateRoleRequest struct {
-	ID          string                  `json:"-"`
+	Id          string                  `json:"-"`
 	Name        string                  `json:"name"`
 	Permissions []permission.Permission `json:"permissions"`
 	TierLevel   uint                    `json:"tier_level" validate:"max=3~only available with tier level 1, 2"`

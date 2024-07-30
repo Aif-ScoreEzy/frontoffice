@@ -19,7 +19,7 @@ type controller struct {
 type Controller interface {
 	CreateRole(c *fiber.Ctx) error
 	GetAllRoles(c *fiber.Ctx) error
-	GetRoleByID(c *fiber.Ctx) error
+	GetRoleById(c *fiber.Ctx) error
 	UpdateRole(c *fiber.Ctx) error
 	DeleteRole(c *fiber.Ctx) error
 }
@@ -35,7 +35,7 @@ func (ctrl *controller) CreateRole(c *fiber.Ctx) error {
 	}
 
 	for _, permissionData := range request.Permissions {
-		_, err := ctrl.SvcPermission.IsPermissionExistSvc(permissionData.ID)
+		_, err := ctrl.SvcPermission.IsPermissionExistSvc(permissionData.Id)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
@@ -78,10 +78,10 @@ func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) GetRoleByID(c *fiber.Ctx) error {
+func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	role, err := ctrl.Svc.FindRoleByIDSvc(id)
+	role, err := ctrl.Svc.FindRoleByIdSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -89,7 +89,7 @@ func (ctrl *controller) GetRoleByID(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"Succeed to get a role by ID",
+		"Succeed to get a role by Id",
 		role,
 	)
 
@@ -100,7 +100,7 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleByIDSvc(id)
+	_, err := ctrl.Svc.FindRoleByIdSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -116,7 +116,7 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 		}
 	}
 
-	role, err := ctrl.Svc.UpdateRoleByIDSvc(req, id)
+	role, err := ctrl.Svc.UpdateRoleByIdSvc(req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -134,14 +134,14 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 func (ctrl *controller) DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleByIDSvc(id)
+	_, err := ctrl.Svc.FindRoleByIdSvc(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusNotFound).JSON(resp)
 	}
 
-	if err := ctrl.Svc.DeleteRoleByIDSvc(id); err != nil {
+	if err := ctrl.Svc.DeleteRoleByIdSvc(id); err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
 		return c.Status(fiber.StatusInternalServerError).JSON(resp)

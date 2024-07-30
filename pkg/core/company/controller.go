@@ -17,15 +17,15 @@ type controller struct {
 }
 
 type Controller interface {
-	UpdateCompanyByID(c *fiber.Ctx) error
+	UpdateCompanyById(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
+func (ctrl *controller) UpdateCompanyById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateCompanyRequest)
 	id := c.Params("id")
 
-	if req.IndustryID != "" {
-		_, err := ctrl.SvcIndustry.IsIndustryIDExistSvc(req.IndustryID)
+	if req.IndustryId != "" {
+		_, err := ctrl.SvcIndustry.IsIndustryIdExistSvc(req.IndustryId)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
@@ -33,7 +33,7 @@ func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
 		}
 	}
 
-	company, err := ctrl.Svc.UpdateCompanyByIDSvc(*req, id)
+	company, err := ctrl.Svc.UpdateCompanyByIdSvc(*req, id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -41,14 +41,14 @@ func (ctrl *controller) UpdateCompanyByID(c *fiber.Ctx) error {
 	}
 
 	dataResponse := UpdateCompanyResponse{
-		ID:              company.ID,
+		Id:              company.Id,
 		CompanyName:     company.CompanyName,
 		CompanyAddress:  company.CompanyAddress,
 		CompanyPhone:    company.CompanyPhone,
 		AgreementNumber: company.AgreementNumber,
 		PaymentScheme:   company.PaymentScheme,
 		PostpaidActive:  company.PostpaidActive,
-		IndustryID:      company.IndustryID,
+		IndustryId:      company.IndustryId,
 	}
 
 	resp := helper.ResponseSuccess(

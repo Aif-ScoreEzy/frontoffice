@@ -32,8 +32,8 @@ type Controller interface {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -60,13 +60,13 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		liveStatusRequests = append(liveStatusRequests, liveStatusRequest)
 	}
 
-	jobID, err := ctrl.Svc.CreateJob(liveStatusRequests, userID, companyID, totalData)
+	jobId, err := ctrl.Svc.CreateJob(liveStatusRequests, userId, companyId, totalData)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobDetails, err := ctrl.Svc.GetJobDetailsByJobID(jobID)
+	jobDetails, err := ctrl.Svc.GetJobDetailsByJobId(jobId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -75,7 +75,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	var successRequestTotal int
 	for _, jobDetail := range jobDetails {
 		if errValid := validator.ValidateStruct(jobDetail); errValid != nil {
-			err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID, errValid.Error())
+			err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.Id, errValid.Error())
 			if err != nil {
 				statusCode, resp := helper.GetError(err.Error())
 				return c.Status(statusCode).JSON(resp)
@@ -89,7 +89,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		}
 
 		// update count success pada tabel job
-		successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+		successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobId, false)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -98,7 +98,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		updateReq := UpdateJobRequest{
 			Total: &successRequestTotal,
 		}
-		err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
+		err = ctrl.Svc.UpdateJob(jobDetail.JobId, &updateReq)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -106,7 +106,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	}
 
 	// jika tidak ada job details dengan status 'error', update status pada job menjadi 'done'
-	failedJobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
+	failedJobDetails, err := ctrl.Svc.GetFailedJobDetails(jobId)
 	if err != nil {
 		log.Println("Error GetFailedJobDetails : ", err.Error())
 	}
@@ -120,7 +120,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 			EndAt:  &now,
 		}
 
-		err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+		err := ctrl.Svc.UpdateJob(jobId, &updateReq)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -128,7 +128,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	}
 
 	// todo: jika semua request sukses, hapus job pada temp tabel
-	// err = ctrl.Svc.DeleteJob(jobID)
+	// err = ctrl.Svc.DeleteJob(jobId)
 	// if err != nil {
 	// 	statusCode, resp := helper.GetError(err.Error())
 	// 	return c.Status(statusCode).JSON(resp)
@@ -150,19 +150,19 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
 
-	jobs, err := ctrl.Svc.GetJobs(page, size, userID, companyID, startDate, endDate, uint(tierLevel))
+	jobs, err := ctrl.Svc.GetJobs(page, size, userId, companyId, startDate, endDate, uint(tierLevel))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetJobsTotal(userID, companyID, startDate, endDate, uint(tierLevel))
+	totalData, _ := ctrl.Svc.GetJobsTotal(userId, companyId, startDate, endDate, uint(tierLevel))
 
 	data := GetJobsResponse{
 		TotalData: totalData,
@@ -180,18 +180,18 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 
-	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(userID, companyID, startDate, endDate, uint(tierLevel))
-	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "subscriber_status", "ACTIVE", uint(tierLevel))
-	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "device_status", "REACHABLE", uint(tierLevel))
-	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "data", "MOBILE", uint(tierLevel))
-	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, "data", "FIXED_LINE", uint(tierLevel))
-	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "success", uint(tierLevel))
-	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "fail", uint(tierLevel))
-	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, "error", uint(tierLevel))
+	totalData, _ := ctrl.Svc.GetJobsTotalByRangeDate(userId, companyId, startDate, endDate, uint(tierLevel))
+	totalSubscriberActive, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, "subscriber_status", "ACTIVE", uint(tierLevel))
+	totalDeviceReachable, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, "device_status", "REACHABLE", uint(tierLevel))
+	totalMobilePhone, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, "data", "MOBILE", uint(tierLevel))
+	totalFixedLine, _ := ctrl.Svc.GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, "data", "FIXED_LINE", uint(tierLevel))
+	totalDataPercentageSuccess, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userId, companyId, startDate, endDate, "success", uint(tierLevel))
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userId, companyId, startDate, endDate, "fail", uint(tierLevel))
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsTotalPercentageByRangeDate(userId, companyId, startDate, endDate, "error", uint(tierLevel))
 
 	data := JobSummaryResponse{
 		TotalData:        totalData,
@@ -215,11 +215,11 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 
-	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(userID, companyID, startDate, endDate, uint(tierLevel))
+	jobDetails, err := ctrl.Svc.GetJobDetailsByRangeDate(userId, companyId, startDate, endDate, uint(tierLevel))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -265,30 +265,30 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
 	keyword := c.Query("keyword", "")
-	jobID := c.Params("id")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	jobId := c.Params("id")
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
-	jobIDUint, _ := strconv.ParseUint(jobID, 10, 32)
+	jobIdUint, _ := strconv.ParseUint(jobId, 10, 32)
 
-	_, err := ctrl.Svc.GetJobByIDAndUserID(uint(jobIDUint), uint(tierLevel), userID, companyID)
+	_, err := ctrl.Svc.GetJobByIdAndUserId(uint(jobIdUint), uint(tierLevel), userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobs, err := ctrl.Svc.GetJobDetailsWithPagination(page, size, keyword, uint(jobIDUint))
+	jobs, err := ctrl.Svc.GetJobDetailsWithPagination(page, size, keyword, uint(jobIdUint))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetJobDetailsWithPaginationTotal(keyword, uint(jobIDUint))
-	subscriberStatuscon, _ := ctrl.Svc.GetJobDetailsPercentage("subscriber_status", "ACTIVE", uint(jobIDUint))
-	deviceStatusReach, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "REACHABLE", uint(jobIDUint))
-	totalDataPercentage, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "success")
-	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "fail")
-	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "error")
+	totalData, _ := ctrl.Svc.GetJobDetailsWithPaginationTotal(keyword, uint(jobIdUint))
+	subscriberStatuscon, _ := ctrl.Svc.GetJobDetailsPercentage("subscriber_status", "ACTIVE", uint(jobIdUint))
+	deviceStatusReach, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "REACHABLE", uint(jobIdUint))
+	totalDataPercentage, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIdUint), "success")
+	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIdUint), "fail")
+	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIdUint), "error")
 
 	dataResponse := JobDetailResponse{
 		TotalData:        totalData,
@@ -309,19 +309,19 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ReprocessFailedJobDetails() {
-	jobIDs, err := ctrl.Svc.GetJobWithIncompleteStatus()
+	jobIds, err := ctrl.Svc.GetJobWithIncompleteStatus()
 	if err != nil {
 		log.Println("Error GetJobWithIncompleStatus : ", err.Error())
 		return
 	}
 
-	if len(jobIDs) == 0 {
+	if len(jobIds) == 0 {
 		log.Println("No incomplete job found")
 		return
 	}
 
-	for _, jobID := range jobIDs {
-		jobDetails, err := ctrl.Svc.GetFailedJobDetails(jobID)
+	for _, jobId := range jobIds {
+		jobDetails, err := ctrl.Svc.GetFailedJobDetails(jobId)
 		if err != nil {
 			log.Println("Error GetFailedJobDetails : ", err.Error())
 		}
@@ -337,7 +337,7 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 			}
 
 			// update count success pada tabel job
-			successRequestTotal, err := ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+			successRequestTotal, err := ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobId, false)
 			if err != nil {
 				log.Println("Error CountOnProcessJobDetails : ", err.Error())
 			}
@@ -345,19 +345,19 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 			updateReq := UpdateJobRequest{
 				Total: &successRequestTotal,
 			}
-			err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
+			err = ctrl.Svc.UpdateJob(jobDetail.JobId, &updateReq)
 			if err != nil {
 				log.Println("Error UpdateJob : ", err.Error())
 			}
 		}
 
 		// jika tidak ada lagi job detail yang diproses dalam sebuah job, update status pada job menjadi 'done'
-		jobDetailIDs, err := ctrl.Svc.GetOnProcessJobDetails(jobID, true)
+		jobDetailIds, err := ctrl.Svc.GetOnProcessJobDetails(jobId, true)
 		if err != nil {
 			log.Println("Error GetOnProcessJobDetails : ", err.Error())
 		}
 
-		if len(jobDetailIDs) == 0 {
+		if len(jobDetailIds) == 0 {
 			doneStatus := "done"
 			now := time.Now()
 
@@ -366,7 +366,7 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 				EndAt:  &now,
 			}
 
-			err := ctrl.Svc.UpdateJob(jobID, &updateReq)
+			err := ctrl.Svc.UpdateJob(jobId, &updateReq)
 			if err != nil {
 				log.Println("Error UpdateJob : ", err.Error())
 			}
@@ -374,28 +374,28 @@ func (ctrl *controller) ReprocessFailedJobDetails() {
 	}
 
 	// todo: jika semua request sukses, hapus job pada temp tabel
-	// err = ctrl.Svc.DeleteJob(jobID)
+	// err = ctrl.Svc.DeleteJob(jobId)
 	// if err != nil {
 	// 	log.Println("Error DeleteJob : ", err.Error())
 	// }
 }
 
 func (ctrl *controller) GetJobDetailsExport(c *fiber.Ctx) error {
-	jobID := c.Params("id")
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	jobId := c.Params("id")
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
-	jobIDUint, _ := strconv.ParseUint(jobID, 10, 32)
+	jobIdUint, _ := strconv.ParseUint(jobId, 10, 32)
 
-	// Get Job by ID
-	_, err := ctrl.Svc.GetJobByIDAndUserID(uint(jobIDUint), uint(tierLevel), userID, companyID)
+	// Get Job by Id
+	_, err := ctrl.Svc.GetJobByIdAndUserId(uint(jobIdUint), uint(tierLevel), userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	// Get JobDetails By JobID
-	jobDetails, err := ctrl.Svc.GetJobDetailsByJobIDExport(uint(jobIDUint))
+	// Get JobDetails By JobId
+	jobDetails, err := ctrl.Svc.GetJobDetailsByJobIdExport(uint(jobIdUint))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -424,7 +424,7 @@ func (ctrl *controller) GetJobDetailsExport(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	var filename string = fmt.Sprintf("jobs_detail_%s.csv", jobID)
+	var filename string = fmt.Sprintf("jobs_detail_%s.csv", jobId)
 
 	c.Set("Content-Type", "text/csv")
 	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))

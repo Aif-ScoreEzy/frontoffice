@@ -17,13 +17,13 @@ type RegisterAdminRequest struct {
 	CompanyAddress  string `json:"company_address"`
 	CompanyPhone    string `json:"company_phone"`
 	AgreementNumber string `json:"agreement_number"`
-	IndustryID      string `json:"industry_id"`
+	IndustryId      string `json:"industry_id"`
 	PaymentScheme   string `json:"payment_scheme"`
-	RoleID          string `json:"role_id" validate:"required~Field Role is required"`
+	RoleId          string `json:"role_id" validate:"required~Field Role is required"`
 }
 
 type RegisterAdminResponse struct {
-	ID         string          `json:"id"`
+	Id         string          `json:"id"`
 	Name       string          `json:"name"`
 	Email      string          `json:"email"`
 	Password   string          `json:"-"`
@@ -31,9 +31,9 @@ type RegisterAdminResponse struct {
 	Status     string          `json:"status"`
 	Active     bool            `json:"active"`
 	IsVerified bool            `json:"is_verified"`
-	CompanyID  string          `json:"-"`
+	CompanyId  string          `json:"-"`
 	Company    company.Company `json:"company"`
-	RoleID     string          `json:"-"`
+	RoleId     string          `json:"-"`
 	Role       role.Role       `json:"role"`
 	CreatedAt  time.Time       `json:"-"`
 	UpdatedAt  time.Time       `json:"-"`
@@ -46,10 +46,10 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID          uint   `json:"id"`
+	Id          uint   `json:"id"`
 	Name        string `json:"name"`
 	Email       string `json:"email"`
-	CompanyID   uint   `json:"company_id"`
+	CompanyId   uint   `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	TierLevel   uint   `json:"tier_level"`
 	Image       string `json:"image"`

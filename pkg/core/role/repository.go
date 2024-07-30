@@ -15,16 +15,16 @@ type repository struct {
 type Repository interface {
 	Create(role Role) (Role, error)
 	FindAll() ([]Role, error)
-	FindOneByID(id string) (*Role, error)
+	FindOneById(id string) (*Role, error)
 	FindOneByName(name string) (*Role, error)
-	UpdateByID(req *Role, id string) (*Role, error)
+	UpdateById(req *Role, id string) (*Role, error)
 	Delete(id string) error
 }
 
 func (repo *repository) Create(role Role) (Role, error) {
 	result := repo.DB.Create(&role)
 
-	repo.DB.Preload("Permissions").First(&role, "id = ?", role.ID)
+	repo.DB.Preload("Permissions").First(&role, "id = ?", role.Id)
 
 	return role, result.Error
 }
@@ -40,7 +40,7 @@ func (repo *repository) FindAll() ([]Role, error) {
 	return roles, nil
 }
 
-func (repo *repository) FindOneByID(id string) (*Role, error) {
+func (repo *repository) FindOneById(id string) (*Role, error) {
 	var role *Role
 
 	err := repo.DB.Preload("Permissions").First(&role, "id = ?", id).Error
@@ -61,7 +61,7 @@ func (repo *repository) FindOneByName(name string) (*Role, error) {
 	return role, nil
 }
 
-func (repo *repository) UpdateByID(req *Role, id string) (*Role, error) {
+func (repo *repository) UpdateById(req *Role, id string) (*Role, error) {
 	var role *Role
 
 	result := repo.DB.Model(&role).

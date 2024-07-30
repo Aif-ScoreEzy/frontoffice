@@ -24,9 +24,9 @@ type Controller interface {
 
 func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
 	date := c.Query("date")
-	companyID := c.Query("company_id")
+	companyId := c.Query("company_id")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByDateSvc(companyID, date)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByDateSvc(companyId, date)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -43,10 +43,10 @@ func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
 func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
-	companyID := c.Query("company_id")
+	companyId := c.Query("company_id")
 	page := c.Query("page", "1")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByRangeDateSvc(startDate, endDate, companyID, page)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByRangeDateSvc(startDate, endDate, companyId, page)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -61,10 +61,10 @@ func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
-	companyID := c.Query("company_id")
+	companyId := c.Query("company_id")
 	month := c.Query("month")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonthSvc(companyID, month)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonthSvc(companyId, month)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -79,10 +79,10 @@ func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetTransactionLogsByName(c *fiber.Ctx) error {
-	companyID := c.Query("company_id")
+	companyId := c.Query("company_id")
 	name := c.Query("name")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByNameSvc(companyID, name)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByNameSvc(companyId, name)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)

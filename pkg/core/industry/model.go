@@ -7,7 +7,7 @@ import (
 )
 
 type Industry struct {
-	ID        string         `json:"id"`
+	Id        string         `json:"id"`
 	Name      string         `json:"name"`
 	CreatedAt time.Time      `gorm:"not null;default:current_timestamp" json:"-"`
 	UpdatedAt time.Time      `gorm:"not null;default:current_timestamp" json:"-"`

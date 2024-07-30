@@ -8,12 +8,12 @@ import (
 )
 
 type Grading struct {
-	ID           string          `gorm:"primarykey" json:"id"`
+	Id           string          `gorm:"primarykey" json:"id"`
 	GradingLabel string          `gorm:"not null" json:"grading_label"`
 	MinGrade     float64         `gorm:"not null" json:"min_grade"`
 	MaxGrade     float64         `gorm:"not null" json:"max_grade"`
-	CompanyID    string          `json:"company_id"`
-	Company      company.Company `gorm:"foreignKey:CompanyID" json:"-"`
+	CompanyId    string          `json:"company_id"`
+	Company      company.Company `gorm:"foreignKey:CompanyId" json:"-"`
 	CreatedAt    time.Time       `json:"-"`
 	UpdatedAt    time.Time       `json:"-"`
 	DeletedAt    gorm.DeletedAt  `gorm:"index" json:"-"`
@@ -30,7 +30,7 @@ type CreateGradingsRequest struct {
 }
 
 type UpdateGradingRequest struct {
-	ID           string    `json:"id"`
+	Id           string    `json:"id"`
 	GradingLabel string    `json:"grading_label"`
 	MinGrade     *float64  `json:"min_grade"`
 	MaxGrade     *float64  `json:"max_grade"`

@@ -19,11 +19,11 @@ type controller struct {
 
 type Controller interface {
 	GetAllUsers(c *fiber.Ctx) error
-	GetUserByID(c *fiber.Ctx) error
-	UpdateUserByID(c *fiber.Ctx) error
+	GetUserById(c *fiber.Ctx) error
+	UpdateUserById(c *fiber.Ctx) error
 	UpdateProfile(c *fiber.Ctx) error
 	UploadProfileImage(c *fiber.Ctx) error
-	DeleteUserByID(c *fiber.Ctx) error
+	DeleteUserById(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetAllUsers(c *fiber.Ctx) error {
@@ -34,9 +34,9 @@ func (ctrl *controller) GetAllUsers(c *fiber.Ctx) error {
 	status := c.Query("status", "")
 	startDate := c.Query("startDate", "")
 	endDate := c.Query("endDate", "")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	var roleID string
+	var roleId string
 	if roleName != "" {
 		role, err := ctrl.SvcRole.GetRoleByNameSvc(roleName)
 		if err != nil {
@@ -44,16 +44,16 @@ func (ctrl *controller) GetAllUsers(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		roleID = role.ID
+		roleId = role.Id
 	}
 
-	users, err := ctrl.Svc.GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID)
+	users, err := ctrl.Svc.GetAllUsersSvc(limit, page, keyword, roleId, status, startDate, endDate, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetTotalDataSvc(keyword, roleID, status, startDate, endDate, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataSvc(keyword, roleId, status, startDate, endDate, companyId)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
@@ -68,49 +68,49 @@ func (ctrl *controller) GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) GetUserByID(c *fiber.Ctx) error {
-	userID := c.Params("id")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+func (ctrl *controller) GetUserById(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	user, err := ctrl.Svc.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	user, err := ctrl.Svc.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		"succeed to get a user by ID",
+		"succeed to get a user by Id",
 		user,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) UpdateUserByID(c *fiber.Ctx) error {
+func (ctrl *controller) UpdateUserById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
-	userID := c.Params("id")
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	userId := c.Params("id")
 
-	user, err := ctrl.Svc.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	user, err := ctrl.Svc.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err = ctrl.Svc.UpdateUserByIDSvc(req, user)
+	user, err = ctrl.Svc.UpdateUserByIdSvc(req, user)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	dataResponse := UserUpdateResponse{
-		ID:        user.ID,
+		Id:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
 		Status:    user.Status,
 		Active:    user.Active,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -123,10 +123,10 @@ func (ctrl *controller) UpdateUserByID(c *fiber.Ctx) error {
 
 func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateProfileRequest)
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	user, err := ctrl.Svc.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	user, err := ctrl.Svc.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -139,13 +139,13 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	dataResponse := &UserUpdateResponse{
-		ID:        user.ID,
+		Id:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
 		Status:    user.Status,
 		Active:    user.Active,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -157,11 +157,11 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
-	user, err := ctrl.Svc.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	user, err := ctrl.Svc.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -174,13 +174,13 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	}
 
 	dataResponse := &UserUpdateResponse{
-		ID:        user.ID,
+		Id:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
 		Status:    user.Status,
 		Active:    user.Active,
-		CompanyID: user.CompanyID,
-		RoleID:    user.RoleID,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -191,17 +191,17 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) DeleteUserByID(c *fiber.Ctx) error {
-	userID := c.Params("id")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+func (ctrl *controller) DeleteUserById(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	_, err := ctrl.Svc.FindUserByIDAndCompanyIDSvc(userID, companyID)
+	_, err := ctrl.Svc.FindUserByIdAndCompanyIdSvc(userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = ctrl.Svc.DeleteUserByIDSvc(userID)
+	err = ctrl.Svc.DeleteUserByIdSvc(userId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

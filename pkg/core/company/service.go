@@ -9,12 +9,12 @@ type service struct {
 }
 
 type Service interface {
-	FindCompanyByIDSvc(id string) (*Company, error)
-	UpdateCompanyByIDSvc(req UpdateCompanyRequest, id string) (Company, error)
+	FindCompanyByIdSvc(id string) (*Company, error)
+	UpdateCompanyByIdSvc(req UpdateCompanyRequest, id string) (Company, error)
 }
 
-func (svc *service) FindCompanyByIDSvc(id string) (*Company, error) {
-	result, err := svc.Repo.FindOneByID(id)
+func (svc *service) FindCompanyByIdSvc(id string) (*Company, error) {
+	result, err := svc.Repo.FindOneById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -22,16 +22,16 @@ func (svc *service) FindCompanyByIDSvc(id string) (*Company, error) {
 	return result, nil
 }
 
-func (svc *service) UpdateCompanyByIDSvc(req UpdateCompanyRequest, id string) (Company, error) {
+func (svc *service) UpdateCompanyByIdSvc(req UpdateCompanyRequest, id string) (Company, error) {
 	dataReq := Company{
 		CompanyName:    req.CompanyName,
 		CompanyAddress: req.CompanyAddress,
 		CompanyPhone:   req.CompanyPhone,
 		PaymentScheme:  req.PaymentScheme,
-		IndustryID:     req.IndustryID,
+		IndustryId:     req.IndustryId,
 	}
 
-	company, err := svc.Repo.UpdateOneByID(dataReq, id)
+	company, err := svc.Repo.UpdateOneById(dataReq, id)
 	if err != nil {
 		return company, err
 	}
