@@ -84,7 +84,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 			var err error
 			if errValid := validator.ValidateStruct(jobDetail); errValid != nil {
-				err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.ID, errValid.Error())
+				err = ctrl.Svc.UpdateInvalidJobDetail(jobDetail.Id, errValid.Error())
 				if err != nil {
 					errChan <- err
 					return
@@ -98,7 +98,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 			}
 
 			// update count success pada tabel job
-			successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobID, false)
+			successRequestTotal, err = ctrl.Svc.CountOnProcessJobDetails(jobDetail.JobId, false)
 			if err != nil {
 				errChan <- err
 				return
@@ -107,7 +107,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 			updateReq := UpdateJobRequest{
 				Total: &successRequestTotal,
 			}
-			err = ctrl.Svc.UpdateJob(jobDetail.JobID, &updateReq)
+			err = ctrl.Svc.UpdateJob(jobDetail.JobId, &updateReq)
 			if err != nil {
 				errChan <- err
 				return
@@ -160,7 +160,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		EndAt:  &now,
 	}
 
-	err = ctrl.Svc.UpdateJob(jobID, &updateReq)
+	err = ctrl.Svc.UpdateJob(jobId, &updateReq)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

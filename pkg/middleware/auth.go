@@ -102,20 +102,20 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		userID, err := helper.ExtractUserIDFromClaims(claims)
+		userID, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		companyID, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		tierLevel, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
