@@ -24,15 +24,16 @@ type service struct {
 type Service interface {
 	FindUserByEmailSvc(email string) (*User, error)
 	FindUserByKeySvc(key string) (*User, error)
-	FindUserByIDSvc(id string) (*User, error)
-	FindUserByIDAndCompanyIDSvc(id, companyID string) (*User, error)
+	FindUserByIdSvc(id string) (*User, error)
+	FindUserByIdAndCompanyIdSvc(id, companyId string) (*User, error)
 	UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*User, error)
 	UploadProfileImageSvc(user *User, filename *string) (*User, error)
-	UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error)
-	GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error)
-	GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error)
-	DeleteUserByIDSvc(id string) error
+	UpdateUserByIdSvc(req *UpdateUserRequest, user *User) (*User, error)
+	GetAllUsersSvc(limit, page, keyword, roleId, status, startDate, endDate, companyId string) ([]GetUsersResponse, error)
+	GetTotalDataSvc(keyword, roleId, active, startDate, endDate, companyId string) (int64, error)
+	DeleteUserByIdSvc(id string) error
 	FindUserByEmailAifCore(email string) (*FindUserAifCoreResponse, error)
+	UpdateUserByIdAifCore(req *UpdateUserRequest, memberId uint) error
 }
 
 func (svc *service) FindUserByEmailSvc(email string) (*User, error) {
@@ -53,8 +54,8 @@ func (svc *service) FindUserByKeySvc(key string) (*User, error) {
 	return user, nil
 }
 
-func (svc *service) FindUserByIDSvc(id string) (*User, error) {
-	user, err := svc.Repo.FindOneByUserID(id)
+func (svc *service) FindUserByIdSvc(id string) (*User, error) {
+	user, err := svc.Repo.FindOneByUserId(id)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +63,8 @@ func (svc *service) FindUserByIDSvc(id string) (*User, error) {
 	return user, err
 }
 
-func (svc *service) FindUserByIDAndCompanyIDSvc(id, companyID string) (*User, error) {
-	user, err := svc.Repo.FindOneByUserIDAndCompanyID(id, companyID)
+func (svc *service) FindUserByIdAndCompanyIdSvc(id, companyId string) (*User, error) {
+	user, err := svc.Repo.FindOneByUserIdAndCompanyId(id, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (svc *service) UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*Us
 	}
 
 	if req.Email != nil {
-		result, _ := svc.Repo.FindOneByUserIDAndCompanyID(user.ID, user.CompanyID)
+		result, _ := svc.Repo.FindOneByUserIdAndCompanyId(user.Id, user.CompanyId)
 		if result.Role.TierLevel == 2 {
 			return nil, errors.New(constant.RequestProhibited)
 		}
@@ -94,7 +95,7 @@ func (svc *service) UpdateProfileSvc(req *UpdateProfileRequest, user *User) (*Us
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := svc.Repo.UpdateOneByID(updateUser, user)
+	user, err := svc.Repo.UpdateOneById(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +112,7 @@ func (svc *service) UploadProfileImageSvc(user *User, filename *string) (*User, 
 
 	updateUser["updated_at"] = time.Now()
 
-	user, err := svc.Repo.UpdateOneByID(updateUser, user)
+	user, err := svc.Repo.UpdateOneById(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (svc *service) UploadProfileImageSvc(user *User, filename *string) (*User, 
 	return user, nil
 }
 
-func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User, error) {
+func (svc *service) UpdateUserByIdSvc(req *UpdateUserRequest, user *User) (*User, error) {
 	updateUser := map[string]interface{}{}
 	oldEmail := user.Email
 	currentTime := time.Now()
@@ -137,15 +138,15 @@ func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User
 		updateUser["email"] = *req.Email
 	}
 
-	if req.RoleID != nil {
-		role, err := svc.RepoRole.FindOneByID(*req.RoleID)
+	if req.RoleId != nil {
+		role, err := svc.RepoRole.FindOneById(*req.RoleId)
 		if role == nil {
 			return nil, errors.New(constant.DataNotFound)
 		} else if err != nil {
 			return nil, err
 		}
 
-		updateUser["role_id"] = *req.RoleID
+		updateUser["role_id"] = *req.RoleId
 	}
 
 	if req.Active != nil {
@@ -164,7 +165,7 @@ func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User
 
 	updateUser["updated_at"] = currentTime
 
-	updatedUser, err := svc.Repo.UpdateOneByID(updateUser, user)
+	updatedUser, err := svc.Repo.UpdateOneById(updateUser, user)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +182,7 @@ func (svc *service) UpdateUserByIDSvc(req *UpdateUserRequest, user *User) (*User
 	return updatedUser, nil
 }
 
-func (svc *service) GetAllUsersSvc(limit, page, keyword, roleID, status, startDate, endDate, companyID string) ([]GetUsersResponse, error) {
+func (svc *service) GetAllUsersSvc(limit, page, keyword, roleId, status, startDate, endDate, companyId string) ([]GetUsersResponse, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
@@ -214,7 +215,7 @@ func (svc *service) GetAllUsersSvc(limit, page, keyword, roleID, status, startDa
 		endTime = helper.FormatEndTimeForSQL(endDate)
 	}
 
-	users, err := svc.Repo.FindAll(intLimit, offset, keyword, roleID, status, startTime, endTime, companyID)
+	users, err := svc.Repo.FindAll(intLimit, offset, keyword, roleId, status, startTime, endTime, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -222,13 +223,13 @@ func (svc *service) GetAllUsersSvc(limit, page, keyword, roleID, status, startDa
 	var responseUsers []GetUsersResponse
 	for _, user := range users {
 		responseUser := GetUsersResponse{
-			ID:         user.ID,
+			Id:         user.Id,
 			Name:       user.Name,
 			Email:      user.Email,
 			Status:     user.Status,
 			Active:     user.Active,
 			IsVerified: user.IsVerified,
-			CompanyID:  user.CompanyID,
+			CompanyId:  user.CompanyId,
 			Role:       user.Role,
 			CreatedAt:  user.CreatedAt,
 		}
@@ -238,7 +239,7 @@ func (svc *service) GetAllUsersSvc(limit, page, keyword, roleID, status, startDa
 	return responseUsers, nil
 }
 
-func (svc *service) GetTotalDataSvc(keyword, roleID, active, startDate, endDate, companyID string) (int64, error) {
+func (svc *service) GetTotalDataSvc(keyword, roleId, active, startDate, endDate, companyId string) (int64, error) {
 	var startTime, endTime string
 	layoutPostgreSQLDate := "2006-01-02"
 	if startDate != "" {
@@ -263,12 +264,12 @@ func (svc *service) GetTotalDataSvc(keyword, roleID, active, startDate, endDate,
 		endTime = helper.FormatEndTimeForSQL(endDate)
 	}
 
-	count, err := svc.Repo.GetTotalData(keyword, roleID, active, startTime, endTime, companyID)
+	count, err := svc.Repo.GetTotalData(keyword, roleId, active, startTime, endTime, companyId)
 	return count, err
 }
 
-func (svc *service) DeleteUserByIDSvc(id string) error {
-	err := svc.Repo.DeleteByID(id)
+func (svc *service) DeleteUserByIdSvc(id string) error {
+	err := svc.Repo.DeleteById(id)
 	if err != nil {
 		return err
 	}
@@ -292,4 +293,63 @@ func (svc *service) FindUserByEmailAifCore(email string) (*FindUserAifCoreRespon
 	}
 
 	return baseResponseSuccess, nil
+}
+
+func (svc *service) UpdateUserByIdAifCore(req *UpdateUserRequest, memberId uint) error {
+	updateUser := map[string]interface{}{}
+
+	if req.Name != nil {
+		updateUser["name"] = *req.Name
+	}
+
+	if req.Email != nil {
+		userExists, _ := svc.Repo.FindOneByEmail(*req.Email)
+		if userExists != nil {
+			return errors.New(constant.EmailAlreadyExists)
+		}
+
+		updateUser["email"] = *req.Email
+	}
+
+	if req.RoleId != nil {
+		role, err := svc.RepoRole.FindOneById(*req.RoleId)
+		if role == nil {
+			return errors.New(constant.DataNotFound)
+		} else if err != nil {
+			return err
+		}
+
+		updateUser["role_id"] = *req.RoleId
+	}
+
+	if req.Active != nil {
+		if *req.Active {
+			updateUser["status"] = "active"
+			updateUser["active"] = true
+		} else {
+			updateUser["status"] = "inactive"
+			updateUser["active"] = false
+		}
+	}
+
+	if req.Status != nil {
+		updateUser["status"] = *req.Status
+	}
+
+	_, err := svc.Repo.UpdateOneByIdAifCore(updateUser, memberId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+	// currentTime := time.Now()
+	// formattedTime := helper.FormatWIB(currentTime)
+
+	// if oldEmail != updatedUser.Email {
+	// 	err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(updatedUser.Name, oldEmail, *req.Email, formattedTime)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 }

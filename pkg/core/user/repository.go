@@ -22,14 +22,15 @@ type repository struct {
 
 type Repository interface {
 	FindOneByEmail(email string) (*User, error)
-	FindOneByUserID(id string) (*User, error)
+	FindOneByUserId(id string) (*User, error)
 	FindOneByKey(key string) (*User, error)
-	FindOneByUserIDAndCompanyID(id, companyID string) (*User, error)
-	UpdateOneByID(req map[string]interface{}, user *User) (*User, error)
-	FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, companyID string) ([]User, error)
-	DeleteByID(id string) error
-	GetTotalData(keyword, roleID, status, startTime, endTime, companyID string) (int64, error)
+	FindOneByUserIdAndCompanyId(id, companyId string) (*User, error)
+	UpdateOneById(req map[string]interface{}, user *User) (*User, error)
+	FindAll(limit, offset int, keyword, roleId, status, startTime, endTime, companyId string) ([]User, error)
+	DeleteById(id string) error
+	GetTotalData(keyword, roleId, status, startTime, endTime, companyId string) (int64, error)
 	FindOneByEmailAifCore(email string) (*http.Response, error)
+	UpdateOneByIdAifCore(req map[string]interface{}, memberId uint) (*http.Response, error)
 }
 
 func (repo *repository) FindOneByEmail(email string) (*User, error) {
@@ -43,7 +44,7 @@ func (repo *repository) FindOneByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-func (repo *repository) FindOneByUserID(id string) (*User, error) {
+func (repo *repository) FindOneByUserId(id string) (*User, error) {
 	var user *User
 
 	err := repo.DB.Preload("Role").Preload("Company").First(&user, "id = ?", id).Error
@@ -65,10 +66,10 @@ func (repo *repository) FindOneByKey(key string) (*User, error) {
 	return user, nil
 }
 
-func (repo *repository) FindOneByUserIDAndCompanyID(id, companyID string) (*User, error) {
+func (repo *repository) FindOneByUserIdAndCompanyId(id, companyId string) (*User, error) {
 	var user *User
 
-	err := repo.DB.Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyID).Error
+	err := repo.DB.Preload("Role").Preload("Company").First(&user, "id = ? AND company_id = ?", id, companyId).Error
 	if err != nil {
 		return nil, err
 	}
@@ -76,9 +77,9 @@ func (repo *repository) FindOneByUserIDAndCompanyID(id, companyID string) (*User
 	return user, nil
 }
 
-func (repo *repository) UpdateOneByID(req map[string]interface{}, user *User) (*User, error) {
+func (repo *repository) UpdateOneById(req map[string]interface{}, user *User) (*User, error) {
 	err := repo.DB.Model(&user).
-		Where("id = ? AND company_id = ?", user.ID, user.CompanyID).Updates(req).Error
+		Where("id = ? AND company_id = ?", user.Id, user.CompanyId).Updates(req).Error
 	if err != nil {
 		return nil, err
 	}
@@ -86,16 +87,16 @@ func (repo *repository) UpdateOneByID(req map[string]interface{}, user *User) (*
 	return user, nil
 }
 
-func (repo *repository) FindAll(limit, offset int, keyword, roleID, status, startTime, endTime, companyID string) ([]User, error) {
+func (repo *repository) FindAll(limit, offset int, keyword, roleId, status, startTime, endTime, companyId string) ([]User, error) {
 	var users []User
 
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := repo.DB.Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+	query := repo.DB.Preload("Role").Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyId, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
 
-	if roleID != "" {
-		query = query.Where("role_id = ?", roleID)
+	if roleId != "" {
+		query = query.Where("role_id = ?", roleId)
 	}
 
 	if status != "" {
@@ -115,7 +116,7 @@ func (repo *repository) FindAll(limit, offset int, keyword, roleID, status, star
 	return users, nil
 }
 
-func (repo *repository) DeleteByID(id string) error {
+func (repo *repository) DeleteById(id string) error {
 	err := repo.DB.Model(&User{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
 	if err != nil {
 		return err
@@ -124,16 +125,16 @@ func (repo *repository) DeleteByID(id string) error {
 	return nil
 }
 
-func (repo *repository) GetTotalData(keyword, roleID, status, startTime, endTime, companyID string) (int64, error) {
+func (repo *repository) GetTotalData(keyword, roleId, status, startTime, endTime, companyId string) (int64, error) {
 	var users []User
 	var count int64
 
 	// avoid case sensitive (uppercase/lowercase) keywords
 	keywordToLower := strings.ToLower(keyword)
 
-	query := repo.DB.Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyID, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
-	if roleID != "" {
-		query = query.Where("role_id = ?", roleID)
+	query := repo.DB.Where("company_id = ? AND (LOWER(name) LIKE ? OR LOWER(email) LIKE ?)", companyId, "%"+keywordToLower+"%", "%"+keywordToLower+"%")
+	if roleId != "" {
+		query = query.Where("role_id = ?", roleId)
 	}
 
 	if status != "" {
@@ -158,6 +159,16 @@ func (repo *repository) FindOneByEmailAifCore(email string) (*http.Response, err
 	q := request.URL.Query()
 	q.Add("email", email)
 	request.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+	return client.Do(request)
+}
+
+func (repo *repository) UpdateOneByIdAifCore(req map[string]interface{}, memberId uint) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%d`, repo.Cfg.Env.AifcoreHost, memberId)
+
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}
 	return client.Do(request)
