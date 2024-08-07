@@ -1,6 +1,8 @@
 package user
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
@@ -29,6 +31,7 @@ type Repository interface {
 	FindAll(limit, offset int, keyword, roleId, status, startTime, endTime, companyId string) ([]User, error)
 	DeleteById(id string) error
 	GetTotalData(keyword, roleId, status, startTime, endTime, companyId string) (int64, error)
+	AddMemberAifCore(req *RegisterMemberRequest) (*http.Response, error)
 	FindOneByEmailAifCore(email string) (*http.Response, error)
 	UpdateOneByIdAifCore(req map[string]interface{}, memberId uint) (*http.Response, error)
 }
@@ -148,6 +151,18 @@ func (repo *repository) GetTotalData(keyword, roleId, status, startTime, endTime
 	err := query.Find(&users).Count(&count).Error
 
 	return count, err
+}
+
+func (repo *repository) AddMemberAifCore(req *RegisterMemberRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/addmember"
+
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	request.Header.Set(constant.XAPIKey, repo.Cfg.Env.XModuleKey)
+
+	client := &http.Client{}
+	return client.Do(request)
 }
 
 func (repo *repository) FindOneByEmailAifCore(email string) (*http.Response, error) {
