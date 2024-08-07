@@ -76,9 +76,19 @@ type UserResponse struct {
 }
 
 type RegisterMemberRequest struct {
-	Name   string `json:"name" validate:"required~Field Name is required"`
-	Email  string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
-	RoleId string `json:"role_id" validate:"required~Field Role is required"`
+	Name      string `json:"name" validate:"required~Field Name is required"`
+	Email     string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
+	CompanyId uint   `json:"company_id"`
+	RoleId    uint   `json:"role_id"`
+}
+
+type dataRegisterMemberResponse struct {
+	MemberId uint `json:"member_id"`
+}
+
+type RegisterMemberResponse struct {
+	Data       *dataRegisterMemberResponse `json:"data"`
+	StatusCode int                         `json:"-"`
 }
 
 type GetUsersResponse struct {

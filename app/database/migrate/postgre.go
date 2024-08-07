@@ -23,7 +23,7 @@ func PostgreDB(dbase database.Database) {
 		&role.Role{},
 		&permission.Permission{},
 		&user.User{},
-		&activationtoken.ActivationToken{},
+		&activationtoken.MstActivationToken{},
 		&passwordresettoken.PasswordResetToken{},
 		&company.Company{},
 		&industry.Industry{},

@@ -27,7 +27,8 @@ func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	controller := NewController(service, serviceUser, serviceActivationToken, servicePasswordResetToken, cfg)
 
 	authAPI.Post("/register-admin", middleware.IsRequestValid(RegisterAdminRequest{}), controller.RegisterAdmin)
-	authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(user.RegisterMemberRequest{}), controller.RegisterMember)
+	// authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(user.RegisterMemberRequest{}), controller.RegisterMember)
+	authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(user.RegisterMemberRequest{}), controller.RegisterMemberAifCore)
 	// authAPI.Post("/request-password-reset", middleware.IsRequestValid(RequestPasswordResetRequest{}), controller.RequestPasswordReset)
 	authAPI.Post("/login", middleware.IsRequestValid(UserLoginRequest{}), controller.LoginAifCore)
 	authAPI.Post("/logout", controller.Logout)

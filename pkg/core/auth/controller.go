@@ -41,7 +41,8 @@ type controller struct {
 
 type Controller interface {
 	RegisterAdmin(c *fiber.Ctx) error
-	RegisterMember(c *fiber.Ctx) error
+	// RegisterMember(c *fiber.Ctx) error
+	RegisterMemberAifCore(c *fiber.Ctx) error
 	VerifyUser(c *fiber.Ctx) error
 	// Login(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
@@ -105,17 +106,64 @@ func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
-	req := c.Locals("request").(*user.RegisterMemberRequest)
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+// func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
+// 	req := c.Locals("request").(*user.RegisterMemberRequest)
+// 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	userExists, _ := ctrl.SvcUser.FindUserByEmailSvc(req.Email)
-	if userExists != nil {
-		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
+// 	userExists, _ := ctrl.SvcUser.FindUserByEmailSvc(req.Email)
+// 	if userExists != nil {
+// 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
+// 		return c.Status(statusCode).JSON(resp)
+// 	}
+
+// 	result, token, err := ctrl.Svc.RegisterMemberSvc(req, companyId)
+// 	if err != nil {
+// 		statusCode, resp := helper.GetError(err.Error())
+// 		return c.Status(statusCode).JSON(resp)
+// 	}
+
+// 	err = mailjet.SendEmailActivation(req.Email, token)
+// 	if err != nil {
+// 		resend := "resend"
+// 		req := &user.UpdateUserRequest{
+// 			Status: &resend,
+// 		}
+
+// 		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, result)
+// 		if err != nil {
+// 			statusCode, resp := helper.GetError(err.Error())
+// 			return c.Status(statusCode).JSON(resp)
+// 		}
+
+// 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
+// 		return c.Status(statusCode).JSON(resp)
+// 	}
+
+// 	resp := helper.ResponseSuccess(
+// 		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
+// 		nil,
+// 	)
+
+// 	return c.Status(fiber.StatusCreated).JSON(resp)
+// }
+
+func (ctrl *controller) RegisterMemberAifCore(c *fiber.Ctx) error {
+	req := c.Locals("request").(*user.RegisterMemberRequest)
+
+	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	result, token, err := ctrl.Svc.RegisterMemberSvc(req, companyId)
+	resAddMember, err := ctrl.Svc.AddMemberAifCoreService(req, companyId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	memberRoleId := 2
+	token, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(resAddMember.Data.MemberId, companyId, uint(memberRoleId))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -128,7 +176,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 			Status: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, result)
+		err = ctrl.SvcUser.UpdateUserByIdAifCore(req, resAddMember.Data.MemberId)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -298,7 +346,7 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, _, err := ctrl.SvcActivationToken.CreateActivationTokenSvc(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	token, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -306,7 +354,6 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 
 	err = mailjet.SendEmailActivation(email, token)
 	if err != nil {
-
 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
 		return c.Status(statusCode).JSON(resp)
 	} else {
@@ -453,7 +500,7 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	accessToken, refreshToken, err := ctrl.Svc.LoginAifCoreService(req, res.Data)
+	accessToken, refreshToken, err := ctrl.Svc.LoginMemberAifCoreService(req, res.Data)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
