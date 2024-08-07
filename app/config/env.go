@@ -33,6 +33,7 @@ type Environment struct {
 	AifcoreHost                    string
 	GenretailV3                    string
 	AllowingDomains                string
+	XModuleKey                     string
 }
 
 func GetEnvironment(key string) string {
@@ -78,5 +79,6 @@ func LoadEnvironment() *Environment {
 		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
 		GenretailV3:                    GetEnvironment("GEN_RETAIL_V3"),
 		AllowingDomains:                GetEnvironment("ALLOWING_DOMAINS"),
+		XModuleKey:                     GetEnvironment("X_MODULE_KEY"),
 	}
 }
