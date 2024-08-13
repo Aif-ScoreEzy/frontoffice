@@ -194,7 +194,9 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
-		svc.UpdateInvalidJobDetail(jobDetail.ID, "can not connected to server")
+		if err := svc.UpdateInvalidJobDetail(jobDetail.Id, "can not connected to server"); err != nil {
+			return err
+		}
 
 		return err
 	}
@@ -243,7 +245,9 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 		data := &JSONB{}
 		responseBodyByte, err := json.Marshal(liveStatusResponse.Data)
 		if err == nil {
-			data.Scan(responseBodyByte)
+			if err := data.Scan(responseBodyByte); err != nil {
+				return err
+			}
 		}
 
 		if liveStatusResponse.StatusCode == 200 {
@@ -280,7 +284,9 @@ func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKe
 	defer response.Body.Close()
 
 	var liveStatusResponse *LiveStatusResponse
-	json.Unmarshal(dataBytes, &liveStatusResponse)
+	if err := json.Unmarshal(dataBytes, &liveStatusResponse); err != nil {
+		return nil, err
+	}
 	if liveStatusResponse != nil {
 		liveStatusResponse.StatusCode = response.StatusCode
 	}
