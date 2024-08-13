@@ -209,25 +209,10 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 			return err
 		}
 	} else {
-		dataMap, ok := liveStatusResponse.Data.(map[string]interface{})
-		if !ok {
-			log.Println("Failed to assert Data field as map[string]interface{}")
-		}
-
-		dataLiveMap, ok := dataMap["live"].(map[string]interface{})
-		if !ok {
-			log.Println("Failed to assert live field within Data as map[string]interface{}")
-		}
-
-		subscriberStatus, ok := dataLiveMap["subscriber_status"].(string)
-		if !ok {
-			log.Println("Failed to assert subscriber_status field as string")
-		}
-
-		deviceStatus, ok := dataLiveMap["device_status"].(string)
-		if !ok {
-			log.Println("Failed to assert device_status field as string")
-		}
+		dataMap, _ := liveStatusResponse.Data.(map[string]interface{})
+		dataLiveMap, _ := dataMap["live"].(map[string]interface{})
+		subscriberStatus, _ := dataLiveMap["subscriber_status"].(string)
+		deviceStatus, _ := dataLiveMap["device_status"].(string)
 
 		var errorCode int
 		if errors, ok := dataMap["errors"].([]interface{}); ok {
