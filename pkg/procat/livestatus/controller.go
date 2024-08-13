@@ -151,12 +151,11 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	select {
 	case err := <-errChan:
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+			log.Println("errors found in job processing")
 		}
 	default:
 		{
-			fmt.Println("No errors found in job processing")
+			log.Println("no errors found in job processing")
 		}
 	}
 
