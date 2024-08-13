@@ -100,6 +100,7 @@ type JobDetailQueryResult struct {
 	Status           string `json:"status"`
 	Operator         string `json:"operator"`
 	PhoneType        string `json:"phone_type"`
+	Message          string `json:"message"`
 }
 
 type ResponseSuccess struct {
