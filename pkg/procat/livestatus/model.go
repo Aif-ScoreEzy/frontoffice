@@ -82,13 +82,15 @@ type GetJobsResponse struct {
 }
 
 type JobDetailResponse struct {
-	TotalData        int64                   `json:"total_data"`
-	TotalDataSuccess int64                   `json:"total_data_percentage_success"`
-	TotalDataFail    int64                   `json:"total_data_percentage_fail"`
-	TotalDataError   int64                   `json:"total_data_percentage_error"`
-	SubscriberActive int64                   `json:"subs_active"`
-	DeviceReachable  int64                   `json:"dev_reachable"`
-	JobDetails       []*JobDetailQueryResult `json:"job_details"`
+	TotalData         int64                   `json:"total_data"`
+	TotalDataSuccess  int64                   `json:"total_data_percentage_success"`
+	TotalDataFail     int64                   `json:"total_data_percentage_fail"`
+	TotalDataError    int64                   `json:"total_data_percentage_error"`
+	SubscriberActive  int64                   `json:"subs_active"`
+	DeviceReachable   int64                   `json:"dev_reachable"`
+	DeviceUnreachable int64                   `json:"dev_unreachable"`
+	DeviceUnavailable int64                   `json:"dev_unavailable"`
+	JobDetails        []*JobDetailQueryResult `json:"job_details"`
 }
 
 type JobDetailQueryResult struct {
@@ -100,6 +102,7 @@ type JobDetailQueryResult struct {
 	Status           string `json:"status"`
 	Operator         string `json:"operator"`
 	PhoneType        string `json:"phone_type"`
+	Message          string `json:"message"`
 }
 
 type ResponseSuccess struct {
