@@ -230,7 +230,7 @@ func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, ke
 
 	if err := repo.DB.
 		Model(&JobDetail{}).
-		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type, message").
 		Limit(limit).
 		Offset(offset).
 		Where("job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").
