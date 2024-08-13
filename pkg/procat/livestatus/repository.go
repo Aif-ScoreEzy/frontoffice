@@ -54,8 +54,8 @@ func (repo *repository) CreateJobInTx(userId, companyId string, dataJob *Job, re
 
 		for _, request := range requests {
 			dataJobDetail := &JobDetail{
-				UserID:      userID,
-				CompanyID:   companyID,
+				UserID:      userId,
+				CompanyID:   companyId,
 				JobID:       dataJob.ID,
 				PhoneNumber: request.PhoneNumber,
 				OnProcess:   true,
@@ -72,7 +72,7 @@ func (repo *repository) CreateJobInTx(userId, companyId string, dataJob *Job, re
 		return 0, errTx
 	}
 
-	return dataJob.Id, nil
+	return dataJob.ID, nil
 }
 
 func (repo *repository) GetJobs(limit, offset int, tierLevel uint, userID, companyID, startTime, endTime string) ([]*Job, error) {

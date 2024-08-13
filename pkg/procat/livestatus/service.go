@@ -194,7 +194,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
-		if err := svc.UpdateInvalidJobDetail(jobDetail.Id, "can not connected to server"); err != nil {
+		if err := svc.UpdateInvalidJobDetail(jobDetail.ID, "can not connected to server"); err != nil {
 			return err
 		}
 

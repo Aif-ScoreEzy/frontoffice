@@ -332,19 +332,23 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 
 	totalData, _ := ctrl.Svc.GetJobDetailsWithPaginationTotal(keyword, uint(jobIDUint))
 	subscriberStatuscon, _ := ctrl.Svc.GetJobDetailsPercentage("subscriber_status", "ACTIVE", uint(jobIDUint))
-	deviceStatusReach, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "REACHABLE", uint(jobIDUint))
+	deviceStatusReachable, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "REACHABLE", uint(jobIDUint))
+	deviceStatusUnreachable, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "UNREACHABLE", uint(jobIDUint))
+	deviceStatusUnavailable, _ := ctrl.Svc.GetJobDetailsPercentage("device_status", "UNAVAILABLE", uint(jobIDUint))
 	totalDataPercentage, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "success")
 	totalDataPercentageFail, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "fail")
 	totalDataPercentageError, _ := ctrl.Svc.GetJobDetailsWithPaginationTotalPercentage(uint(jobIDUint), "error")
 
 	dataResponse := JobDetailResponse{
-		TotalData:        totalData,
-		TotalDataSuccess: totalDataPercentage,
-		TotalDataFail:    totalDataPercentageFail,
-		TotalDataError:   totalDataPercentageError,
-		SubscriberActive: subscriberStatuscon,
-		DeviceReachable:  deviceStatusReach,
-		JobDetails:       jobs,
+		TotalData:         totalData,
+		TotalDataSuccess:  totalDataPercentage,
+		TotalDataFail:     totalDataPercentageFail,
+		TotalDataError:    totalDataPercentageError,
+		SubscriberActive:  subscriberStatuscon,
+		DeviceReachable:   deviceStatusReachable,
+		DeviceUnreachable: deviceStatusUnreachable,
+		DeviceUnavailable: deviceStatusUnavailable,
+		JobDetails:        jobs,
 	}
 
 	resp := helper.ResponseSuccess(
