@@ -163,6 +163,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 	now := time.Now()
 
 	updateReq := UpdateJobRequest{
+		Total:  &totalData,
 		Status: &doneStatus,
 		EndAt:  &now,
 	}
