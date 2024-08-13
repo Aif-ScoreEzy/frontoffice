@@ -46,16 +46,16 @@ type Repository interface {
 	CountOnProcessJobDetails(jobID uint, onProcess bool) (int64, error)
 }
 
-func (repo *repository) CreateJobInTx(userID, companyID string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
-	repo.DB.Transaction(func(tx *gorm.DB) error {
+func (repo *repository) CreateJobInTx(userId, companyId string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
+	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&dataJob).Error; err != nil {
 			return err
 		}
 
 		for _, request := range requests {
 			dataJobDetail := &JobDetail{
-				UserID:      userID,
-				CompanyID:   companyID,
+				UserID:      userId,
+				CompanyID:   companyId,
 				JobID:       dataJob.ID,
 				PhoneNumber: request.PhoneNumber,
 				OnProcess:   true,
@@ -67,6 +67,10 @@ func (repo *repository) CreateJobInTx(userID, companyID string, dataJob *Job, re
 
 		return nil
 	})
+
+	if errTx != nil {
+		return 0, errTx
+	}
 
 	return dataJob.ID, nil
 }
@@ -210,7 +214,7 @@ func (repo *repository) GetJobDetailsByRangeDate(userID, companyID, startTime, e
 
 	err := query.
 		Model(&JobDetail{}).
-		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type, message").
 		Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).
 		Find(&jobs).
 		Error

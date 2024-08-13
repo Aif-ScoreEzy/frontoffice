@@ -1,8 +1,9 @@
 package helper
 
 import (
+	"crypto/rand"
 	"encoding/hex"
-	"math/rand"
+	"math/big"
 	"time"
 	"unicode"
 )
@@ -19,16 +20,19 @@ func GenerateAPIKey() string {
 	return apiKey
 }
 
-func GeneratePassword() string {
+func GeneratePassword() (string, error) {
 	const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|<>/?~"
-	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	b := make([]byte, 10)
 	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = charset[num.Int64()]
 	}
 
-	return string(b)
+	return string(b), nil
 }
 
 func ValidatePasswordStrength(password string) bool {

@@ -11,8 +11,8 @@ const (
 	// auth
 	AlreadyVerified            = "the account has already verified"
 	ActivationTokenExpired     = "user activation token has expired"
-	ConfirmNewPasswordMismatch = "please ensure that the new password and confirm password fields match exactly"
-	ConfirmPasswordMismatch    = "please ensure that password and confirm password fields match exactly"
+	ConfirmNewPasswordMismatch = "ensure that the new password and confirm password fields match exactly"
+	ConfirmPasswordMismatch    = "ensure that password and confirm password fields match exactly"
 	InvalidEmailOrPassword     = "email or password is incorrect"
 	InvalidPassword            = "password must contain a combination of uppercase, lowercase, number, and symbol"
 	InvalidPasswordResetLink   = "invalid password reset link"
