@@ -275,14 +275,14 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 
-	header := []string{"Phone Number", "Phone Type", "Operator", "Device Status", "Subscriber Status", "Message"}
+	header := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}
 	if err := w.Write(header); err != nil {
 		statusCode, resp := helper.GetError("Failed to write CSV header")
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	for _, record := range jobDetails {
-		row := []string{record.PhoneNumber, record.PhoneType, record.Operator, record.DeviceStatus, record.SubscriberStatus, record.Message}
+		row := []string{record.PhoneNumber, record.SubscriberStatus, record.DeviceStatus, record.Status, record.Operator, record.PhoneType}
 		if err := w.Write(row); err != nil {
 			statusCode, resp := helper.GetError("Failed to write CSV data")
 			return c.Status(statusCode).JSON(resp)
