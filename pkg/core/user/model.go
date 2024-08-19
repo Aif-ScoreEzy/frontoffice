@@ -141,6 +141,13 @@ func SetPassword(password string) string {
 	return password
 }
 
+type FindUserQuery struct {
+	Id       string
+	Email    string
+	Username string
+	Key      string
+}
+
 type FindUserAifCoreResponse struct {
 	Message    string     `json:"message"`
 	Success    bool       `json:"success"`

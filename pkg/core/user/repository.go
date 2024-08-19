@@ -32,7 +32,7 @@ type Repository interface {
 	DeleteById(id string) error
 	GetTotalData(keyword, roleId, status, startTime, endTime, companyId string) (int64, error)
 	AddMemberAifCore(req *RegisterMemberRequest) (*http.Response, error)
-	FindOneByEmailAifCore(email string) (*http.Response, error)
+	FindOneAifCore(query *FindUserQuery) (*http.Response, error)
 	UpdateOneByIdAifCore(req map[string]interface{}, memberId uint) (*http.Response, error)
 }
 
@@ -165,14 +165,17 @@ func (repo *repository) AddMemberAifCore(req *RegisterMemberRequest) (*http.Resp
 	return client.Do(request)
 }
 
-func (repo *repository) FindOneByEmailAifCore(email string) (*http.Response, error) {
+func (repo *repository) FindOneAifCore(query *FindUserQuery) (*http.Response, error) {
 	apiUrl := fmt.Sprintf(`%v/api/core/member/by`, repo.Cfg.Env.AifcoreHost)
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := request.URL.Query()
-	q.Add("email", email)
+	q.Add("id", query.Id)
+	q.Add("email", query.Email)
+	q.Add("username", query.Username)
+	q.Add("key", query.Key)
 	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}

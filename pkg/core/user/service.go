@@ -32,7 +32,7 @@ type Service interface {
 	GetAllUsersSvc(limit, page, keyword, roleId, status, startDate, endDate, companyId string) ([]GetUsersResponse, error)
 	GetTotalDataSvc(keyword, roleId, active, startDate, endDate, companyId string) (int64, error)
 	DeleteUserByIdSvc(id string) error
-	FindUserByEmailAifCore(email string) (*FindUserAifCoreResponse, error)
+	FindUserAifCore(query *FindUserQuery) (*FindUserAifCoreResponse, error)
 	UpdateUserByIdAifCore(req *UpdateUserRequest, memberId uint) error
 }
 
@@ -277,8 +277,8 @@ func (svc *service) DeleteUserByIdSvc(id string) error {
 	return nil
 }
 
-func (svc *service) FindUserByEmailAifCore(email string) (*FindUserAifCoreResponse, error) {
-	res, err := svc.Repo.FindOneByEmailAifCore(email)
+func (svc *service) FindUserAifCore(query *FindUserQuery) (*FindUserAifCoreResponse, error) {
+	res, err := svc.Repo.FindOneAifCore(query)
 	if err != nil {
 		return nil, err
 	}
