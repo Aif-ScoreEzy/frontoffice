@@ -194,7 +194,9 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
-		svc.UpdateInvalidJobDetail(jobDetail.Id, "can not connected to server")
+		if err := svc.UpdateInvalidJobDetail(jobDetail.Id, "can not connected to server"); err != nil {
+			return err
+		}
 
 		return err
 	}
@@ -207,25 +209,10 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 			return err
 		}
 	} else {
-		dataMap, ok := liveStatusResponse.Data.(map[string]interface{})
-		if !ok {
-			log.Println("Failed to assert Data field as map[string]interface{}")
-		}
-
-		dataLiveMap, ok := dataMap["live"].(map[string]interface{})
-		if !ok {
-			log.Println("Failed to assert live field within Data as map[string]interface{}")
-		}
-
-		subscriberStatus, ok := dataLiveMap["subscriber_status"].(string)
-		if !ok {
-			log.Println("Failed to assert subscriber_status field as string")
-		}
-
-		deviceStatus, ok := dataLiveMap["device_status"].(string)
-		if !ok {
-			log.Println("Failed to assert device_status field as string")
-		}
+		dataMap, _ := liveStatusResponse.Data.(map[string]interface{})
+		dataLiveMap, _ := dataMap["live"].(map[string]interface{})
+		subscriberStatus, _ := dataLiveMap["subscriber_status"].(string)
+		deviceStatus, _ := dataLiveMap["device_status"].(string)
 
 		var errorCode int
 		if errors, ok := dataMap["errors"].([]interface{}); ok {
@@ -243,7 +230,9 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 		data := &JSONB{}
 		responseBodyByte, err := json.Marshal(liveStatusResponse.Data)
 		if err == nil {
-			data.Scan(responseBodyByte)
+			if err := data.Scan(responseBodyByte); err != nil {
+				return err
+			}
 		}
 
 		if liveStatusResponse.StatusCode == 200 {
@@ -273,6 +262,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error) {
 	response, err := svc.Repo.CallLiveStatus(liveStatusRequest, apiKey)
 	if err != nil {
+		log.Println("Error : ", err.Error())
 		return nil, err
 	}
 
@@ -280,7 +270,9 @@ func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKe
 	defer response.Body.Close()
 
 	var liveStatusResponse *LiveStatusResponse
-	json.Unmarshal(dataBytes, &liveStatusResponse)
+	if err := json.Unmarshal(dataBytes, &liveStatusResponse); err != nil {
+		return nil, err
+	}
 	if liveStatusResponse != nil {
 		liveStatusResponse.StatusCode = response.StatusCode
 	}

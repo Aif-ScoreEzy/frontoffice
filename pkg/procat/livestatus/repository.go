@@ -47,7 +47,7 @@ type Repository interface {
 }
 
 func (repo *repository) CreateJobInTx(userId, companyId string, dataJob *Job, requests []LiveStatusRequest) (uint, error) {
-	repo.DB.Transaction(func(tx *gorm.DB) error {
+	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&dataJob).Error; err != nil {
 			return err
 		}
@@ -67,6 +67,10 @@ func (repo *repository) CreateJobInTx(userId, companyId string, dataJob *Job, re
 
 		return nil
 	})
+
+	if errTx != nil {
+		return 0, errTx
+	}
 
 	return dataJob.Id, nil
 }
@@ -210,7 +214,7 @@ func (repo *repository) GetJobDetailsByRangeDate(userId, companyId, startTime, e
 
 	err := query.
 		Model(&JobDetail{}).
-		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type, message").
 		Where("on_process = ? AND created_at BETWEEN ? AND ?", false, startTime, endTime).
 		Find(&jobs).
 		Error
@@ -226,7 +230,7 @@ func (repo *repository) GetJobDetailsByJobIdWithPagination(limit, offset int, ke
 
 	if err := repo.DB.
 		Model(&JobDetail{}).
-		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type").
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type, message").
 		Limit(limit).
 		Offset(offset).
 		Where("job_id = ? AND phone_number LIKE ?", jobId, "%"+keyword+"%").

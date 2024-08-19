@@ -46,7 +46,9 @@ func (svc *service) GenRetailV3(requestData *GenRetailRequest, apiKey string) (*
 	responseBodyBytes, _ := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	json.Unmarshal(responseBodyBytes, &dataResponse)
+	if err := json.Unmarshal(responseBodyBytes, &dataResponse); err != nil {
+		return nil, err
+	}
 	dataResponse.StatusCode = response.StatusCode
 
 	return dataResponse, nil

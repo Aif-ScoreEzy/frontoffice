@@ -45,7 +45,9 @@ func (svc *service) GetTransactionLogsByDateSvc(companyId, date string) (*model.
 	responseBodyBytes, _ := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	json.Unmarshal(responseBodyBytes, &dataResp)
+	if err := json.Unmarshal(responseBodyBytes, &dataResp); err != nil {
+		return nil, 0, err
+	}
 
 	return dataResp, response.StatusCode, nil
 }
@@ -73,7 +75,9 @@ func (svc *service) GetTransactionLogsByRangeDateSvc(startDate, endDate, company
 	responseBodyBytes, _ := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	json.Unmarshal(responseBodyBytes, &dataResp)
+	if err := json.Unmarshal(responseBodyBytes, &dataResp); err != nil {
+		return nil, 0, err
+	}
 
 	return dataResp, response.StatusCode, nil
 }
@@ -99,7 +103,9 @@ func (svc *service) GetTransactionLogsByMonthSvc(companyId, month string) (*mode
 	responseBodyBytes, _ := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	json.Unmarshal(responseBodyBytes, &dataResp)
+	if err := json.Unmarshal(responseBodyBytes, &dataResp); err != nil {
+		return nil, 0, err
+	}
 
 	return dataResp, response.StatusCode, nil
 }
@@ -125,7 +131,9 @@ func (svc *service) GetTransactionLogsByNameSvc(companyId, name string) (*model.
 	responseBodyBytes, _ := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
-	json.Unmarshal(responseBodyBytes, &dataResp)
+	if err := json.Unmarshal(responseBodyBytes, &dataResp); err != nil {
+		return nil, 0, err
+	}
 
 	return dataResp, response.StatusCode, nil
 }

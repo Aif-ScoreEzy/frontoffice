@@ -328,7 +328,9 @@ func (svc *service) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*h
 		dataBytes, _ := io.ReadAll(response.Body)
 		defer response.Body.Close()
 
-		json.Unmarshal(dataBytes, &baseResponseSuccess)
+		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
+			return nil, err
+		}
 		baseResponseSuccess.StatusCode = response.StatusCode
 	}
 
