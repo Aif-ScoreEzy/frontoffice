@@ -47,7 +47,6 @@ type Controller interface {
 	// Login(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	SendEmailActivation(c *fiber.Ctx) error
-	// RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
 	// RefreshAccessToken(c *fiber.Ctx) error
@@ -335,7 +334,9 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")
 
-	userExists, err := ctrl.SvcUser.FindUserByEmailAifCore(email)
+	userExists, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
+		Email: email,
+	})
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -494,10 +495,20 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	res, err := ctrl.SvcUser.FindUserByEmailAifCore(req.Email)
+	res, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
+		Email: req.Email,
+	})
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 		return c.Status(res.StatusCode).JSON(resp)
+	}
+
+	if res == nil {
+		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
+		return c.Status(statusCode).JSON(resp)
+	} else if res != nil && !res.Data.Active {
+		statusCode, resp := helper.GetError(constant.RequestProhibited)
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	accessToken, refreshToken, err := ctrl.Svc.LoginMemberAifCoreService(req, res.Data)
