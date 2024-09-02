@@ -2,6 +2,8 @@ package passwordresettoken
 
 import (
 	"front-office/app/config"
+	"front-office/helper"
+	"strconv"
 )
 
 func NewService(repo Repository, cfg *config.Config) Service {
@@ -16,6 +18,7 @@ type service struct {
 type Service interface {
 	// CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error)
 	FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error)
+	CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error)
 }
 
 // func (svc *service) CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
@@ -49,4 +52,26 @@ func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*PasswordRes
 	}
 
 	return result, nil
+}
+
+func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId)
+	if err != nil {
+		return "", err
+	}
+
+	req := &CreatePasswordResetTokenRequest{
+		Token: token,
+	}
+
+	userIdStr := helper.ConvertUintToString(userId)
+	_, err = svc.Repo.CreatePasswordResetTokenAifCore(req, userIdStr)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

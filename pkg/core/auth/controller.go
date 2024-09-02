@@ -47,6 +47,7 @@ type Controller interface {
 	// Login(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	SendEmailActivation(c *fiber.Ctx) error
+	RequestPasswordResetAifCore(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
 	// RefreshAccessToken(c *fiber.Ctx) error
@@ -559,4 +560,40 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 	)
 
 	return c.Status(fiber.StatusOK).JSON(responseSuccess)
+}
+
+func (ctrl *controller) RequestPasswordResetAifCore(c *fiber.Ctx) error {
+	req := c.Locals("request").(*RequestPasswordResetRequest)
+
+	userExists, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
+		Email: req.Email,
+	})
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if !userExists.Data.IsVerified {
+		statusCode, resp := helper.GetError(constant.UnverifiedUser)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = mailjet.SendEmailPasswordReset(req.Email, userExists.Data.Name, token)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		fmt.Sprintf("we've sent an email to %s with a link to reset your password", req.Email),
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }

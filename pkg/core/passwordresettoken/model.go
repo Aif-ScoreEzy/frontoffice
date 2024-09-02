@@ -17,3 +17,7 @@ type PasswordResetToken struct {
 	UpdatedAt  time.Time      `json:"-"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+type CreatePasswordResetTokenRequest struct {
+	Token string `json:"token"`
+}

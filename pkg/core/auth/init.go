@@ -17,7 +17,7 @@ func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repoUser := user.NewRepository(db, cfg)
 	repoRole := role.NewRepository(db)
 	repoActivationToken := activationtoken.NewRepository(db, cfg)
-	repoPasswordResetToken := passwordresettoken.NewRepository(db)
+	repoPasswordResetToken := passwordresettoken.NewRepository(db, cfg)
 
 	service := NewService(repo, repoUser, repoRole, cfg)
 	serviceUser := user.NewService(repoUser, repoRole)
@@ -29,7 +29,7 @@ func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	authAPI.Post("/register-admin", middleware.IsRequestValid(RegisterAdminRequest{}), controller.RegisterAdmin)
 	// authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(user.RegisterMemberRequest{}), controller.RegisterMember)
 	authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(user.RegisterMemberRequest{}), controller.RegisterMemberAifCore)
-	// authAPI.Post("/request-password-reset", middleware.IsRequestValid(RequestPasswordResetRequest{}), controller.RequestPasswordReset)
+	authAPI.Post("/request-password-reset", middleware.IsRequestValid(RequestPasswordResetRequest{}), controller.RequestPasswordResetAifCore)
 	authAPI.Post("/login", middleware.IsRequestValid(UserLoginRequest{}), controller.LoginAifCore)
 	authAPI.Post("/logout", controller.Logout)
 	// authAPI.Post("/refresh-access", middleware.GetPayloadFromRefreshToken(), controller.RefreshAccessToken)
