@@ -3,6 +3,7 @@ package activationtoken
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"net/http"
@@ -58,7 +59,7 @@ func (repo *repository) CreateActivationToken(activationToken *MstActivationToke
 }
 
 func (repo *repository) CreateActivationTokenAifCore(req *CreateActivationTokenRequest, userId string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/activationtoken/" + userId
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/activation-token`, repo.Cfg.Env.AifcoreHost, userId)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
