@@ -24,6 +24,7 @@ type Repository interface {
 	FindOnePasswordResetTokenByToken(token string) (*http.Response, error)
 	FindOnePasswordResetTokenByUserId(userId string) (*PasswordResetToken, error)
 	CreatePasswordResetTokenAifCore(req *CreatePasswordResetTokenRequest, userId string) (*http.Response, error)
+	DeletePasswordResetToken(id string) (*http.Response, error)
 }
 
 // func (repo *repository) CreatePasswordResetToken(passwordResetToken *PasswordResetToken) (*PasswordResetToken, error) {
@@ -61,6 +62,16 @@ func (repo *repository) CreatePasswordResetTokenAifCore(req *CreatePasswordReset
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+	return client.Do(request)
+}
+
+func (repo *repository) DeletePasswordResetToken(id string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.Cfg.Env.AifcoreHost, id)
+
+	request, _ := http.NewRequest(http.MethodDelete, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}
