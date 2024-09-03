@@ -1,8 +1,10 @@
 package passwordresettoken
 
 import (
+	"encoding/json"
 	"front-office/app/config"
 	"front-office/helper"
+	"io"
 	"strconv"
 )
 
@@ -17,7 +19,7 @@ type service struct {
 
 type Service interface {
 	// CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error)
-	FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error)
+	FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error)
 	CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error)
 }
 
@@ -45,13 +47,24 @@ type Service interface {
 // 	return token, passwordResetToken, nil
 // }
 
-func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error) {
-	result, err := svc.Repo.FindOnePasswordResetTokenByToken(token)
+func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error) {
+	response, err := svc.Repo.FindOnePasswordResetTokenByToken(token)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	var baseResponseSuccess *FindTokenResponse
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
+			return nil, err
+		}
+		baseResponseSuccess.StatusCode = response.StatusCode
+	}
+
+	return baseResponseSuccess, nil
 }
 
 func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error) {

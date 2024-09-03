@@ -21,7 +21,7 @@ type repository struct {
 }
 
 type Repository interface {
-	FindOnePasswordResetTokenByToken(token string) (*PasswordResetToken, error)
+	FindOnePasswordResetTokenByToken(token string) (*http.Response, error)
 	FindOnePasswordResetTokenByUserId(userId string) (*PasswordResetToken, error)
 	CreatePasswordResetTokenAifCore(req *CreatePasswordResetTokenRequest, userId string) (*http.Response, error)
 }
@@ -35,14 +35,14 @@ type Repository interface {
 // 	return passwordResetToken, nil
 // }
 
-func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*PasswordResetToken, error) {
-	var result *PasswordResetToken
-	err := repo.DB.First(&result, "token = ?", token).Error
-	if err != nil {
-		return nil, err
-	}
+func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.Cfg.Env.AifcoreHost, token)
 
-	return result, nil
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+	return client.Do(request)
 }
 
 func (repo *repository) FindOnePasswordResetTokenByUserId(userId string) (*PasswordResetToken, error) {
@@ -57,7 +57,7 @@ func (repo *repository) FindOnePasswordResetTokenByUserId(userId string) (*Passw
 }
 
 func (repo *repository) CreatePasswordResetTokenAifCore(req *CreatePasswordResetTokenRequest, userId string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-token`, repo.Cfg.Env.AifcoreHost, userId)
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens`, repo.Cfg.Env.AifcoreHost, userId)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))

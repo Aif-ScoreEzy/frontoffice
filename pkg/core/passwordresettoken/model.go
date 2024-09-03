@@ -21,3 +21,10 @@ type PasswordResetToken struct {
 type CreatePasswordResetTokenRequest struct {
 	Token string `json:"token"`
 }
+
+type FindTokenResponse struct {
+	Message    string              `json:"message"`
+	Success    bool                `json:"success"`
+	Data       *PasswordResetToken `json:"data"`
+	StatusCode int                 `json:"-"`
+}
