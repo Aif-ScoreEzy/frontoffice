@@ -190,7 +190,7 @@ func (svc *service) VerifyUserTxSvc(userId, token string, req *PasswordResetRequ
 	return user, nil
 }
 
-func (svc *service) PasswordResetSvc(userId, token string, req *PasswordResetRequest) error {
+func (svc *service) PasswordResetSvc(memberId, token string, req *PasswordResetRequest) error {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return errors.New(constant.InvalidPassword)
@@ -200,7 +200,7 @@ func (svc *service) PasswordResetSvc(userId, token string, req *PasswordResetReq
 		return errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	err := svc.Repo.ResetPassword(userId, token, req)
+	_, err := svc.Repo.PasswordReset(memberId, token, req)
 	if err != nil {
 		return err
 	}

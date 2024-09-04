@@ -21,7 +21,7 @@ type Service interface {
 	// CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error)
 	FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error)
 	CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error)
-	DeletePasswordResetToken(id string) (*helper.BaseResponseSuccess, error)
+	DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error)
 }
 
 // func (svc *service) CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
@@ -90,8 +90,9 @@ func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId ui
 	return token, nil
 }
 
-func (svc *service) DeletePasswordResetToken(id string) (*helper.BaseResponseSuccess, error) {
-	response, err := svc.Repo.DeletePasswordResetToken(id)
+func (svc *service) DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error) {
+	idStr := strconv.Itoa(int(id))
+	response, err := svc.Repo.DeletePasswordResetToken(idStr)
 	if err != nil {
 		return nil, err
 	}

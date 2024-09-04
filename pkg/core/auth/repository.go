@@ -3,11 +3,11 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/company"
-	"front-office/pkg/core/passwordresettoken"
 	"front-office/pkg/core/user"
 	"net/http"
 
@@ -26,7 +26,7 @@ type repository struct {
 type Repository interface {
 	CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
 	CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
-	ResetPassword(id, token string, req *PasswordResetRequest) error
+	PasswordReset(id, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyUserTx(req map[string]interface{}, userId, token string) (*user.User, error)
 	LoginAifCoreService(req *UserLoginRequest) (*http.Response, error)
 	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error)
@@ -79,25 +79,15 @@ func (repo *repository) CreateMember(user *user.User, activationToken *activatio
 	return user, nil
 }
 
-func (repo *repository) ResetPassword(id, token string, req *PasswordResetRequest) error {
-	errTX := repo.DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&user.User{}).Where("id = ?", id).Update("password", user.SetPassword(req.Password)).Error
-		if err != nil {
-			return err
-		}
+func (repo *repository) PasswordReset(memberId, token string, req *PasswordResetRequest) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.Cfg.Env.AifcoreHost, memberId, token)
 
-		if err := tx.Model(&passwordresettoken.PasswordResetToken{}).Where("token = ?", token).Update("activation", true).Error; err != nil {
-			return err
-		}
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-		return nil
-	})
-
-	if errTX != nil {
-		return errTX
-	}
-
-	return nil
+	client := &http.Client{}
+	return client.Do(request)
 }
 
 func (repo *repository) VerifyUserTx(req map[string]interface{}, userId, token string) (*user.User, error) {

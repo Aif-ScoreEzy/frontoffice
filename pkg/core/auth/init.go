@@ -36,5 +36,5 @@ func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	// authAPI.Put("/change-password", middleware.IsRequestValid(ChangePasswordRequest{}), controller.ChangePasswordAifcore)
 	authAPI.Put("/send-email-activation/:email", middleware.Auth(), middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), controller.SendEmailActivation)
 	authAPI.Put("/verify/:token", middleware.SetHeaderAuth, middleware.IsRequestValid(PasswordResetRequest{}), controller.VerifyUser)
-	authAPI.Put("/password-reset/:token", middleware.SetHeaderAuth, middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(PasswordResetRequest{}), controller.PasswordReset)
+	authAPI.Put("/password-reset/:token", middleware.SetCookiePasswordResetToken, middleware.GetJWTPayloadPasswordResetFromCookie(), middleware.IsRequestValid(PasswordResetRequest{}), controller.PasswordResetAifCore)
 }
