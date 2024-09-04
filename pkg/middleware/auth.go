@@ -54,6 +54,11 @@ func GetJWTPayloadFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		token := c.Cookies("aif_token")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -94,6 +99,11 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		token := c.Cookies("password_reset_cookie")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -178,6 +188,11 @@ func AdminAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		token := c.Cookies("aif_token")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
