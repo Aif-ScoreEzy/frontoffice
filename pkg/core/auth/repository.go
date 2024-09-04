@@ -29,7 +29,7 @@ type Repository interface {
 	PasswordReset(id, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyUserTx(req map[string]interface{}, userId, token string) (*user.User, error)
 	LoginAifCoreService(req *UserLoginRequest) (*http.Response, error)
-	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error)
+	ChangePasswordAifCoreService(memberId string, req *ChangePasswordRequest) (*http.Response, error)
 }
 
 func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
@@ -123,8 +123,8 @@ func (repo *repository) LoginAifCoreService(req *UserLoginRequest) (*http.Respon
 	return client.Do(request)
 }
 
-func (repo *repository) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/change-password"
+func (repo *repository) ChangePasswordAifCoreService(memberId string, req *ChangePasswordRequest) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.Cfg.Env.AifcoreHost, memberId)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))

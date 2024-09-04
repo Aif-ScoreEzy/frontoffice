@@ -46,11 +46,10 @@ type Controller interface {
 	Logout(c *fiber.Ctx) error
 	SendEmailActivation(c *fiber.Ctx) error
 	RequestPasswordResetAifCore(c *fiber.Ctx) error
-	ChangePassword(c *fiber.Ctx) error
 	RefreshAccessToken(c *fiber.Ctx) error
 	LoginAifCore(c *fiber.Ctx) error
 	PasswordResetAifCore(c *fiber.Ctx) error
-	// ChangePasswordAifcore(c *fiber.Ctx) error
+	ChangePasswordAifcore(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
@@ -277,21 +276,27 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
+func (ctrl *controller) ChangePasswordAifcore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 
-	userExists, err := ctrl.SvcUser.FindUserByIdAndCompanyIdSvc(userId, companyId)
+	member, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
+		Id: memberId,
+	})
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.ChangePasswordSvc(userExists, req)
+	_, err = ctrl.Svc.ChangePasswordAifCoreService(member, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
+	}
+
+	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(member.Data.Name, member.Data.Email)
+	if err != nil {
+		return err
 	}
 
 	resp := helper.ResponseSuccess(

@@ -10,7 +10,6 @@ import (
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/user"
-	"front-office/utility/mailjet"
 	"io"
 	"strconv"
 	"time"
@@ -42,14 +41,11 @@ type service struct {
 
 type Service interface {
 	RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
-	// RegisterMemberSvc(req *user.RegisterMemberRequest, companyId string) (*user.User, string, error)
 	VerifyUserTxSvc(userId, token string, req *PasswordResetRequest) (*user.User, error)
 	PasswordResetSvc(userId, token string, req *PasswordResetRequest) error
-	// LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error)
-	ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error)
 	AddMemberAifCoreService(req *user.RegisterMemberRequest, companyId uint) (*user.RegisterMemberResponse, error)
 	LoginMemberAifCoreService(req *UserLoginRequest, user *user.MstMember) (string, string, error)
-	ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
+	ChangePasswordAifCoreService(member *user.FindUserAifCoreResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
 
 func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -160,39 +156,6 @@ func (svc *service) PasswordResetSvc(memberId, token string, req *PasswordResetR
 	return nil
 }
 
-func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
-	updateUser := map[string]interface{}{}
-
-	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(req.CurrentPassword))
-	if err != nil {
-		return nil, errors.New(constant.IncorrectPassword)
-	}
-
-	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
-	if !isPasswordStrength {
-		return nil, errors.New(constant.InvalidPassword)
-	}
-
-	if req.NewPassword != req.ConfirmNewPassword {
-		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
-	}
-
-	updateUser["password"] = user.SetPassword(req.NewPassword)
-	updateUser["updated_at"] = time.Now()
-
-	data, err := svc.RepoUser.UpdateOneById(updateUser, currentUser)
-	if err != nil {
-		return nil, err
-	}
-
-	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(currentUser.Name, currentUser.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
 func (svc *service) AddMemberAifCoreService(req *user.RegisterMemberRequest, companyId uint) (*user.RegisterMemberResponse, error) {
 	data := &user.RegisterMemberRequest{
 		Name:      req.Name,
@@ -243,8 +206,23 @@ func (svc *service) LoginMemberAifCoreService(req *UserLoginRequest, user *user.
 	return accessToken, refreshToken, nil
 }
 
-func (svc *service) ChangePasswordAifCoreService(req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
-	response, err := svc.Repo.ChangePasswordAifCoreService(req)
+func (svc *service) ChangePasswordAifCoreService(member *user.FindUserAifCoreResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(member.Data.Password), []byte(req.CurrentPassword))
+	if err != nil {
+		return nil, errors.New("old_password is wrong")
+	}
+
+	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
+	if !isPasswordStrength {
+		return nil, errors.New(constant.InvalidPassword)
+	}
+
+	if req.NewPassword != req.ConfirmNewPassword {
+		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
+	}
+
+	memberIdStr := helper.ConvertUintToString(member.Data.MemberId)
+	response, err := svc.Repo.ChangePasswordAifCoreService(memberIdStr, req)
 	if err != nil {
 		return nil, err
 	}
