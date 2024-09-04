@@ -116,54 +116,6 @@ func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, str
 	return user, token, nil
 }
 
-// func (svc *service) RegisterMemberSvc(req *user.RegisterMemberRequest, companyId string) (*user.User, string, error) {
-// 	userId := uuid.NewString()
-
-// 	var tierLevel uint
-// 	if req.RoleId != "" {
-// 		result, err := svc.RepoRole.FindOneById(req.RoleId)
-// 		if result == nil {
-// 			return nil, "", errors.New(constant.DataNotFound)
-// 		} else if err != nil {
-// 			return nil, "", err
-// 		} else {
-// 			tierLevel = result.TierLevel
-// 		}
-// 	}
-
-// 	dataUser := &user.User{
-// 		Id:        userId,
-// 		Name:      req.Name,
-// 		Email:     req.Email,
-// 		Key:       helper.GenerateAPIKey(),
-// 		Image:     "default-profile-image.jpg",
-// 		RoleId:    req.RoleId,
-// 		CompanyId: companyId,
-// 	}
-
-// 	secret := svc.Cfg.Env.JwtSecretKey
-// 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
-
-// 	token, err := helper.GenerateToken(secret, minutesToExpired, 1, 1, tierLevel)
-// 	if err != nil {
-// 		return nil, "", err
-// 	}
-
-// 	tokenId := uuid.NewString()
-// 	dataToken := &activationtoken.MstActivationToken{
-// 		Id:     tokenId,
-// 		Token:  token,
-// 		UserId: userId,
-// 	}
-
-// 	user, err := svc.Repo.CreateMember(dataUser, dataToken)
-// 	if err != nil {
-// 		return nil, "", err
-// 	}
-
-// 	return user, token, nil
-// }
-
 func (svc *service) VerifyUserTxSvc(userId, token string, req *PasswordResetRequest) (*user.User, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
@@ -207,32 +159,6 @@ func (svc *service) PasswordResetSvc(memberId, token string, req *PasswordResetR
 
 	return nil
 }
-
-// func (svc *service) LoginSvc(req *UserLoginRequest, user *user.User) (string, string, error) {
-// 	secret := svc.Cfg.Env.JwtSecretKey
-
-// 	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
-// 	err := bcrypt.CompareHashAndPassword(
-// 		[]byte(user.Password),
-// 		[]byte(req.Password),
-// 	)
-// 	if err != nil {
-// 		return "", "", errors.New(constant.InvalidEmailOrPassword)
-// 	}
-
-// 	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, user.Id, user.CompanyId, user.Role.TierLevel)
-// 	if err != nil {
-// 		return "", "", err
-// 	}
-
-// 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-// 	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.Id, user.CompanyId, user.Role.TierLevel)
-// 	if err != nil {
-// 		return "", "", err
-// 	}
-
-// 	return accessToken, refreshToken, nil
-// }
 
 func (svc *service) ChangePasswordSvc(currentUser *user.User, req *ChangePasswordRequest) (*user.User, error) {
 	updateUser := map[string]interface{}{}
@@ -309,7 +235,7 @@ func (svc *service) LoginMemberAifCoreService(req *UserLoginRequest, user *user.
 	}
 
 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateRefreshToken(secret, refreshTokenExpiresAt, user.MemberId, user.CompanyId, user.RoleId)
+	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, user.MemberId, user.CompanyId, user.RoleId)
 	if err != nil {
 		return "", "", err
 	}

@@ -9,34 +9,14 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+const (
+	keyEmpty = "key doesn't exist"
+)
+
 func GenerateToken(
 	secret string,
 	minutesToExpired int,
-	userId, companyId uint,
-	roleId uint,
-) (string, error) {
-	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
-
-	claims := jwt.MapClaims{}
-	claims["user_id"] = userId
-	claims["company_id"] = companyId
-	claims["role_id"] = roleId
-	claims["exp"] = willExpiredAt.Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(secret))
-	if err != nil {
-		return "", err
-	}
-
-	return t, nil
-}
-
-func GenerateRefreshToken(
-	secret string,
-	minutesToExpired int,
-	userId, companyId uint,
-	roleId uint,
+	userId, companyId, roleId uint,
 ) (string, error) {
 	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
 
@@ -80,7 +60,7 @@ func ExtractUserIdFromClaims(claims *jwt.MapClaims) (uint, error) {
 
 		return uint(roleId), nil
 	} else {
-		return 0, errors.New("key doesn't exist")
+		return 0, errors.New(keyEmpty)
 	}
 }
 
@@ -96,7 +76,7 @@ func ExtractCompanyIdFromClaims(claims *jwt.MapClaims) (uint, error) {
 
 		return uint(roleId), nil
 	} else {
-		return 0, errors.New("key doesn't exist")
+		return 0, errors.New(keyEmpty)
 	}
 }
 
@@ -112,6 +92,6 @@ func ExtractRoleIdFromClaims(claims *jwt.MapClaims) (uint, error) {
 
 		return uint(roleId), nil
 	} else {
-		return 0, errors.New("key doesn't exist")
+		return 0, errors.New(keyEmpty)
 	}
 }
