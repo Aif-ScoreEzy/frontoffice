@@ -78,8 +78,11 @@ type UserResponse struct {
 type RegisterMemberRequest struct {
 	Name      string `json:"name" validate:"required~Field Name is required"`
 	Email     string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
+	Username  string `json:"username"`
+	Phone     string `json:"phone" validate:"phone"`
 	CompanyId uint   `json:"company_id"`
 	RoleId    uint   `json:"role_id"`
+	Key       string `json:"key"`
 }
 
 type dataRegisterMemberResponse struct {

@@ -2,10 +2,10 @@ package user
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
@@ -156,9 +156,18 @@ func (repo *repository) GetTotalData(keyword, roleId, status, startTime, endTime
 func (repo *repository) AddMemberAifCore(req *RegisterMemberRequest) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/addmember"
 
-	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	writer.WriteField("name", req.Name)
+	writer.WriteField("email", req.Email)
+	writer.WriteField("key", req.Key)
+	writer.WriteField("companyid", fmt.Sprintf("%d", req.CompanyId))
+
+	writer.Close()
+
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, &body)
+	request.Header.Set(constant.HeaderContentType, writer.FormDataContentType())
 	request.Header.Set(constant.XAPIKey, repo.Cfg.Env.XModuleKey)
 
 	client := &http.Client{}
