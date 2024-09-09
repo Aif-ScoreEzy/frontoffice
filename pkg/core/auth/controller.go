@@ -40,7 +40,6 @@ type controller struct {
 }
 
 type Controller interface {
-	// RegisterAdmin(c *fiber.Ctx) error
 	RegisterMemberAifCore(c *fiber.Ctx) error
 	VerifyUser(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
@@ -51,57 +50,6 @@ type Controller interface {
 	PasswordResetAifCore(c *fiber.Ctx) error
 	ChangePasswordAifcore(c *fiber.Ctx) error
 }
-
-// func (ctrl *controller) RegisterAdmin(c *fiber.Ctx) error {
-// 	req := c.Locals("request").(*RegisterAdminRequest)
-
-// 	userExists, _ := ctrl.SvcUser.FindUserByEmailSvc(req.Email)
-// 	if userExists != nil {
-// 		statusCode, resp := helper.GetError(constant.DataAlreadyExist)
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
-
-// 	newUser, token, err := ctrl.Svc.RegisterAdminSvc(req)
-// 	if err != nil {
-// 		resp := helper.ResponseFailed(err.Error())
-// 		return c.Status(fiber.StatusInternalServerError).JSON(resp)
-// 	}
-
-// 	err = mailjet.SendEmailVerification(req.Email, token)
-// 	if err != nil {
-// 		resend := "resend"
-// 		req := &user.UpdateUserRequest{
-// 			Status: &resend,
-// 		}
-
-// 		_, err = ctrl.SvcUser.UpdateUserByIdSvc(req, newUser)
-// 		if err != nil {
-// 			statusCode, resp := helper.GetError(err.Error())
-// 			return c.Status(statusCode).JSON(resp)
-// 		}
-
-// 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
-// 		return c.Status(statusCode).JSON(resp)
-// 	}
-
-// 	dataResponse := RegisterAdminResponse{
-// 		Id:      newUser.Id,
-// 		Name:    newUser.Name,
-// 		Email:   newUser.Email,
-// 		Phone:   newUser.Phone,
-// 		Status:  newUser.Status,
-// 		Active:  newUser.Active,
-// 		Company: newUser.Company,
-// 		Role:    newUser.Role,
-// 	}
-
-// 	resp := helper.ResponseSuccess(
-// 		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
-// 		dataResponse,
-// 	)
-
-// 	return c.Status(fiber.StatusCreated).JSON(resp)
-// }
 
 func (ctrl *controller) RegisterMemberAifCore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*user.RegisterMemberRequest)
