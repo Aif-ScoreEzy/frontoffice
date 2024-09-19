@@ -24,7 +24,7 @@ type service struct {
 type Service interface {
 	CreateActivationTokenAifCore(userId, companyId uint, roleId uint) (string, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
-	FindActivationTokenByTokenSvc(token string) (*FindTokenResponse, error)
+	FindActivationTokenByTokenSvc(token string) (*AifResponse, error)
 }
 
 func (svc *service) CreateActivationTokenAifCore(userId, companyId, roleId uint) (string, error) {
@@ -72,22 +72,21 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 	return token, userId, nil
 }
 
-func (svc *service) FindActivationTokenByTokenSvc(token string) (*FindTokenResponse, error) {
+func (svc *service) FindActivationTokenByTokenSvc(token string) (*AifResponse, error) {
 	response, err := svc.Repo.FindOneActivationTokenBytoken(token)
 	if err != nil {
 		return nil, err
 	}
 
-	var baseResponseSuccess *FindTokenResponse
+	var baseResponse *AifResponse
 	if response != nil {
 		dataBytes, _ := io.ReadAll(response.Body)
 		defer response.Body.Close()
 
-		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
+		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
 			return nil, err
 		}
-		baseResponseSuccess.StatusCode = response.StatusCode
 	}
 
-	return baseResponseSuccess, nil
+	return baseResponse, nil
 }
