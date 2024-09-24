@@ -69,8 +69,8 @@ func (ctrl *controller) RegisterMemberAifCore(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(resAddMember.Data.MemberId, companyId, uint(memberRoleId))
-	if err != nil {
+	token, result, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(resAddMember.Data.MemberId, companyId, uint(memberRoleId))
+	if err != nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -105,7 +105,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 	token := c.Params("token")
 
 	result, err := ctrl.SvcActivationToken.FindActivationTokenByTokenSvc(token)
-	if err != nil || result == nil || result.Data == nil || result.Data.Activation {
+	if err != nil || result == nil || !result.Success {
 		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -204,8 +204,8 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
-	if err != nil {
+	token, result, err := ctrl.SvcActivationToken.CreateActivationTokenAifCore(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	if err != nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
