@@ -37,7 +37,7 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	genretail.SetupInit(genRetailAPI, db, cfg)
 
 	logAPI := routeAPI.Group("logs")
-	log.SetupInit(logAPI, cfg)
+	log.SetupInit(logAPI, db, cfg)
 
 	productAPI := routeAPI.Group("products")
 	livestatus.SetupInit(productAPI, db, cfg)

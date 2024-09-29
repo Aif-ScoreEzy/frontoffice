@@ -1,7 +1,6 @@
 package log
 
 import (
-	"front-office/common/model"
 	"front-office/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -32,7 +31,7 @@ func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
@@ -52,7 +51,7 @@ func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
@@ -70,7 +69,7 @@ func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
@@ -88,7 +87,7 @@ func (ctrl *controller) GetTransactionLogsByName(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
