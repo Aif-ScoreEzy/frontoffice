@@ -75,6 +75,43 @@ func TestNewRepository(t *testing.T) {
 	assert.Equal(t, mockConfig, repo.(*repository).Cfg)
 }
 
+func TestFindAllTransactionLogs(t *testing.T) {
+	// Mock server to simulate the external API
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request URL and method
+		expectedPath := "/api/core/logging/transaction/list"
+		assert.Equal(t, expectedPath, r.URL.Path)
+		assert.Equal(t, http.MethodGet, r.Method)
+
+		// Mock response body
+		w.Header().Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(dummyResponseBody))
+	}))
+	defer mockServer.Close()
+
+	// Initialize mock config with the mock server's URL
+	mockConfig := initMockConfig(mockServer.URL)
+
+	repo := &repository{
+		DB:  &gorm.DB{},
+		Cfg: mockConfig,
+	}
+
+	resp, err := repo.FindAllTransactionLogs()
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+
+	expectedBody := dummyResponseBody
+	assert.JSONEq(t, expectedBody, string(body))
+}
+
 func TestFindAllTransactionLogsByDate(t *testing.T) {
 	// Mock server to simulate the external API
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
