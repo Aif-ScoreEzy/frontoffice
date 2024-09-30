@@ -19,7 +19,6 @@ type Controller interface {
 	GetTransactionLogsByDate(c *fiber.Ctx) error
 	GetTransactionLogsByRangeDate(c *fiber.Ctx) error
 	GetTransactionLogsByMonth(c *fiber.Ctx) error
-	GetTransactionLogsByName(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetTransactionLogs(c *fiber.Ctx) error {
@@ -80,24 +79,6 @@ func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
 	month := c.Query("month")
 
 	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonthSvc(companyID, month)
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
-}
-
-func (ctrl *controller) GetTransactionLogsByName(c *fiber.Ctx) error {
-	companyID := c.Query("company_id")
-	name := c.Query("name")
-
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByNameSvc(companyID, name)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)

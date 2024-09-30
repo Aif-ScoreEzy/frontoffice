@@ -16,5 +16,4 @@ func SetupInit(logAPI fiber.Router,db *gorm.DB, cfg *config.Config) {
 	logAPI.Get("/by-date", controller.GetTransactionLogsByDate)
 	logAPI.Get("/by-range-date", controller.GetTransactionLogsByRangeDate)
 	logAPI.Get("/by-month", controller.GetTransactionLogsByMonth)
-	logAPI.Get("/by-name", controller.GetTransactionLogsByName)
 }
