@@ -2,6 +2,7 @@ package log
 
 import (
 	"front-office/app/config"
+	"front-office/common/constant"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -88,7 +89,7 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 		assert.Equal(t, dummyDate, query.Get("date"))
 
 		// Mock response body
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(dummyResponseBody))
 	}))
@@ -137,7 +138,7 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 		assert.Equal(t, dummyDate, query.Get("date_end"))
 
 		// Mock response body
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(dummyResponseBody))
 	}))
@@ -169,5 +170,46 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 
 	expectedBody := dummyResponseBody
 
+	assert.JSONEq(t, expectedBody, string(body))
+}
+
+func TestFindAllTransactionLogsByMonth(t *testing.T) {
+	// Mock server to simulate the external API
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedPath := "/api/core/logging/transaction/month"
+		assert.Equal(t, expectedPath, r.URL.Path)
+		assert.Equal(t, http.MethodGet, r.Method)
+
+		query := r.URL.Query()
+		assert.Equal(t, "1", query.Get("company_id"))
+		assert.Equal(t, dummyDate, query.Get("month"))
+
+		// Mock response body
+		w.Header().Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(dummyResponseBody))
+	}))
+	defer mockServer.Close()
+
+	mockConfig := initMockConfig(mockServer.URL)
+
+	repo := &repository{
+		DB:  &gorm.DB{},
+		Cfg: mockConfig,
+	}
+
+	companyId := "1"
+	date := dummyDate
+	resp, err := repo.FindAllTransactionLogsByMonth(companyId, date)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+
+	expectedBody := dummyResponseBody
 	assert.JSONEq(t, expectedBody, string(body))
 }
