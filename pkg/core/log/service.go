@@ -18,10 +18,34 @@ type service struct {
 }
 
 type Service interface {
+	GetTransactionLogsSvc() (*AifResponse, int, error)
 	GetTransactionLogsByDateSvc(companyId, date string) (*AifResponse, int, error)
 	GetTransactionLogsByRangeDateSvc(startDate, endDate, companyId, page string) (*AifResponse, int, error)
 	GetTransactionLogsByMonthSvc(companyId, month string) (*AifResponse, int, error)
 	GetTransactionLogsByNameSvc(companyId, name string) (*AifResponse, int, error)
+}
+
+func (svc *service) GetTransactionLogsSvc() (*AifResponse, int, error) {
+	response, err := svc.Repo.FindAllTransactionLogs()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var baseResponse *AifResponse
+	if response != nil {
+		responseBodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, 0, err
+		}
+		
+		defer response.Body.Close()
+		
+		if err := json.Unmarshal(responseBodyBytes, &baseResponse); err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return baseResponse, response.StatusCode, nil
 }
 
 func (svc *service) GetTransactionLogsByDateSvc(companyId, date string) (*AifResponse, int, error) {
@@ -120,3 +144,4 @@ func (svc *service) GetTransactionLogsByNameSvc(companyId, name string) (*AifRes
 
 	return dataResp, response.StatusCode, nil
 }
+

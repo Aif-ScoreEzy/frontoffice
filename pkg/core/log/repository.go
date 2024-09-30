@@ -21,9 +21,21 @@ type repository struct {
 }
 
 type Repository interface {
+	FindAllTransactionLogs() (*http.Response, error)
 	FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error)
 	FindAllTransactionLogsByRangeDate(companyId, startDate, endDate string) (*http.Response, error)
 	FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error)
+}
+
+func (repo *repository) FindAllTransactionLogs() (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/list"
+
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+
+	return client.Do(request)
 }
 
 func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error) {
