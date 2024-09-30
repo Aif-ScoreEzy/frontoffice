@@ -121,3 +121,53 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 
 	assert.JSONEq(t, expectedBody, string(body))
 }
+
+func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
+	// Mock server to simulate the external API
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request URL and method
+		expectedPath := "/api/core/logging/transaction/range"
+		assert.Equal(t, expectedPath, r.URL.Path)
+		assert.Equal(t, http.MethodGet, r.Method)
+
+		// Validate query parameters
+		query := r.URL.Query()
+		assert.Equal(t, "1", query.Get("company_id"))
+		assert.Equal(t, dummyDate, query.Get("date_start"))
+		assert.Equal(t, dummyDate, query.Get("date_end"))
+
+		// Mock response body
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(dummyResponseBody))
+	}))
+	defer mockServer.Close()
+
+	// Initialize mock config with the mock server's URL
+	mockConfig := initMockConfig(mockServer.URL)
+
+	// Create repository with the mock config
+	repo := &repository{
+		DB:  &gorm.DB{},
+		Cfg: mockConfig,
+	}
+
+	// Act - Call the method with companyId and date
+	companyId := "1"
+	startDate := dummyDate
+	endDate := dummyDate
+	resp, err := repo.FindAllTransactionLogsByRangeDate(companyId, startDate, endDate)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Optionally, check the body content
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+
+	expectedBody := dummyResponseBody
+
+	assert.JSONEq(t, expectedBody, string(body))
+}
