@@ -23,6 +23,7 @@ type repository struct {
 type Repository interface {
 	FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error)
 	FindAllTransactionLogsByRangeDate(companyId, startDate, endDate string) (*http.Response, error)
+	FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error)
 }
 
 func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error) {
@@ -51,6 +52,22 @@ func (repo *repository) FindAllTransactionLogsByRangeDate(companyId, startDate, 
 	q.Add("date_start", startDate)
 	q.Add("date_end", endDate)
 	q.Add("company_id", companyId)
+	request.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+
+	return client.Do(request)
+}
+
+func (repo *repository) FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/month"
+
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("company_id", companyId)
+	q.Add("month", month)
 	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
