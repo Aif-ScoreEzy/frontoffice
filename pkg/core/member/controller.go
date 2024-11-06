@@ -18,16 +18,15 @@ type controller struct {
 
 type Controller interface {
 	GetBy(c *fiber.Ctx) error
+	GetById(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetBy(c *fiber.Ctx) error {
-	id := c.Query("id")
 	email := c.Query("email")
 	username := c.Query("username")
 	key := c.Query("key")
 
-	result, err := ctrl.Svc.GetBy(&FindUserQuery{
-		Id:       id,
+	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Email:    email,
 		Username: username,
 		Key:      key,
@@ -38,7 +37,27 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 	}
 
 	resp := helper.ResponseSuccess(
-		"succeed to get a user by Id",
+		"succeed to get a user",
+		result.Data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) GetById(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id: id,
+	})
+
+	if err != nil || result == nil || !result.Success {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"succeed to get a user",
 		result.Data,
 	)
 
