@@ -22,10 +22,11 @@ type repository struct {
 }
 
 type Repository interface {
-	GetBy(query *FindUserQuery) (*http.Response, error)
+	GetMemberBy(query *FindUserQuery) (*http.Response, error)
+	GetMemberList() (*http.Response, error)
 }
 
-func (repo *repository) GetBy(query *FindUserQuery) (*http.Response, error) {
+func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error) {
 	apiUrl := fmt.Sprintf(`%v/api/core/member/by`, repo.Cfg.Env.AifcoreHost)
 
 	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
@@ -41,6 +42,20 @@ func (repo *repository) GetBy(query *FindUserQuery) (*http.Response, error) {
 	q.Add("username", query.Username)
 	q.Add("key", query.Key)
 	request.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+
+	return client.Do(request)
+}
+
+func (repo *repository) GetMemberList() (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/list`, repo.Cfg.Env.AifcoreHost)
+	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}
 
