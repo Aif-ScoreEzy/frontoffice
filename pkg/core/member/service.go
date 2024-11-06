@@ -19,6 +19,7 @@ type service struct {
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
 	GetMemberList() (*AifResponse, error)
+	DeleteMemberById(id string) (*AifResponse, error)
 }
 
 func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
@@ -32,6 +33,15 @@ func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
 
 func (s *service) GetMemberList() (*AifResponse, error) {
 	response, err := s.Repo.GetMemberList()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.parseResponse(response)
+}
+
+func (s *service) DeleteMemberById(id string) (*AifResponse, error) {
+	response, err := s.Repo.DeleteMemberById(id)
 	if err != nil {
 		return nil, err
 	}

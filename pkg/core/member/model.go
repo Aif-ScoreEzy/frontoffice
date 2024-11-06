@@ -138,11 +138,11 @@ type FindUserAifCoreResponse struct {
 }
 
 type AifResponse struct {
-	Success bool   `json:"success"`
-	Data    any    `json:"data"`
-	Message string `json:"message"`
-	Meta    any    `json:"meta,omitempty"`
-	Status  bool   `json:"status,omitempty"`
+	Success bool      `json:"success"`
+	Data    MstMember `json:"data"`
+	Message string    `json:"message"`
+	Meta    any       `json:"meta,omitempty"`
+	Status  bool      `json:"status,omitempty"`
 }
 
 type Meta struct {
