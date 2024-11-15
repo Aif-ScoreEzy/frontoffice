@@ -13,7 +13,8 @@ func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	service := NewService(cfg, repository)
 	controller := NewController(service)
 
-	liveStatusAPI.Post("/live-status", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.UploadCSVFile(), controller.BulkSearch)
+	liveStatusAPI.Post("/live-status", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.Search)
+	liveStatusAPI.Post("/live-status/bulk", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.UploadCSVFile(), controller.BulkSearch)
 	liveStatusAPI.Get("/live-status", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobs)
 	liveStatusAPI.Get("/live-status/jobs-summary", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobsSummary)
 	liveStatusAPI.Get("/live-status/jobs-summary/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobsSummary)
