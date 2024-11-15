@@ -61,7 +61,6 @@ func (ctrl *controller) Search(c *fiber.Ctx) error {
 	}
 
 	if errValid := validator.ValidateStruct(&req); errValid != nil {
-		fmt.Println("eeee", errValid)
 		err := ctrl.Svc.UpdateInvalidJobDetail(jobDetails[0].ID, errValid.Error())
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
