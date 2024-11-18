@@ -244,6 +244,9 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 			} else {
 				status = "success"
 			}
+
+			jobDetail.Data = data
+
 			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, status, data)
 			if err != nil {
 				return err
