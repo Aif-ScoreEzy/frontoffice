@@ -1,6 +1,8 @@
 package member
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
@@ -24,6 +26,7 @@ type repository struct {
 type Repository interface {
 	GetMemberBy(query *FindUserQuery) (*http.Response, error)
 	GetMemberList() (*http.Response, error)
+	UpdateOneById(id string, req map[string]interface{}) (*http.Response, error)
 	DeleteMemberById(id string) (*http.Response, error)
 }
 
@@ -60,6 +63,17 @@ func (repo *repository) GetMemberList() (*http.Response, error) {
 
 	client := &http.Client{}
 
+	return client.Do(request)
+}
+
+func (repo *repository) UpdateOneById(id string, req map[string]interface{}) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/updateprofile/%v`, repo.Cfg.Env.AifcoreHost, id)
+
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
 	return client.Do(request)
 }
 
