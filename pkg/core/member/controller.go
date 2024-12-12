@@ -1,8 +1,10 @@
 package member
 
 import (
+	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,6 +23,7 @@ type Controller interface {
 	GetBy(c *fiber.Ctx) error
 	GetById(c *fiber.Ctx) error
 	GetList(c *fiber.Ctx) error
+	UpdateProfile(c *fiber.Ctx) error
 	DeleteById(c *fiber.Ctx) error
 }
 
@@ -81,6 +84,70 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"succeed to get member list",
 		result.Data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateProfileRequest)
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	roleId := fmt.Sprintf("%v", c.Locals("roleId"))
+
+	if req.Email != nil {
+		roleIdInt, err := strconv.Atoi(roleId)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		roleIdMember := 2
+		if roleIdInt == roleIdMember {
+			statusCode, resp := helper.GetError(constant.RequestProhibited)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+			Email: *req.Email,
+		})
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if result != nil && result.Data.MemberId != 0 {
+			statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	result, err := ctrl.Svc.UpdateProfile(userId, req)
+	if err != nil || result == nil || !result.Success {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	updatedMember, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id: userId,
+	})
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	dataResponse := &UserUpdateResponse{
+		Id:        updatedMember.Data.MemberId,
+		Name:      updatedMember.Data.Name,
+		Email:     updatedMember.Data.Email,
+		Active:    updatedMember.Data.Active,
+		CompanyId: updatedMember.Data.CompanyId,
+		RoleId:    updatedMember.Data.RoleId,
+	}
+
+	resp := helper.ResponseSuccess(
+		"succeed to update profile",
+		dataResponse,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

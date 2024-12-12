@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 )
 
 func NewService(repo Repository) Service {
@@ -19,6 +20,7 @@ type service struct {
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
 	GetMemberList() (*AifResponse, error)
+	UpdateProfile(id string, req *UpdateProfileRequest) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -33,6 +35,27 @@ func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
 
 func (s *service) GetMemberList() (*AifResponse, error) {
 	response, err := s.Repo.GetMemberList()
+	if err != nil {
+		return nil, err
+	}
+
+	return s.parseResponse(response)
+}
+
+func (s *service) UpdateProfile(id string, req *UpdateProfileRequest) (*AifResponse, error) {
+	updateUser := map[string]interface{}{}
+
+	if req.Name != nil {
+		updateUser["name"] = *req.Name
+	}
+
+	if req.Email != nil {
+		updateUser["email"] = *req.Email
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	response, err := s.Repo.UpdateOneById(id, updateUser)
 	if err != nil {
 		return nil, err
 	}

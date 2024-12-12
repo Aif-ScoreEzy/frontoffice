@@ -97,14 +97,12 @@ type UpdateUserRequest struct {
 }
 
 type UserUpdateResponse struct {
-	Id        string `json:"id"`
+	Id        uint   `json:"id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
-	Password  string `json:"-"`
-	Status    string `json:"status"`
 	Active    bool   `json:"active"`
-	CompanyId string `json:"company_id"`
-	RoleId    string `json:"role_id"`
+	CompanyId uint   `json:"company_id"`
+	RoleId    uint   `json:"role_id"`
 }
 
 type UpdateProfileRequest struct {
