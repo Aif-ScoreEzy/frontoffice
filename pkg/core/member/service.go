@@ -2,6 +2,7 @@ package member
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -19,8 +20,8 @@ type service struct {
 
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
-	GetMemberList() (*AifResponse, error)
-	UpdateProfile(id string, req *UpdateProfileRequest) (*AifResponse, error)
+	GetMemberList(companyId string) (*AifResponseWithMultipleData, error)
+	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -30,19 +31,19 @@ func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
 		return nil, err
 	}
 
-	return s.parseResponse(response)
+	return s.parseSingleResponse(response)
 }
 
-func (s *service) GetMemberList() (*AifResponse, error) {
-	response, err := s.Repo.GetMemberList()
+func (s *service) GetMemberList(companyId string) (*AifResponseWithMultipleData, error) {
+	response, err := s.Repo.GetMemberList(companyId)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.parseResponse(response)
+	return s.parseMultipleResponse(response)
 }
 
-func (s *service) UpdateProfile(id string, req *UpdateProfileRequest) (*AifResponse, error) {
+func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error) {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -60,7 +61,7 @@ func (s *service) UpdateProfile(id string, req *UpdateProfileRequest) (*AifRespo
 		return nil, err
 	}
 
-	return s.parseResponse(response)
+	return s.parseSingleResponse(response)
 }
 
 func (s *service) DeleteMemberById(id string) (*AifResponse, error) {
@@ -69,23 +70,41 @@ func (s *service) DeleteMemberById(id string) (*AifResponse, error) {
 		return nil, err
 	}
 
-	return s.parseResponse(response)
+	return s.parseSingleResponse(response)
 }
 
-func (s *service) parseResponse(response *http.Response) (*AifResponse, error) {
-	var baseResponse *AifResponse
+func parseResponse(response *http.Response, result interface{}) error {
+	if response == nil {
+		return fmt.Errorf("response is nil")
+	}
+	defer response.Body.Close()
 
-	if response != nil {
-		dataByte, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, err
-		}
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataByte, &baseResponse); err != nil {
-			return nil, err
-		}
+	dataByte, err := io.ReadAll(response.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return baseResponse, nil
+	if err := json.Unmarshal(dataByte, result); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return nil
+}
+
+func (s *service) parseSingleResponse(response *http.Response) (*AifResponse, error) {
+	var baseResponse AifResponse
+	if err := parseResponse(response, &baseResponse); err != nil {
+		return nil, err
+	}
+
+	return &baseResponse, nil
+}
+
+func (s *service) parseMultipleResponse(response *http.Response) (*AifResponseWithMultipleData, error) {
+	var baseResponse AifResponseWithMultipleData
+	if err := parseResponse(response, &baseResponse); err != nil {
+		return nil, err
+	}
+
+	return &baseResponse, nil
 }

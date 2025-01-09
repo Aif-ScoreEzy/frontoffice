@@ -25,7 +25,7 @@ type repository struct {
 
 type Repository interface {
 	GetMemberBy(query *FindUserQuery) (*http.Response, error)
-	GetMemberList() (*http.Response, error)
+	GetMemberList(companyId string) (*http.Response, error)
 	UpdateOneById(id string, req map[string]interface{}) (*http.Response, error)
 	DeleteMemberById(id string) (*http.Response, error)
 }
@@ -52,8 +52,9 @@ func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error
 	return client.Do(request)
 }
 
-func (repo *repository) GetMemberList() (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/list`, repo.Cfg.Env.AifcoreHost)
+func (repo *repository) GetMemberList(companyId string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.Cfg.Env.AifcoreHost, companyId)
+
 	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
 		return nil, err

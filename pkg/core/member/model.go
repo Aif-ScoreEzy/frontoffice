@@ -143,6 +143,14 @@ type AifResponse struct {
 	Status  bool      `json:"status,omitempty"`
 }
 
+type AifResponseWithMultipleData struct {
+	Success bool        `json:"success"`
+	Data    []MstMember `json:"data"`
+	Message string      `json:"message"`
+	Meta    Meta        `json:"meta,omitempty"`
+	Status  bool        `json:"status,omitempty"`
+}
+
 type Meta struct {
 	Total      any `json:"total,omitempty"`
 	Page       any `json:"page,omitempty"`

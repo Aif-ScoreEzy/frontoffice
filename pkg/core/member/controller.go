@@ -75,15 +75,22 @@ func (ctrl *controller) GetById(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
-	result, err := ctrl.Svc.GetMemberList()
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+
+	result, err := ctrl.Svc.GetMemberList(companyId)
 	if err != nil || result == nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	fullResponsePage := map[string]interface{}{
+		"data":       result.Data,
+		"total_data": result.Meta.Total,
+	}
+
 	resp := helper.ResponseSuccess(
 		"succeed to get member list",
-		result.Data,
+		fullResponsePage,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -94,6 +101,7 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	roleId := fmt.Sprintf("%v", c.Locals("roleId"))
 
+	var oldEmail string
 	if req.Email != nil {
 		roleIdInt, err := strconv.Atoi(roleId)
 		if err != nil {
@@ -120,9 +128,11 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 			statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
 			return c.Status(statusCode).JSON(resp)
 		}
+
+		oldEmail = result.Data.Email
 	}
 
-	result, err := ctrl.Svc.UpdateProfile(userId, req)
+	result, err := ctrl.Svc.UpdateProfile(userId, oldEmail, req)
 	if err != nil || result == nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -178,7 +188,7 @@ func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"succeed to delete member",
-		result.Data,
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
