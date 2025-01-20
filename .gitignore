@@ -4,3 +4,5 @@ bin
 
 /public/*
 !/public/default-profile-image.jpg
+
+.vscode

@@ -165,6 +165,10 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 
 func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
+	companyId, err := strconv.Atoi(fmt.Sprintf("%v", c.Locals("companyId")))
+	if err != nil {
+		return err
+	}
 
 	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Id: id,
@@ -175,7 +179,7 @@ func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if result == nil || !result.Success || result.Data.MemberId == 0 {
+	if result == nil || !result.Success || result.Data.MemberId == 0 || result.Data.CompanyId != uint(companyId) {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}

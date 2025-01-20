@@ -123,7 +123,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	minutesToExpired, _ := strconv.Atoi(ctrl.Cfg.Env.JwtActivationExpiresMinutes)
+	minutesToExpired, err := strconv.Atoi(ctrl.Cfg.Env.JwtActivationExpiresMinutes)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -307,10 +307,12 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	if res == nil || (res != nil && res.Data.MemberId == 0) {
+	if res == nil || res.Data.MemberId == 0 {
 		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
 		return c.Status(statusCode).JSON(resp)
-	} else if res != nil && !res.Data.Active {
+	}
+
+	if !res.Data.Active {
 		statusCode, resp := helper.GetError(constant.RequestProhibited)
 		return c.Status(statusCode).JSON(resp)
 	}
