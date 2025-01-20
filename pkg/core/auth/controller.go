@@ -63,7 +63,7 @@ func (ctrl *controller) RegisterMemberAifCore(c *fiber.Ctx) error {
 	memberRoleId := 2
 	req.CompanyId = companyId
 	req.RoleId = uint(memberRoleId)
-	resAddMember, err := ctrl.Svc.AddMemberAifCoreService(req, companyId)
+	resAddMember, err := ctrl.Svc.AddMemberAifCore(req, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -247,7 +247,7 @@ func (ctrl *controller) ChangePasswordAifcore(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.ChangePasswordAifCoreService(member, req)
+	_, err = ctrl.Svc.ChangePasswordAifCore(member, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -299,25 +299,15 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	res, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
+	member, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
 		Email: req.Email,
 	})
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
-		return c.Status(res.StatusCode).JSON(resp)
+		return c.Status(member.StatusCode).JSON(resp)
 	}
 
-	if res == nil || res.Data.MemberId == 0 {
-		statusCode, resp := helper.GetError(constant.InvalidEmailOrPassword)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if !res.Data.Active {
-		statusCode, resp := helper.GetError(constant.RequestProhibited)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	accessToken, refreshToken, err := ctrl.Svc.LoginMemberAifCoreService(req, res.Data)
+	accessToken, refreshToken, res, err := ctrl.Svc.LoginMemberAifCore(req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -343,20 +333,15 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 		SameSite: "Lax",
 	})
 
-	if res.StatusCode != 200 {
-		resp := helper.ResponseFailed(res.Message)
-		return c.Status(res.StatusCode).JSON(resp)
-	}
-
-	user := res.Data
 	data := UserLoginResponse{
-		Id:          user.MemberId,
-		Name:        user.Name,
-		Email:       user.Email,
-		CompanyId:   user.CompanyId,
-		CompanyName: user.MstCompany.CompanyName,
-		TierLevel:   user.RoleId,
-		Image:       user.Image,
+		Id:                 res.Data.MemberId,
+		Name:               member.Data.Name,
+		Email:              member.Data.Email,
+		CompanyId:          res.Data.CompanyId,
+		CompanyName:        member.Data.MstCompany.CompanyName,
+		TierLevel:          res.Data.RoleId,
+		Image:              member.Data.Image,
+		SubscriberProducts: res.Data.SubscriberProducts,
 	}
 
 	responseSuccess := helper.ResponseSuccess(

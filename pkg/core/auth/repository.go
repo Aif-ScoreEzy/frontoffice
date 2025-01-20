@@ -28,8 +28,8 @@ type Repository interface {
 	CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
 	PasswordReset(id, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error)
-	LoginAifCoreService(req *UserLoginRequest) (*http.Response, error)
-	ChangePasswordAifCoreService(memberId string, req *ChangePasswordRequest) (*http.Response, error)
+	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
+	AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error)
 }
 
 func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
@@ -101,22 +101,22 @@ func (repo *repository) VerifyMemberAif(req *PasswordResetRequest, memberId uint
 	return client.Do(request)
 }
 
-func (repo *repository) LoginAifCoreService(req *UserLoginRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/login"
+func (repo *repository) ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.Cfg.Env.AifcoreHost, memberId)
 
 	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}
 	return client.Do(request)
 }
 
-func (repo *repository) ChangePasswordAifCoreService(memberId string, req *ChangePasswordRequest) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.Cfg.Env.AifcoreHost, memberId)
+func (repo *repository) AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/middleware/auth-member-login"
 
 	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}

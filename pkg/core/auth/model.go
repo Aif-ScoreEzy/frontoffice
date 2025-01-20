@@ -46,13 +46,26 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	Id          uint   `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	CompanyId   uint   `json:"company_id"`
-	CompanyName string `json:"company_name"`
-	TierLevel   uint   `json:"tier_level"`
-	Image       string `json:"image"`
+	Id                 uint        `json:"id"`
+	Name               string      `json:"name"`
+	Email              string      `json:"email"`
+	CompanyId          uint        `json:"company_id"`
+	CompanyName        string      `json:"company_name"`
+	TierLevel          uint        `json:"tier_level"`
+	Image              string      `json:"image"`
+	SubscriberProducts interface{} `json:"subscriber_products"`
+}
+
+type dataLoginResponse struct {
+	MemberId           uint        `json:"member_id"`
+	CompanyId          uint        `json:"company_id"`
+	RoleId             uint        `json:"role_id"`
+	SubscriberProducts interface{} `json:"subscriber_products"`
+}
+
+type aifcoreAuthMemberResponse struct {
+	Data       *dataLoginResponse `json:"data"`
+	StatusCode int                `json:"status_code"`
 }
 
 type LoginResponse struct {
