@@ -299,14 +299,6 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UserLoginRequest)
 
-	member, err := ctrl.SvcUser.FindUserAifCore(&user.FindUserQuery{
-		Email: req.Email,
-	})
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-		return c.Status(member.StatusCode).JSON(resp)
-	}
-
 	accessToken, refreshToken, res, err := ctrl.Svc.LoginMemberAifCore(req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -335,12 +327,12 @@ func (ctrl *controller) LoginAifCore(c *fiber.Ctx) error {
 
 	data := UserLoginResponse{
 		Id:                 res.Data.MemberId,
-		Name:               member.Data.Name,
-		Email:              member.Data.Email,
+		Name:               res.Data.Name,
+		Email:              res.Data.Email,
 		CompanyId:          res.Data.CompanyId,
-		CompanyName:        member.Data.MstCompany.CompanyName,
+		CompanyName:        res.Data.CompanyName,
 		TierLevel:          res.Data.RoleId,
-		Image:              member.Data.Image,
+		Image:              res.Data.Image,
 		SubscriberProducts: res.Data.SubscriberProducts,
 	}
 

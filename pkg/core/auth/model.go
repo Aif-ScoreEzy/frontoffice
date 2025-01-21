@@ -58,8 +58,12 @@ type UserLoginResponse struct {
 
 type dataLoginResponse struct {
 	MemberId           uint        `json:"member_id"`
+	Name               string      `json:"name"`
+	Email              string      `json:"email"`
 	CompanyId          uint        `json:"company_id"`
+	CompanyName        string      `json:"company_name"`
 	RoleId             uint        `json:"role_id"`
+	Image              string      `json:"image"`
 	SubscriberProducts interface{} `json:"subscriber_products"`
 }
 
