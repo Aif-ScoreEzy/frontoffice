@@ -54,7 +54,7 @@ type UpdateJobDetailRequest struct {
 }
 
 type LiveStatusRequest struct {
-	PhoneNumber string `json:"phone_number"`
+	PhoneNumber string `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
 	TrxId       string `json:"trx_id"`
 }
 

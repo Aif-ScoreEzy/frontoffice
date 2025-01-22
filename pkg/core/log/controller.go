@@ -1,7 +1,6 @@
 package log
 
 import (
-	"front-office/common/model"
 	"front-office/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,10 +15,25 @@ type controller struct {
 }
 
 type Controller interface {
+	GetTransactionLogs(c *fiber.Ctx) error
 	GetTransactionLogsByDate(c *fiber.Ctx) error
 	GetTransactionLogsByRangeDate(c *fiber.Ctx) error
 	GetTransactionLogsByMonth(c *fiber.Ctx) error
-	GetTransactionLogsByName(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) GetTransactionLogs(c *fiber.Ctx) error {
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsSvc()
+	if errRequest != nil {
+		_, resp := helper.GetError(errRequest.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := AifResponse{
+		Data: result.Data,
+		Meta: result.Meta,
+	}
+
+	return c.Status(statusCode).JSON(resp)
 }
 
 func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
@@ -32,7 +46,7 @@ func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
@@ -52,7 +66,7 @@ func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}
@@ -70,25 +84,7 @@ func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := model.AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
-}
-
-func (ctrl *controller) GetTransactionLogsByName(c *fiber.Ctx) error {
-	companyId := c.Query("company_id")
-	name := c.Query("name")
-
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByNameSvc(companyId, name)
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := model.AifResponse{
+	resp := AifResponse{
 		Data: result.Data,
 		Meta: result.Meta,
 	}

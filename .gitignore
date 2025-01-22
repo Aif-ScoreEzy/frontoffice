@@ -1,6 +1,7 @@
 .env
 tmp
 bin
+coverage.out
 
 /public/*
 !/public/default-profile-image.jpg

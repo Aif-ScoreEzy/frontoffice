@@ -23,6 +23,7 @@ type controller struct {
 }
 
 type Controller interface {
+	Search(c *fiber.Ctx) error
 	BulkSearch(c *fiber.Ctx) error
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
@@ -30,6 +31,70 @@ type Controller interface {
 	ExportJobsSummary(c *fiber.Ctx) error
 	ReprocessFailedJobDetails()
 	GetJobDetailsExport(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) Search(c *fiber.Ctx) error {
+	userID := fmt.Sprintf("%v", c.Locals("userID"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+
+	var req LiveStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		resp := helper.ResponseFailed(err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	data := LiveStatusRequest{
+		PhoneNumber: req.PhoneNumber,
+	}
+	totalData := 1
+
+	jobId, err := ctrl.Svc.CreateJob([]LiveStatusRequest{data}, userID, companyID, totalData)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	jobDetails, err := ctrl.Svc.GetJobDetailsByJobId(jobId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if errValid := validator.ValidateStruct(&req); errValid != nil {
+		err := ctrl.Svc.UpdateInvalidJobDetail(jobDetails[0].Id, errValid.Error())
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+	}
+
+	err = ctrl.Svc.ProcessJobDetails(jobDetails[0])
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	doneStatus := "done"
+	now := time.Now()
+
+	updateReq := UpdateJobRequest{
+		Total:  &totalData,
+		Status: &doneStatus,
+		EndAt:  &now,
+	}
+
+	err = ctrl.Svc.UpdateJob(jobId, &updateReq)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		jobDetails[0].Data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
