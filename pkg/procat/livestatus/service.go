@@ -7,8 +7,8 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"io"
-	"log"
 	"strconv"
+	"strings"
 )
 
 func NewService(cfg *config.Config, repo Repository) Service {
@@ -39,7 +39,7 @@ type Service interface {
 	ProcessJobDetails(jobDetail *JobDetail) error
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, req *UpdateJobRequest) error
-	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error
+	UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, phoneType, operator, status, transactionId, pricingStrategy string) error
 	UpdateFailedJobDetail(id uint, sequence int) error
 	UpdateInvalidJobDetail(id uint, errMessage string) error
 	DeleteJobDetail(id uint) error
@@ -185,7 +185,7 @@ func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
 }
 
 func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
-	apiKey := svc.Cfg.Env.ApiKeyLiveStatus
+	apiKey := svc.Cfg.Env.ApiKeyProductCatalog
 	jobIDStr := strconv.FormatUint(uint64(jobDetail.JobID), 10)
 	request := &LiveStatusRequest{
 		PhoneNumber: jobDetail.PhoneNumber,
@@ -209,30 +209,18 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 			return err
 		}
 	} else {
-		dataMap, _ := liveStatusResponse.Data.(map[string]interface{})
-		dataLiveMap, _ := dataMap["live"].(map[string]interface{})
-		subscriberStatus, _ := dataLiveMap["subscriber_status"].(string)
-		deviceStatus, _ := dataLiveMap["device_status"].(string)
+		parsedLiveStatuses := strings.Split(liveStatusResponse.Data.LiveStatus, ",")
+		subscriberStatus := parsedLiveStatuses[0]
+		deviceStatus := parsedLiveStatuses[1]
+
+		phoneType := liveStatusResponse.Data.PhoneType
+		operator := liveStatusResponse.Data.Operator
+		transactionId := liveStatusResponse.TransactionId
+		pricingStrategy := liveStatusResponse.PricingStrategy
 
 		var errorCode int
-		if errors, ok := dataMap["errors"].([]interface{}); ok {
-			for _, err := range errors {
-				if errMap, ok := err.(map[string]interface{}); ok {
-					if code, ok := errMap["code"].(float64); ok {
-						errorCode = int(code)
-					} else {
-						log.Println("Error: 'code' field is not a number")
-					}
-				}
-			}
-		}
-
-		data := &JSONB{}
-		responseBodyByte, err := json.Marshal(liveStatusResponse.Data)
-		if err == nil {
-			if err := data.Scan(responseBodyByte); err != nil {
-				return err
-			}
+		if len(liveStatusResponse.Data.Errors) != 0 {
+			errorCode = liveStatusResponse.Data.Errors[0].Code
 		}
 
 		if liveStatusResponse.StatusCode == 200 {
@@ -245,9 +233,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 				status = "success"
 			}
 
-			jobDetail.Data = data
-
-			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, status, data)
+			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, phoneType, operator, status, transactionId, pricingStrategy)
 			if err != nil {
 				return err
 			}
@@ -300,14 +286,17 @@ func (svc *service) UpdateJob(id uint, req *UpdateJobRequest) error {
 	return svc.Repo.UpdateJob(id, data)
 }
 
-func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, status string, data *JSONB) error {
+func (svc *service) UpdateSucceededJobDetail(id uint, subcriberStatus, deviceStatus, phoneType, operator, status, transactionId, pricingStrategy string) error {
 	updateJobDetail := map[string]interface{}{}
 
 	updateJobDetail["subscriber_status"] = subcriberStatus
 	updateJobDetail["device_status"] = deviceStatus
+	updateJobDetail["phone_type"] = phoneType
+	updateJobDetail["operator"] = operator
 	updateJobDetail["status"] = status
 	updateJobDetail["on_process"] = false
-	updateJobDetail["data"] = data
+	updateJobDetail["transaction_id"] = transactionId
+	updateJobDetail["pricing_strategy"] = pricingStrategy
 
 	return svc.Repo.UpdateJobDetail(id, updateJobDetail)
 }

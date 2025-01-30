@@ -230,7 +230,7 @@ func (repo *repository) GetJobDetailsByJobIDWithPagination(limit, offset int, ke
 
 	if err := repo.DB.
 		Model(&JobDetail{}).
-		Select("id, job_id, phone_number, subscriber_status, device_status, status, data -> 'carrier' ->> 'name' as operator, data -> 'phone_type' ->> 'description' as phone_type, message").
+		Select("id, job_id, phone_number, subscriber_status, device_status, status, operator, phone_type, transaction_id, pricing_strategy, message").
 		Limit(limit).
 		Offset(offset).
 		Where("job_id = ? AND phone_number LIKE ?", jobID, "%"+keyword+"%").
@@ -308,12 +308,12 @@ func (repo *repository) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
 }
 
 func (repo *repository) CallLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.PartnerServiceHost + "/api/partner/telesign/phone-live-status"
+	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/identity/phone-live-status"
 
 	jsonBodyValue, _ := json.Marshal(liveStatusRequest)
 	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	request.Header.Set("X-AIF-KEY", apiKey)
+	request.Header.Set("X-API-KEY", apiKey)
 
 	client := &http.Client{}
 	return client.Do(request)
