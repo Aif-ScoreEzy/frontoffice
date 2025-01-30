@@ -91,7 +91,7 @@ func (ctrl *controller) Search(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"success",
-		jobDetails[0].Data,
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

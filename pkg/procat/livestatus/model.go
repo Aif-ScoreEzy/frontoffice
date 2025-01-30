@@ -19,19 +19,23 @@ type Job struct {
 }
 
 type JobDetail struct {
-	ID               uint      `json:"id"`
-	UserID           string    `json:"user_id"`
-	CompanyID        string    `json:"company_id"`
-	JobID            uint      `json:"job_id"`
-	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
-	SubscriberStatus string    `json:"subscriber_status"`
-	DeviceStatus     string    `json:"device_status"`
-	OnProcess        bool      `gorm:"not null" json:"on_process"`
-	Sequence         int       `json:"sequence"`
-	Status           string    `json:"status"`
-	Message          *string   `json:"message"`
-	Data             *JSONB    `gorm:"type:jsonb" json:"data"`
-	CreatedAt        time.Time `gorm:"not null;default:current_timestamp" json:"-"`
+	ID               uint    `json:"id"`
+	UserID           string  `json:"user_id"`
+	CompanyID        string  `json:"company_id"`
+	JobID            uint    `json:"job_id"`
+	PhoneNumber      string  `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
+	SubscriberStatus string  `json:"subscriber_status"`
+	DeviceStatus     string  `json:"device_status"`
+	PhoneType        string  `json:"phone_type"`
+	Operator         string  `json:"operator"`
+	OnProcess        bool    `gorm:"not null" json:"on_process"`
+	Sequence         int     `json:"sequence"`
+	Status           string  `json:"status"`
+	Message          *string `json:"message"`
+	TransactionId    string  `json:"transaction_id"`
+	PricingStrategy  string  `json:"pricing_strategy"`
+	// Data             *JSONB    `gorm:"type:jsonb" json:"data"`
+	CreatedAt time.Time `gorm:"not null;default:current_timestamp" json:"-"`
 }
 
 type UpdateJobRequest struct {
@@ -58,11 +62,25 @@ type LiveStatusRequest struct {
 	TrxID       string `json:"trx_id"`
 }
 
+type dataErrors struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
+}
+
+type dataReturnFromProCat struct {
+	LiveStatus string       `json:"live_status"`
+	PhoneType  string       `json:"phone_type"`
+	Operator   string       `json:"operator"`
+	Errors     []dataErrors `json:"errors"`
+}
+
 type LiveStatusResponse struct {
-	Success    bool        `json:"success"`
-	Data       interface{} `json:"data"`
-	Message    string      `json:"message"`
-	StatusCode int         `json:"status_code"`
+	Success         bool                 `json:"success"`
+	Data            dataReturnFromProCat `json:"data"`
+	TransactionId   string               `json:"transaction_id"`
+	PricingStrategy string               `json:"pricing_strategy"`
+	Message         string               `json:"message"`
+	StatusCode      int                  `json:"status_code"`
 }
 
 type JobSummaryResponse struct {
@@ -102,6 +120,8 @@ type JobDetailQueryResult struct {
 	Status           string `json:"status"`
 	Operator         string `json:"operator"`
 	PhoneType        string `json:"phone_type"`
+	TransactionId    string `json:"transaction_id"`
+	PricingStrategy  string `json:"pricing_strategy"`
 	Message          string `json:"message"`
 }
 
