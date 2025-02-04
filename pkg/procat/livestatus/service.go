@@ -187,6 +187,7 @@ func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
 func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 	apiKey := svc.Cfg.Env.ApiKeyProductCatalog
 	jobIDStr := strconv.FormatUint(uint64(jobDetail.JobID), 10)
+
 	request := &LiveStatusRequest{
 		PhoneNumber: jobDetail.PhoneNumber,
 		TrxID:       jobIDStr,
@@ -201,48 +202,42 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 		return err
 	}
 
-	// todo: jika status code 200 kirim job detail ke aifcore
-	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
-	if liveStatusResponse == nil {
-		err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+	if liveStatusResponse == nil || liveStatusResponse.StatusCode != 200 {
+		message := "unknown error"
+		if liveStatusResponse != nil {
+			message = liveStatusResponse.Message
+		}
+
+		err = svc.UpdateInvalidJobDetail(jobDetail.ID, liveStatusResponse.Message)
 		if err != nil {
 			return err
 		}
-	} else {
-		parsedLiveStatuses := strings.Split(liveStatusResponse.Data.LiveStatus, ",")
-		subscriberStatus := parsedLiveStatuses[0]
-		deviceStatus := parsedLiveStatuses[1]
 
-		phoneType := liveStatusResponse.Data.PhoneType
-		operator := liveStatusResponse.Data.Operator
-		transactionId := liveStatusResponse.TransactionId
-		pricingStrategy := liveStatusResponse.PricingStrategy
+		return errors.New(message)
+	}
 
-		var errorCode int
-		if len(liveStatusResponse.Data.Errors) != 0 {
-			errorCode = liveStatusResponse.Data.Errors[0].Code
-		}
+	parsedLiveStatuses := strings.Split(liveStatusResponse.Data.LiveStatus, ",")
+	subscriberStatus := parsedLiveStatuses[0]
+	deviceStatus := parsedLiveStatuses[1]
 
-		if liveStatusResponse.StatusCode == 200 {
-			// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
-			// err = svc.DeleteJobDetail(jobDetail.ID)
-			var status string
-			if errorCode == -60001 {
-				status = "fail"
-			} else {
-				status = "success"
-			}
+	phoneType := liveStatusResponse.Data.PhoneType
+	operator := liveStatusResponse.Data.Operator
+	transactionId := liveStatusResponse.TransactionId
+	pricingStrategy := liveStatusResponse.PricingStrategy
 
-			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, phoneType, operator, status, transactionId, pricingStrategy)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
-			if err != nil {
-				return err
-			}
-		}
+	var errorCode int
+	if len(liveStatusResponse.Data.Errors) != 0 {
+		errorCode = liveStatusResponse.Data.Errors[0].Code
+	}
+
+	status := "success"
+	if errorCode == -60001 {
+		status = "fail"
+	}
+
+	err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, phoneType, operator, status, transactionId, pricingStrategy)
+	if err != nil {
+		return err
 	}
 
 	return nil
