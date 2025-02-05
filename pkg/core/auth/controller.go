@@ -199,6 +199,11 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	if userExists.Data.MemberId == 0 {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
 	if userExists.Data.IsVerified {
 		statusCode, resp := helper.GetError(constant.AlreadyVerified)
 		return c.Status(statusCode).JSON(resp)
