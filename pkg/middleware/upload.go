@@ -40,7 +40,7 @@ func FileUpload() fiber.Handler {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		filename := fmt.Sprintf("%s%s", userId, ext)
+		filename := fmt.Sprintf("%d%s", userId, ext)
 		filePath := fmt.Sprintf("./public/%s", filename)
 
 		if _, err := os.Stat(filePath); err == nil {

@@ -22,6 +22,7 @@ type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
 	GetMemberList(companyId string) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
+	UploadProfileImage(id string, filename *string) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -52,6 +53,23 @@ func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) 
 
 	if req.Email != nil {
 		updateUser["email"] = *req.Email
+	}
+
+	updateUser["updated_at"] = time.Now()
+
+	response, err := s.Repo.UpdateOneById(id, updateUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.parseSingleResponse(response)
+}
+
+func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse, error) {
+	updateUser := map[string]interface{}{}
+
+	if filename != nil {
+		updateUser["image"] = *filename
 	}
 
 	updateUser["updated_at"] = time.Now()

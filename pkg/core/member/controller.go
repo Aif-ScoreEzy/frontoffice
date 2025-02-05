@@ -24,6 +24,7 @@ type Controller interface {
 	GetById(c *fiber.Ctx) error
 	GetList(c *fiber.Ctx) error
 	UpdateProfile(c *fiber.Ctx) error
+	UploadProfileImage(c *fiber.Ctx) error
 	DeleteById(c *fiber.Ctx) error
 }
 
@@ -157,6 +158,42 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 
 	resp := helper.ResponseSuccess(
 		"succeed to update profile",
+		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	filename := fmt.Sprintf("%v", c.Locals("filename"))
+
+	_, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id: userId,
+	})
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	user, err := ctrl.Svc.UploadProfileImage(userId, &filename)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	fmt.Println("=====", filename)
+	dataResponse := &UserUpdateResponse{
+		Id:        user.Data.MemberId,
+		Name:      user.Data.Name,
+		Email:     user.Data.Email,
+		Active:    user.Data.Active,
+		CompanyId: user.Data.CompanyId,
+		RoleId:    user.Data.RoleId,
+	}
+
+	resp := helper.ResponseSuccess(
+		"success to upload profile image",
 		dataResponse,
 	)
 
