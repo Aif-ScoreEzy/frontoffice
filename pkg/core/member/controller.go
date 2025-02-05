@@ -25,6 +25,7 @@ type Controller interface {
 	GetList(c *fiber.Ctx) error
 	UpdateProfile(c *fiber.Ctx) error
 	UploadProfileImage(c *fiber.Ctx) error
+	UpdateMemberById(c *fiber.Ctx) error
 	DeleteById(c *fiber.Ctx) error
 }
 
@@ -182,7 +183,6 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	fmt.Println("=====", filename)
 	dataResponse := &UserUpdateResponse{
 		Id:        user.Data.MemberId,
 		Name:      user.Data.Name,
@@ -195,6 +195,37 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	resp := helper.ResponseSuccess(
 		"success to upload profile image",
 		dataResponse,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
+	req := c.Locals("request").(*UpdateUserRequest)
+	memberId := c.Params("id")
+
+	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id: memberId,
+	})
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result.Data.MemberId == 0 {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	_, err = ctrl.Svc.UpdateMemberByIdSvc(memberId, result.Data.Name, result.Data.Email, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Success to update user",
+		nil,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)

@@ -2,7 +2,11 @@ package member
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/utility/mailjet"
 	"io"
 	"net/http"
 	"time"
@@ -23,6 +27,7 @@ type Service interface {
 	GetMemberList(companyId string) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
 	UploadProfileImage(id string, filename *string) (*AifResponse, error)
+	UpdateMemberByIdSvc(id, currentName, currentEmail string, req *UpdateUserRequest) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -77,6 +82,63 @@ func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse,
 	response, err := s.Repo.UpdateOneById(id, updateUser)
 	if err != nil {
 		return nil, err
+	}
+
+	return s.parseSingleResponse(response)
+}
+
+func (s *service) UpdateMemberByIdSvc(id, currentName, currentEmail string, req *UpdateUserRequest) (*AifResponse, error) {
+	updateUser := map[string]interface{}{}
+	currentTime := time.Now()
+	name := currentName
+
+	if req.Name != nil {
+		name = *req.Name
+		updateUser["name"] = *req.Name
+	}
+
+	if req.Email != nil {
+		result, _ := s.GetMemberBy(&FindUserQuery{
+			Email: *req.Email,
+		})
+
+		if result.Data.MemberId != 0 {
+			return nil, errors.New(constant.EmailAlreadyExists)
+		}
+
+		updateUser["email"] = *req.Email
+	}
+
+	if req.RoleId != nil {
+		// todo: waiting for role api integration to aifcore
+		// role, err := svc.RepoRole.FindOneById(*req.RoleId)
+		// if role == nil {
+		// 	return nil, errors.New(constant.DataNotFound)
+		// } else if err != nil {
+		// 	return nil, err
+		// }
+
+		updateUser["role_id"] = *req.RoleId
+	}
+
+	if req.Active != nil {
+		updateUser["active"] = *req.Active
+	}
+
+	updateUser["updated_at"] = currentTime
+
+	response, err := s.Repo.UpdateOneById(id, updateUser)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedTime := helper.FormatWIB(currentTime)
+
+	if req.Email != nil && currentEmail != *req.Email {
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(name, currentEmail, *req.Email, formattedTime)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s.parseSingleResponse(response)

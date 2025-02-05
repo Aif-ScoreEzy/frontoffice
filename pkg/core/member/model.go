@@ -93,7 +93,7 @@ type UpdateUserRequest struct {
 	Email  *string `json:"email" validate:"email~Only email pattern are allowed"`
 	RoleId *string `json:"role_id"`
 	Active *bool   `json:"active"`
-	Status *string `json:"status"`
+	Status *bool   `json:"status"`
 }
 
 type UserUpdateResponse struct {
