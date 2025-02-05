@@ -163,7 +163,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 func (ctrl *controller) Logout(c *fiber.Ctx) error {
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
+		Name:     "aif_token",
 		Value:    "",              // Empty value
 		Expires:  time.Unix(0, 0), // Expired time (epoch)
 		HTTPOnly: true,            // HTTPOnly for security
@@ -172,7 +172,7 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 	})
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "refresh_token",
+		Name:     "aif_refreh_token",
 		Value:    "",              // Empty value
 		Expires:  time.Unix(0, 0), // Expired time (epoch)
 		HTTPOnly: true,            // HTTPOnly for security
@@ -285,7 +285,7 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
+		Name:     "aif_token",
 		Value:    newAccessToken,
 		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
 		HTTPOnly: true,
