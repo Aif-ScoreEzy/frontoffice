@@ -6,8 +6,8 @@ import (
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/core/member"
 	"front-office/pkg/core/role"
-	"front-office/pkg/core/user"
 	"io"
 	"strconv"
 
@@ -16,7 +16,7 @@ import (
 
 func NewService(
 	repo Repository,
-	repoUser user.Repository,
+	repoUser member.Repository,
 	repoRole role.Repository,
 	cfg *config.Config,
 ) Service {
@@ -30,7 +30,7 @@ func NewService(
 
 type service struct {
 	Repo     Repository
-	RepoUser user.Repository
+	RepoUser member.Repository
 	RepoRole role.Repository
 	Cfg      *config.Config
 }
@@ -39,9 +39,10 @@ type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
 	PasswordResetSvc(userId, token string, req *PasswordResetRequest) error
 	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
-	AddMemberAifCore(req *user.RegisterMemberRequest, companyId uint) (*user.RegisterMemberResponse, error)
-	LoginMemberAifCore(req *UserLoginRequest) (string, string, *aifcoreAuthMemberResponse, error)
-	ChangePasswordAifCore(member *user.FindUserAifCoreResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
+	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
+	LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error)
+	ChangePassword(member *member.AifResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
+	generateTokens(memberId, companyId, roleId uint) (string, string, error)
 }
 
 // func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -155,13 +156,13 @@ func (svc *service) PasswordResetSvc(memberId, token string, req *PasswordResetR
 	return nil
 }
 
-func (svc *service) AddMemberAifCore(req *user.RegisterMemberRequest, companyId uint) (*user.RegisterMemberResponse, error) {
-	res, err := svc.RepoUser.AddMemberAifCore(req)
+func (svc *service) AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error) {
+	res, err := svc.RepoUser.AddMember(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var baseResponseSuccess *user.RegisterMemberResponse
+	var baseResponseSuccess *member.RegisterMemberResponse
 	if res != nil {
 		dataBytes, _ := io.ReadAll(res.Body)
 		defer res.Body.Close()
@@ -173,10 +174,10 @@ func (svc *service) AddMemberAifCore(req *user.RegisterMemberRequest, companyId 
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) LoginMemberAifCore(req *UserLoginRequest) (string, string, *aifcoreAuthMemberResponse, error) {
+func (svc *service) LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error) {
 	res, err := svc.Repo.AuthMemberAifCore(req)
 	if err != nil {
-		return "", "", nil, err
+		return nil, err
 	}
 
 	var baseResponse *aifcoreAuthMemberResponse
@@ -188,26 +189,13 @@ func (svc *service) LoginMemberAifCore(req *UserLoginRequest) (string, string, *
 		baseResponse.StatusCode = res.StatusCode
 	}
 
-	secret := svc.Cfg.Env.JwtSecretKey
-	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
-	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, baseResponse.Data.MemberId, baseResponse.Data.CompanyId, baseResponse.Data.RoleId)
-	if err != nil {
-		return "", "", nil, err
-	}
-
-	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, baseResponse.Data.MemberId, baseResponse.Data.CompanyId, baseResponse.Data.RoleId)
-	if err != nil {
-		return "", "", nil, err
-	}
-
-	return accessToken, refreshToken, baseResponse, nil
+	return baseResponse, nil
 }
 
-func (svc *service) ChangePasswordAifCore(member *user.FindUserAifCoreResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
+func (svc *service) ChangePassword(member *member.AifResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(member.Data.Password), []byte(req.CurrentPassword))
 	if err != nil {
-		return nil, errors.New("old_password is wrong")
+		return nil, errors.New("current password is wrong")
 	}
 
 	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
@@ -237,4 +225,21 @@ func (svc *service) ChangePasswordAifCore(member *user.FindUserAifCoreResponse, 
 	}
 
 	return baseResponseSuccess, nil
+}
+
+func (svc *service) generateTokens(memberId, companyId, roleId uint) (string, string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
+	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, memberId, companyId, roleId)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
+	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, memberId, companyId, roleId)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }

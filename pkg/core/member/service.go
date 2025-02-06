@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
-	"front-office/helper"
-	"front-office/utility/mailjet"
 	"io"
 	"net/http"
 	"time"
@@ -27,7 +25,7 @@ type Service interface {
 	GetMemberList(companyId string) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
 	UploadProfileImage(id string, filename *string) (*AifResponse, error)
-	UpdateMemberByIdSvc(id, currentName, currentEmail string, req *UpdateUserRequest) (*AifResponse, error)
+	UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -87,13 +85,11 @@ func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse,
 	return s.parseSingleResponse(response)
 }
 
-func (s *service) UpdateMemberByIdSvc(id, currentName, currentEmail string, req *UpdateUserRequest) (*AifResponse, error) {
+func (s *service) UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifResponse, error) {
 	updateUser := map[string]interface{}{}
 	currentTime := time.Now()
-	name := currentName
 
 	if req.Name != nil {
-		name = *req.Name
 		updateUser["name"] = *req.Name
 	}
 
@@ -130,15 +126,6 @@ func (s *service) UpdateMemberByIdSvc(id, currentName, currentEmail string, req 
 	response, err := s.Repo.UpdateOneById(id, updateUser)
 	if err != nil {
 		return nil, err
-	}
-
-	formattedTime := helper.FormatWIB(currentTime)
-
-	if req.Email != nil && currentEmail != *req.Email {
-		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(name, currentEmail, *req.Email, formattedTime)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return s.parseSingleResponse(response)

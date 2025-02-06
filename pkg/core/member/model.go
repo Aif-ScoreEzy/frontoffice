@@ -70,6 +70,7 @@ type dataRegisterMemberResponse struct {
 
 type RegisterMemberResponse struct {
 	Data       *dataRegisterMemberResponse `json:"data"`
+	Message    string                      `json:"message"`
 	StatusCode int                         `json:"-"`
 }
 
@@ -89,11 +90,12 @@ type GetUsersResponse struct {
 }
 
 type UpdateUserRequest struct {
-	Name   *string `json:"name"`
-	Email  *string `json:"email" validate:"email~Only email pattern are allowed"`
-	RoleId *string `json:"role_id"`
-	Active *bool   `json:"active"`
-	Status *bool   `json:"status"`
+	Name       *string `json:"name"`
+	Email      *string `json:"email" validate:"email~Only email pattern are allowed"`
+	MailStatus *string `json:"mail_status"`
+	RoleId     *string `json:"role_id"`
+	Active     *bool   `json:"active"`
+	Status     *bool   `json:"status"`
 }
 
 type UserUpdateResponse struct {

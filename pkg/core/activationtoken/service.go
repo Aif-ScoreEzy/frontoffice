@@ -22,12 +22,12 @@ type service struct {
 }
 
 type Service interface {
-	CreateActivationTokenAifCore(userId, companyId uint, roleId uint) (string, *AifResponse, error)
+	CreateActivationToken(userId, companyId uint, roleId uint) (string, *AifResponse, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
-	FindActivationTokenByTokenSvc(token string) (*AifResponse, error)
+	FindActivationTokenByToken(token string) (*AifResponse, error)
 }
 
-func (svc *service) CreateActivationTokenAifCore(userId, companyId, roleId uint) (string, *AifResponse, error) {
+func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, *AifResponse, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
@@ -82,7 +82,7 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 	return token, userId, nil
 }
 
-func (svc *service) FindActivationTokenByTokenSvc(token string) (*AifResponse, error) {
+func (svc *service) FindActivationTokenByToken(token string) (*AifResponse, error) {
 	response, err := svc.Repo.FindOneActivationTokenBytoken(token)
 	if err != nil {
 		return nil, err

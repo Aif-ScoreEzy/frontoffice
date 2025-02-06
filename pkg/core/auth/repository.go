@@ -8,7 +8,8 @@ import (
 	"front-office/common/constant"
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/company"
-	"front-office/pkg/core/user"
+	"front-office/pkg/core/member"
+
 	"net/http"
 
 	"gorm.io/gorm"
@@ -24,21 +25,21 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
-	CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error)
+	CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
+	CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	PasswordReset(id, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error)
 	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
 	AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error)
 }
 
-func (repo *repository) CreateAdmin(company *company.Company, user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
+func (repo *repository) CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error) {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&company).Error; err != nil {
 			return err
 		}
 
-		user.CompanyId = company.Id
+		user.CompanyId = company.CompanyId
 		if err := tx.Create(&user).Error; err != nil {
 			return err
 		}
@@ -59,7 +60,7 @@ func (repo *repository) CreateAdmin(company *company.Company, user *user.User, a
 	return user, errTx
 }
 
-func (repo *repository) CreateMember(user *user.User, activationToken *activationtoken.MstActivationToken) (*user.User, error) {
+func (repo *repository) CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error) {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
 			return err

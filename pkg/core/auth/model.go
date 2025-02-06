@@ -68,8 +68,10 @@ type dataLoginResponse struct {
 }
 
 type aifcoreAuthMemberResponse struct {
+	Success    bool               `json:"success"`
 	Data       *dataLoginResponse `json:"data"`
 	StatusCode int                `json:"status_code"`
+	Message    string             `json:"message"`
 }
 
 type LoginResponse struct {

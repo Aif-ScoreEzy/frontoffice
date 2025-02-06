@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"mime/multipart"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -24,10 +25,32 @@ type repository struct {
 }
 
 type Repository interface {
+	AddMember(req *RegisterMemberRequest) (*http.Response, error)
 	GetMemberBy(query *FindUserQuery) (*http.Response, error)
 	GetMemberList(companyId string) (*http.Response, error)
 	UpdateOneById(id string, req map[string]interface{}) (*http.Response, error)
 	DeleteMemberById(id string) (*http.Response, error)
+}
+
+func (repo *repository) AddMember(req *RegisterMemberRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/member/addmember"
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	writer.WriteField("name", req.Name)
+	writer.WriteField("email", req.Email)
+	writer.WriteField("key", req.Key)
+	writer.WriteField("companyid", fmt.Sprintf("%d", req.CompanyId))
+
+	writer.Close()
+
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, &body)
+	request.Header.Set(constant.HeaderContentType, writer.FormDataContentType())
+	request.Header.Set(constant.XAPIKey, repo.Cfg.Env.XModuleKey)
+
+	client := &http.Client{}
+	return client.Do(request)
 }
 
 func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error) {

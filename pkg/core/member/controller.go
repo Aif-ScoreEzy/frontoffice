@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/utility/mailjet"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -217,10 +219,21 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.UpdateMemberByIdSvc(memberId, result.Data.Name, result.Data.Email, req)
+	_, err = ctrl.Svc.UpdateMemberByIdSvc(memberId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
+	}
+
+	currentTime := time.Now()
+	formattedTime := helper.FormatWIB(currentTime)
+
+	if req.Email != nil && result.Data.Email != *req.Email {
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(result.Data.Name, result.Data.Email, *req.Email, formattedTime)
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
 	}
 
 	resp := helper.ResponseSuccess(
