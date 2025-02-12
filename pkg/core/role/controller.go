@@ -1,6 +1,7 @@
 package role
 
 import (
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/permission"
 
@@ -17,11 +18,33 @@ type controller struct {
 }
 
 type Controller interface {
+	GetRoleById(c *fiber.Ctx) error
 	CreateRole(c *fiber.Ctx) error
 	GetAllRoles(c *fiber.Ctx) error
-	GetRoleById(c *fiber.Ctx) error
 	UpdateRole(c *fiber.Ctx) error
 	DeleteRole(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	result, err := ctrl.Svc.FindRoleById(id)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result == nil || result.Data.RoleId == 0 {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"Succeed to get a role by Id",
+		result.Data,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (ctrl *controller) CreateRole(c *fiber.Ctx) error {
@@ -78,29 +101,11 @@ func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	role, err := ctrl.Svc.FindRoleByIdSvc(id)
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusNotFound).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"Succeed to get a role by Id",
-		role,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
-}
-
 func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleByIdSvc(id)
+	_, err := ctrl.Svc.FindRoleById(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -134,7 +139,7 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 func (ctrl *controller) DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleByIdSvc(id)
+	_, err := ctrl.Svc.FindRoleById(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 

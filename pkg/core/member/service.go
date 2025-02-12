@@ -5,19 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
+	"front-office/pkg/core/role"
 	"io"
 	"net/http"
 	"time"
 )
 
-func NewService(repo Repository) Service {
+func NewService(repo Repository, roleSvc role.Service) Service {
 	return &service{
-		Repo: repo,
+		Repo:    repo,
+		RoleSvc: roleSvc,
 	}
 }
 
 type service struct {
-	Repo Repository
+	Repo    Repository
+	RoleSvc role.Service
 }
 
 type Service interface {
@@ -106,13 +109,14 @@ func (s *service) UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifRe
 	}
 
 	if req.RoleId != nil {
-		// todo: waiting for role api integration to aifcore
-		// role, err := svc.RepoRole.FindOneById(*req.RoleId)
-		// if role == nil {
-		// 	return nil, errors.New(constant.DataNotFound)
-		// } else if err != nil {
-		// 	return nil, err
-		// }
+		role, err := s.RoleSvc.FindRoleById(*req.RoleId)
+		if err != nil {
+			return nil, err
+		}
+
+		if role.Data.RoleId == 0 {
+			return nil, errors.New(constant.DataNotFound)
+		}
 
 		updateUser["role_id"] = *req.RoleId
 	}

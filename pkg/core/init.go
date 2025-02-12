@@ -22,7 +22,7 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	member.SetupInit(userAPI, db, cfg)
 
 	roleAPI := routeAPI.Group("roles")
-	role.SetupInit(roleAPI, db)
+	role.SetupInit(roleAPI, cfg, db)
 
 	permissionAPI := routeAPI.Group("permissions")
 	permission.SetupInit(permissionAPI, db)

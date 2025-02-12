@@ -15,12 +15,13 @@ import (
 func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repo := NewRepository(db, cfg)
 	repoUser := member.NewRepository(db, cfg)
-	repoRole := role.NewRepository(db)
+	repoRole := role.NewRepository(db, cfg)
 	repoActivationToken := activationtoken.NewRepository(cfg)
 	repoPasswordResetToken := passwordresettoken.NewRepository(db, cfg)
 
 	service := NewService(repo, repoUser, repoRole, cfg)
-	serviceUser := member.NewService(repoUser)
+	serviceRole := role.NewService(repoRole)
+	serviceUser := member.NewService(repoUser, serviceRole)
 	serviceActivationToken := activationtoken.NewService(repoActivationToken, cfg)
 	servicePasswordResetToken := passwordresettoken.NewService(repoPasswordResetToken, cfg)
 

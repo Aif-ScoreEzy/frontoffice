@@ -1,6 +1,7 @@
 package role
 
 import (
+	"front-office/app/config"
 	"front-office/pkg/core/permission"
 	"front-office/pkg/middleware"
 
@@ -8,8 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupInit(roleAPI fiber.Router, db *gorm.DB) {
-	repo := NewRepository(db)
+func SetupInit(roleAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
+	repo := NewRepository(db, cfg)
 	repoPermission := permission.NewRepository(db)
 	service := NewService(repo)
 	servicePermission := permission.NewService(repoPermission)

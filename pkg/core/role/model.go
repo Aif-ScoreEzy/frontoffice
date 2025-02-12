@@ -51,3 +51,11 @@ type UpdateRoleRequest struct {
 	Permissions []permission.Permission `json:"permissions"`
 	TierLevel   uint                    `json:"tier_level" validate:"max=3~only available with tier level 1, 2"`
 }
+
+type AifResponse struct {
+	Success bool    `json:"success"`
+	Data    MstRole `json:"data"`
+	Message string  `json:"message"`
+	Meta    any     `json:"meta,omitempty"`
+	Status  bool    `json:"status,omitempty"`
+}

@@ -1,6 +1,11 @@
 package role
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/google/uuid"
 )
 
@@ -13,12 +18,21 @@ type service struct {
 }
 
 type Service interface {
+	FindRoleById(id string) (*AifResponse, error)
 	CreateRoleSvc(req *CreateRoleRequest) (Role, error)
 	GetAllRolesSvc() ([]Role, error)
-	FindRoleByIdSvc(id string) (*Role, error)
 	GetRoleByNameSvc(name string) (*Role, error)
 	UpdateRoleByIdSvc(req *UpdateRoleRequest, id string) (*Role, error)
 	DeleteRoleByIdSvc(id string) error
+}
+
+func (s *service) FindRoleById(id string) (*AifResponse, error) {
+	res, err := s.Repo.FindOneById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseResponse(res)
 }
 
 func (svc *service) CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
@@ -45,15 +59,6 @@ func (svc *service) GetAllRolesSvc() ([]Role, error) {
 	}
 
 	return roles, nil
-}
-
-func (svc *service) FindRoleByIdSvc(id string) (*Role, error) {
-	result, err := svc.Repo.FindOneById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (svc *service) GetRoleByNameSvc(name string) (*Role, error) {
@@ -91,4 +96,24 @@ func (svc *service) DeleteRoleByIdSvc(id string) error {
 	}
 
 	return nil
+}
+
+func parseResponse(response *http.Response) (*AifResponse, error) {
+	var baseResponse *AifResponse
+
+	if response == nil {
+		return nil, fmt.Errorf("response is nil")
+	}
+	defer response.Body.Close()
+
+	dataByte, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if err := json.Unmarshal(dataByte, &baseResponse); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return baseResponse, nil
 }
