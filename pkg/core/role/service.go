@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 func NewService(repo Repository) Service {
@@ -20,10 +18,6 @@ type service struct {
 type Service interface {
 	GetRoleById(id string) (*AifResponse, error)
 	GetAllRoles() (*AifResponseWithMultipleData, error)
-	CreateRoleSvc(req *CreateRoleRequest) (Role, error)
-	GetRoleByNameSvc(name string) (*Role, error)
-	UpdateRoleByIdSvc(req *UpdateRoleRequest, id string) (*Role, error)
-	DeleteRoleByIdSvc(id string) error
 }
 
 func (s *service) GetRoleById(id string) (*AifResponse, error) {
@@ -42,60 +36,6 @@ func (s *service) GetAllRoles() (*AifResponseWithMultipleData, error) {
 	}
 
 	return parseMultipleResponse(res)
-}
-
-func (svc *service) CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
-	roleId := uuid.NewString()
-	dataReq := Role{
-		Id:          roleId,
-		Name:        req.Name,
-		Permissions: req.Permissions,
-		TierLevel:   req.TierLevel,
-	}
-
-	role, err := svc.Repo.Create(dataReq)
-	if err != nil {
-		return role, err
-	}
-
-	return role, nil
-}
-
-func (svc *service) GetRoleByNameSvc(name string) (*Role, error) {
-	result, err := svc.Repo.FindOneByName(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (svc *service) UpdateRoleByIdSvc(req *UpdateRoleRequest, id string) (*Role, error) {
-	dataReq := &Role{}
-
-	if req.Name != "" {
-		dataReq.Name = req.Name
-	}
-
-	if req.Permissions != nil {
-		dataReq.Permissions = req.Permissions
-	}
-
-	role, err := svc.Repo.UpdateById(dataReq, id)
-	if err != nil {
-		return role, err
-	}
-
-	return role, nil
-}
-
-func (svc *service) DeleteRoleByIdSvc(id string) error {
-	err := svc.Repo.Delete(id)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func parseResponse(response *http.Response, result interface{}) error {
