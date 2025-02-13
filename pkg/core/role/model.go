@@ -59,3 +59,11 @@ type AifResponse struct {
 	Meta    any     `json:"meta,omitempty"`
 	Status  bool    `json:"status,omitempty"`
 }
+
+type AifResponseWithMultipleData struct {
+	Success bool      `json:"success"`
+	Data    []MstRole `json:"data"`
+	Message string    `json:"message"`
+	Meta    any       `json:"meta,omitempty"`
+	Status  bool      `json:"status,omitempty"`
+}

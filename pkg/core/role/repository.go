@@ -23,7 +23,7 @@ type repository struct {
 
 type Repository interface {
 	Create(role Role) (Role, error)
-	FindAll() ([]Role, error)
+	FindAll() (*http.Response, error)
 	FindOneById(id string) (*http.Response, error)
 	FindOneByName(name string) (*Role, error)
 	UpdateById(req *Role, id string) (*Role, error)
@@ -53,15 +53,19 @@ func (repo *repository) Create(role Role) (Role, error) {
 	return role, result.Error
 }
 
-func (repo *repository) FindAll() ([]Role, error) {
-	var roles []Role
+func (repo *repository) FindAll() (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/role`, repo.Cfg.Env.AifcoreHost)
 
-	result := repo.Db.Preload("Permissions").Find(&roles)
-	if result.Error != nil {
-		return roles, result.Error
+	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return roles, nil
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+
+	return client.Do(request)
 }
 
 func (repo *repository) FindOneByName(name string) (*Role, error) {

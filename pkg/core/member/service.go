@@ -109,7 +109,7 @@ func (s *service) UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifRe
 	}
 
 	if req.RoleId != nil {
-		role, err := s.RoleSvc.FindRoleById(*req.RoleId)
+		role, err := s.RoleSvc.GetRoleById(*req.RoleId)
 		if err != nil {
 			return nil, err
 		}

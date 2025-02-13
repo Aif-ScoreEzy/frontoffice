@@ -28,7 +28,7 @@ type Controller interface {
 func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	result, err := ctrl.Svc.FindRoleById(id)
+	result, err := ctrl.Svc.GetRoleById(id)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -86,16 +86,15 @@ func (ctrl *controller) CreateRole(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
-	roles, err := ctrl.Svc.GetAllRolesSvc()
-	if err != nil {
-		resp := helper.ResponseFailed(err.Error())
-
-		return c.Status(fiber.StatusInternalServerError).JSON(resp)
+	result, err := ctrl.Svc.GetAllRoles()
+	if err != nil || result == nil || !result.Success {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
 	}
 
 	resp := helper.ResponseSuccess(
-		"Succeed to get all roles",
-		roles,
+		"Succeed to get list of roles",
+		result.Data,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -105,7 +104,7 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateRoleRequest)
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleById(id)
+	_, err := ctrl.Svc.GetRoleById(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
@@ -139,7 +138,7 @@ func (ctrl *controller) UpdateRole(c *fiber.Ctx) error {
 func (ctrl *controller) DeleteRole(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	_, err := ctrl.Svc.FindRoleById(id)
+	_, err := ctrl.Svc.GetRoleById(id)
 	if err != nil {
 		resp := helper.ResponseFailed(err.Error())
 
