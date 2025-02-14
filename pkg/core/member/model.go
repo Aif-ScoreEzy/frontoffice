@@ -123,6 +123,17 @@ func SetPassword(password string) string {
 	return password
 }
 
+type MemberFilter struct {
+	CompanyID string
+	Page      string
+	Limit     string
+	Keyword   string
+	RoleID    string
+	Status    string
+	StartDate string
+	EndDate   string
+}
+
 type FindUserQuery struct {
 	Id       string
 	Email    string

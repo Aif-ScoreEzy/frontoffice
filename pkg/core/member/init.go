@@ -15,7 +15,7 @@ func SetupInit(userAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 
 	serviceRole := role.NewService(roleRepo)
 	service := NewService(repo, serviceRole)
-	controller := NewController(service)
+	controller := NewController(service, serviceRole)
 
 	userAPI.Get("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetList)
 	userAPI.Put("/profile", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(UpdateProfileRequest{}), controller.UpdateProfile)

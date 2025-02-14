@@ -27,7 +27,7 @@ type repository struct {
 type Repository interface {
 	AddMember(req *RegisterMemberRequest) (*http.Response, error)
 	GetMemberBy(query *FindUserQuery) (*http.Response, error)
-	GetMemberList(companyId string) (*http.Response, error)
+	GetMemberList(filter *MemberFilter) (*http.Response, error)
 	UpdateOneById(id string, req map[string]interface{}) (*http.Response, error)
 	DeleteMemberById(id string) (*http.Response, error)
 }
@@ -75,8 +75,8 @@ func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error
 	return client.Do(request)
 }
 
-func (repo *repository) GetMemberList(companyId string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.Cfg.Env.AifcoreHost, companyId)
+func (repo *repository) GetMemberList(filter *MemberFilter) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.Cfg.Env.AifcoreHost, filter.CompanyID)
 
 	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -84,6 +84,16 @@ func (repo *repository) GetMemberList(companyId string) (*http.Response, error) 
 	}
 
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("page", filter.Page)
+	q.Add("size", filter.Limit)
+	q.Add("keyword", filter.Keyword)
+	q.Add("status", filter.Status)
+	q.Add("role_id", filter.RoleID)
+	q.Add("start_date", filter.StartDate)
+	q.Add("end_date", filter.EndDate)
+	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
 

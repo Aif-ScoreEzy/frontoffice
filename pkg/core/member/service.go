@@ -25,7 +25,7 @@ type service struct {
 
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
-	GetMemberList(companyId string) (*AifResponseWithMultipleData, error)
+	GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
 	UploadProfileImage(id string, filename *string) (*AifResponse, error)
 	UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifResponse, error)
@@ -41,8 +41,8 @@ func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
 	return s.parseSingleResponse(response)
 }
 
-func (s *service) GetMemberList(companyId string) (*AifResponseWithMultipleData, error) {
-	response, err := s.Repo.GetMemberList(companyId)
+func (s *service) GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error) {
+	response, err := s.Repo.GetMemberList(filter)
 	if err != nil {
 		return nil, err
 	}

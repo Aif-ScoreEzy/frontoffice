@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
 	"strconv"
 	"time"
@@ -11,14 +12,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
+func NewController(service Service, roleService role.Service) Controller {
 	return &controller{
-		Svc: service,
+		Svc:     service,
+		RoleSvc: roleService,
 	}
 }
 
 type controller struct {
-	Svc Service
+	Svc     Service
+	RoleSvc role.Service
 }
 
 type Controller interface {
@@ -80,8 +83,45 @@ func (ctrl *controller) GetById(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	page := c.Query("page", "1")
+	limit := c.Query("limit", "10")
+	keyword := c.Query("keyword", "")
+	roleName := c.Query("role", "")
+	status := c.Query("status", "")
+	startDate := c.Query("startDate", "")
+	endDate := c.Query("endDate", "")
 
-	result, err := ctrl.Svc.GetMemberList(companyId)
+	var roleID string
+	if roleName != "" {
+		result, err := ctrl.RoleSvc.GetAllRoles(role.RoleFilter{
+			Name: roleName,
+		})
+
+		if err != nil || result == nil || !result.Success {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if len(result.Data) == 0 {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		roleID = fmt.Sprintf("%v", result.Data[0].RoleId)
+	}
+
+	filter := MemberFilter{
+		CompanyID: companyId,
+		Page:      page,
+		Limit:     limit,
+		Keyword:   keyword,
+		RoleID:    roleID,
+		Status:    status,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	result, err := ctrl.Svc.GetMemberList(&filter)
 	if err != nil || result == nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
