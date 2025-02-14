@@ -43,7 +43,13 @@ func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
-	result, err := ctrl.Svc.GetAllRoles()
+	name := c.Query("name", "")
+
+	filter := RoleFilter{
+		Name: name,
+	}
+
+	result, err := ctrl.Svc.GetAllRoles(filter)
 	if err != nil || result == nil || !result.Success {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

@@ -16,8 +16,17 @@ type service struct {
 }
 
 type Service interface {
+	GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error)
 	GetRoleById(id string) (*AifResponse, error)
-	GetAllRoles() (*AifResponseWithMultipleData, error)
+}
+
+func (s *service) GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error) {
+	res, err := s.Repo.FindAll(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseMultipleResponse(res)
 }
 
 func (s *service) GetRoleById(id string) (*AifResponse, error) {
@@ -27,15 +36,6 @@ func (s *service) GetRoleById(id string) (*AifResponse, error) {
 	}
 
 	return parseSingleResponse(res)
-}
-
-func (s *service) GetAllRoles() (*AifResponseWithMultipleData, error) {
-	res, err := s.Repo.FindAll()
-	if err != nil {
-		return nil, err
-	}
-
-	return parseMultipleResponse(res)
 }
 
 func parseResponse(response *http.Response, result interface{}) error {
@@ -58,6 +58,7 @@ func parseResponse(response *http.Response, result interface{}) error {
 
 func parseSingleResponse(response *http.Response) (*AifResponse, error) {
 	var baseResponse AifResponse
+
 	if err := parseResponse(response, &baseResponse); err != nil {
 		return nil, err
 	}
@@ -67,6 +68,7 @@ func parseSingleResponse(response *http.Response) (*AifResponse, error) {
 
 func parseMultipleResponse(response *http.Response) (*AifResponseWithMultipleData, error) {
 	var baseResponse AifResponseWithMultipleData
+
 	if err := parseResponse(response, &baseResponse); err != nil {
 		return nil, err
 	}

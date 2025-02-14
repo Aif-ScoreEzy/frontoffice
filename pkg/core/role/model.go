@@ -29,6 +29,10 @@ type MstPermission struct {
 	Name         string `json:"name"`
 }
 
+type RoleFilter struct {
+	Name string
+}
+
 type CreateRoleRequest struct {
 	Name        string                  `json:"name" validate:"required~Field Name is required"`
 	Permissions []permission.Permission `json:"permissions" validate:"required~Field Permissions is required"`

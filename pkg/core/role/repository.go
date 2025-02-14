@@ -22,7 +22,7 @@ type repository struct {
 }
 
 type Repository interface {
-	FindAll() (*http.Response, error)
+	FindAll(filter RoleFilter) (*http.Response, error)
 	FindOneById(id string) (*http.Response, error)
 }
 
@@ -41,7 +41,7 @@ func (repo *repository) FindOneById(id string) (*http.Response, error) {
 	return client.Do(request)
 }
 
-func (repo *repository) FindAll() (*http.Response, error) {
+func (repo *repository) FindAll(filter RoleFilter) (*http.Response, error) {
 	apiUrl := fmt.Sprintf(`%v/api/core/role`, repo.Cfg.Env.AifcoreHost)
 
 	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
@@ -50,6 +50,10 @@ func (repo *repository) FindAll() (*http.Response, error) {
 	}
 
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("name", filter.Name)
+	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
 
