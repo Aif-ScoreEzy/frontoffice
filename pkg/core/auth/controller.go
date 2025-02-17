@@ -88,7 +88,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 		}
 
 		memberId := fmt.Sprintf("%d", result.Data.MemberId)
-		_, err := ctrl.SvcUser.UpdateMemberByIdSvc(memberId, req)
+		_, err := ctrl.SvcUser.UpdateMemberById(memberId, req)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -142,7 +142,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 			MailStatus: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateMemberByIdSvc(memberId, req)
+		_, err = ctrl.SvcUser.UpdateMemberById(memberId, req)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -232,7 +232,7 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 			MailStatus: &pending,
 		}
 
-		_, err = ctrl.SvcUser.UpdateMemberByIdSvc(memberId, req)
+		_, err = ctrl.SvcUser.UpdateMemberById(memberId, req)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)

@@ -95,7 +95,6 @@ type UpdateUserRequest struct {
 	MailStatus *string `json:"mail_status"`
 	RoleId     *string `json:"role_id"`
 	Active     *bool   `json:"active"`
-	Status     *bool   `json:"status"`
 }
 
 type UserUpdateResponse struct {

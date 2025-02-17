@@ -44,8 +44,14 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 		Username: username,
 		Key:      key,
 	})
-	if err != nil || result == nil || !result.Success {
+
+	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result == nil || !result.Success || result.Data.MemberId == 0 {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
 
@@ -259,7 +265,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.UpdateMemberByIdSvc(memberId, req)
+	_, err = ctrl.Svc.UpdateMemberById(memberId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

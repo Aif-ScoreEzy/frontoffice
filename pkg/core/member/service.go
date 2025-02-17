@@ -28,7 +28,7 @@ type Service interface {
 	GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
 	UploadProfileImage(id string, filename *string) (*AifResponse, error)
-	UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifResponse, error)
+	UpdateMemberById(id string, req *UpdateUserRequest) (*AifResponse, error)
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -88,7 +88,7 @@ func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse,
 	return s.parseSingleResponse(response)
 }
 
-func (s *service) UpdateMemberByIdSvc(id string, req *UpdateUserRequest) (*AifResponse, error) {
+func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) (*AifResponse, error) {
 	updateUser := map[string]interface{}{}
 	currentTime := time.Now()
 
