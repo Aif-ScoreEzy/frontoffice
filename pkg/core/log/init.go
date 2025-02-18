@@ -7,13 +7,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupInit(logAPI fiber.Router,db *gorm.DB, cfg *config.Config) {
+func SetupInit(logAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repository := NewRepository(db, cfg)
 	service := NewService(repository, cfg)
 	controller := NewController(service)
 
-	logAPI.Get("/", controller.GetTransactionLogs)
-	logAPI.Get("/by-date", controller.GetTransactionLogsByDate)
-	logAPI.Get("/by-range-date", controller.GetTransactionLogsByRangeDate)
-	logAPI.Get("/by-month", controller.GetTransactionLogsByMonth)
+	// scoreezy
+	logTransScoreezyAPI := logAPI.Group("scoreezy")
+	logTransScoreezyAPI.Get("/", controller.GetTransactionLogs)
+	logTransScoreezyAPI.Get("/by-date", controller.GetTransactionLogsByDate)
+	logTransScoreezyAPI.Get("/by-range-date", controller.GetTransactionLogsByRangeDate)
+	logTransScoreezyAPI.Get("/by-month", controller.GetTransactionLogsByMonth)
 }

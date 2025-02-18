@@ -22,36 +22,26 @@ type Controller interface {
 }
 
 func (ctrl *controller) GetTransactionLogs(c *fiber.Ctx) error {
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsSvc()
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogs()
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
+	return c.Status(statusCode).JSON(result)
 }
 
 func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
 	date := c.Query("date")
 	companyId := c.Query("company_id")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByDateSvc(companyId, date)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByDate(companyId, date)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
+	return c.Status(statusCode).JSON(result)
 }
 
 func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
@@ -60,34 +50,24 @@ func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
 	companyId := c.Query("company_id")
 	page := c.Query("page", "1")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByRangeDateSvc(startDate, endDate, companyId, page)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByRangeDate(startDate, endDate, companyId, page)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
+	return c.Status(statusCode).JSON(result)
 }
 
 func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
 	companyId := c.Query("company_id")
 	month := c.Query("month")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonthSvc(companyId, month)
+	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonth(companyId, month)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	resp := AifResponse{
-		Data: result.Data,
-		Meta: result.Meta,
-	}
-
-	return c.Status(statusCode).JSON(resp)
+	return c.Status(statusCode).JSON(result)
 }

@@ -10,13 +10,13 @@ import (
 
 func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
 	return &repository{
-		DB: db,
+		DB:  db,
 		Cfg: cfg,
 	}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
 	Cfg *config.Config
 }
 
@@ -28,7 +28,7 @@ type Repository interface {
 }
 
 func (repo *repository) FindAllTransactionLogs() (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/list"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/list"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -39,7 +39,7 @@ func (repo *repository) FindAllTransactionLogs() (*http.Response, error) {
 }
 
 func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/by"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/by"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -55,7 +55,7 @@ func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*h
 }
 
 func (repo *repository) FindAllTransactionLogsByRangeDate(companyId, startDate, endDate string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/range"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/range"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -72,7 +72,7 @@ func (repo *repository) FindAllTransactionLogsByRangeDate(companyId, startDate, 
 }
 
 func (repo *repository) FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/month"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/month"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
