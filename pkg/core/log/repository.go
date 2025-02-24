@@ -21,13 +21,13 @@ type repository struct {
 }
 
 type Repository interface {
-	FindAllTransactionLogs() (*http.Response, error)
-	FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error)
-	FindAllTransactionLogsByRangeDate(companyId, startDate, endDate string) (*http.Response, error)
-	FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error)
+	FetchLogTransactions() (*http.Response, error)
+	FetchLogTransactionsByDate(companyId, date string) (*http.Response, error)
+	FetchLogTransactionsByRangeDate(companyId, startDate, endDate string) (*http.Response, error)
+	FetchLogTransactionsByMonth(companyId, month string) (*http.Response, error)
 }
 
-func (repo *repository) FindAllTransactionLogs() (*http.Response, error) {
+func (repo *repository) FetchLogTransactions() (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/list"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
@@ -38,7 +38,7 @@ func (repo *repository) FindAllTransactionLogs() (*http.Response, error) {
 	return client.Do(request)
 }
 
-func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*http.Response, error) {
+func (repo *repository) FetchLogTransactionsByDate(companyId, date string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/by"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
@@ -54,7 +54,7 @@ func (repo *repository) FindAllTransactionLogsByDate(companyId, date string) (*h
 	return client.Do(request)
 }
 
-func (repo *repository) FindAllTransactionLogsByRangeDate(companyId, startDate, endDate string) (*http.Response, error) {
+func (repo *repository) FetchLogTransactionsByRangeDate(companyId, startDate, endDate string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/range"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
@@ -71,7 +71,7 @@ func (repo *repository) FindAllTransactionLogsByRangeDate(companyId, startDate, 
 	return client.Do(request)
 }
 
-func (repo *repository) FindAllTransactionLogsByMonth(companyId, month string) (*http.Response, error) {
+func (repo *repository) FetchLogTransactionsByMonth(companyId, month string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/month"
 
 	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)

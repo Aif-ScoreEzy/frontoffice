@@ -1,73 +1,197 @@
 package log
 
 import (
+	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/core/member"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service) Controller {
-	return &controller{Svc: service}
+func NewController(service Service, memberService member.Service) Controller {
+	return &controller{Svc: service, MemberSvc: memberService}
 }
 
 type controller struct {
-	Svc Service
+	Svc       Service
+	MemberSvc member.Service
 }
 
 type Controller interface {
-	GetTransactionLogs(c *fiber.Ctx) error
-	GetTransactionLogsByDate(c *fiber.Ctx) error
-	GetTransactionLogsByRangeDate(c *fiber.Ctx) error
-	GetTransactionLogsByMonth(c *fiber.Ctx) error
+	GetLogTransactions(c *fiber.Ctx) error
+	GetLogTransactionsByDate(c *fiber.Ctx) error
+	GetLogTransactionsByRangeDate(c *fiber.Ctx) error
+	GetLogTransactionsByMonth(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) GetTransactionLogs(c *fiber.Ctx) error {
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogs()
+func (ctrl *controller) GetLogTransactions(c *fiber.Ctx) error {
+	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogTransactions()
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	return c.Status(statusCode).JSON(result)
+	var transactions []DataLogTrans
+	for _, data := range resLogTrans.Data {
+		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+			Id: fmt.Sprintf("%d", data.MemberID),
+		})
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		transaction := DataLogTrans{
+			Name:      resMember.Data.Name,
+			Grade:     data.Grade,
+			CreatedAt: data.CreatedAt,
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	responseBody := helper.ResponseSuccess(
+		"succeed to get list of log transaction",
+		transactions,
+	)
+
+	return c.Status(statusCode).JSON(responseBody)
 }
 
-func (ctrl *controller) GetTransactionLogsByDate(c *fiber.Ctx) error {
+func (ctrl *controller) GetLogTransactionsByDate(c *fiber.Ctx) error {
 	date := c.Query("date")
 	companyId := c.Query("company_id")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByDate(companyId, date)
+	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogTransactionsByDate(companyId, date)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	return c.Status(statusCode).JSON(result)
+	var transactions []DataLogTrans
+	for _, data := range resLogTrans.Data {
+		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+			Id: fmt.Sprintf("%d", data.MemberID),
+		})
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		transaction := DataLogTrans{
+			Name:      resMember.Data.Name,
+			Grade:     data.Grade,
+			CreatedAt: data.CreatedAt,
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	responseBody := helper.ResponseSuccess(
+		"succeed to get list of log transaction",
+		transactions,
+	)
+
+	return c.Status(statusCode).JSON(responseBody)
 }
 
-func (ctrl *controller) GetTransactionLogsByRangeDate(c *fiber.Ctx) error {
+func (ctrl *controller) GetLogTransactionsByRangeDate(c *fiber.Ctx) error {
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
 	companyId := c.Query("company_id")
 	page := c.Query("page", "1")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByRangeDate(startDate, endDate, companyId, page)
+	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogTransactionsByRangeDate(startDate, endDate, companyId, page)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	return c.Status(statusCode).JSON(result)
+	var transactions []DataLogTrans
+	for _, data := range resLogTrans.Data {
+		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+			Id: fmt.Sprintf("%d", data.MemberID),
+		})
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		transaction := DataLogTrans{
+			Name:      resMember.Data.Name,
+			Grade:     data.Grade,
+			CreatedAt: data.CreatedAt,
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	responseBody := helper.ResponseSuccess(
+		"succeed to get list of log transaction",
+		transactions,
+	)
+
+	return c.Status(statusCode).JSON(responseBody)
 }
 
-func (ctrl *controller) GetTransactionLogsByMonth(c *fiber.Ctx) error {
+func (ctrl *controller) GetLogTransactionsByMonth(c *fiber.Ctx) error {
 	companyId := c.Query("company_id")
 	month := c.Query("month")
 
-	result, statusCode, errRequest := ctrl.Svc.GetTransactionLogsByMonth(companyId, month)
+	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogTransactionsByMonth(companyId, month)
 	if errRequest != nil {
 		_, resp := helper.GetError(errRequest.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	return c.Status(statusCode).JSON(result)
+	var transactions []DataLogTrans
+	for _, data := range resLogTrans.Data {
+		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+			Id: fmt.Sprintf("%d", data.MemberID),
+		})
+
+		if err != nil {
+			statusCode, resp := helper.GetError(err.Error())
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
+			statusCode, resp := helper.GetError(constant.DataNotFound)
+			return c.Status(statusCode).JSON(resp)
+		}
+
+		transaction := DataLogTrans{
+			Name:      resMember.Data.Name,
+			Grade:     data.Grade,
+			CreatedAt: data.CreatedAt,
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	responseBody := helper.ResponseSuccess(
+		"succeed to get list of log transaction",
+		transactions,
+	)
+
+	return c.Status(statusCode).JSON(responseBody)
 }
