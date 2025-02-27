@@ -31,7 +31,7 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	company.SetupInit(companyAPI, db)
 
 	gradingAPI := routeAPI.Group("gradings")
-	grading.SetupInit(gradingAPI, db)
+	grading.SetupInit(gradingAPI, db, cfg)
 
 	genRetailAPI := routeAPI.Group("scores")
 	genretail.SetupInit(genRetailAPI, db, cfg)

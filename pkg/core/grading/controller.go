@@ -55,7 +55,7 @@ func (ctrl *controller) CreateGradings(c *fiber.Ctx) error {
 func (ctrl *controller) GetGradings(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	gradings, err := ctrl.Svc.GetGradingsSvc(companyId)
+	result, err := ctrl.Svc.GetGradings(companyId)
 	if err != nil {
 		statusCode, res := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(res)
@@ -63,7 +63,7 @@ func (ctrl *controller) GetGradings(c *fiber.Ctx) error {
 
 	res := helper.ResponseSuccess(
 		"succeed to get gradings",
-		gradings,
+		result.Data,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(res)
@@ -79,7 +79,7 @@ func (ctrl *controller) ReplaceGradings(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(res)
 	}
 
-	gradings, err := ctrl.Svc.GetGradingsSvc(companyId)
+	gradings, err := ctrl.Svc.GetGradings(companyId)
 	if err != nil {
 		statusCode, res := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(res)
@@ -103,7 +103,7 @@ func (ctrl *controller) ReplaceGradingsNew(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(res)
 	}
 
-	gradings, err := ctrl.Svc.GetGradingsSvc(companyId)
+	result, err := ctrl.Svc.GetGradings(companyId)
 	if err != nil {
 		statusCode, res := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(res)
@@ -111,7 +111,7 @@ func (ctrl *controller) ReplaceGradingsNew(c *fiber.Ctx) error {
 
 	res := helper.ResponseSuccess(
 		"succeed to update gradings by id",
-		gradings,
+		result,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(res)

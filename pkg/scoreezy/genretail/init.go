@@ -11,7 +11,7 @@ import (
 
 func SetupInit(genRetailAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repo := NewRepository(db)
-	repoGrading := grading.NewRepository(db)
+	repoGrading := grading.NewRepository(db, cfg)
 	service := NewService(repo, cfg)
 	serviceGrading := grading.NewService(repoGrading)
 	controller := NewController(service, serviceGrading)

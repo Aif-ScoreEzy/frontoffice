@@ -1,18 +1,28 @@
 package grading
 
 import (
+	"fmt"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
+
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{
+		DB:  db,
+		Cfg: cfg,
+	}
 }
 
 type repository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
+	GetGradeList(apiconfigId string) (*http.Response, error)
 	CreateGrading(grading *Grading) (*Grading, error)
 	FindOneById(gradingId, companyId string) (*Grading, error)
 	FindOneByGradingLabel(gradingLabel, companyId string) (*Grading, error)
@@ -20,6 +30,27 @@ type Repository interface {
 	UpdateOneById(updateGrading *UpdateGradingRequest, gradingId, companyId string) (*Grading, error)
 	ReplaceAllGradings(gradings []*Grading, companyId string) error
 	DeleteAllGradings(companyId string) error
+}
+
+func (repo *repository) GetGradeList(apiconfigId string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/apiconfig`, repo.Cfg.Env.AifcoreHost)
+
+	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := request.URL.Query()
+	q.Add("id", apiconfigId)
+	request.URL.RawQuery = q.Encode()
+
+	fmt.Println("ppp", request)
+
+	client := &http.Client{}
+
+	return client.Do(request)
 }
 
 func (repo *repository) CreateGrading(grading *Grading) (*Grading, error) {

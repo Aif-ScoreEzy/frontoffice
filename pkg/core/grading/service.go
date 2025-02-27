@@ -1,8 +1,11 @@
 package grading
 
 import (
+	"encoding/json"
 	"errors"
 	"front-office/common/constant"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,14 +20,28 @@ type service struct {
 }
 
 type Service interface {
+	GetGradings(companyId string) (*AifResponse, error)
 	CreateGradingSvc(req *CreateGradingRequest, companyId string) (*Grading, error)
 	GetGradingByGradinglabelSvc(gradingLabel, companyId string) (*Grading, error)
 	GetGradingByIdSvc(gradingId, companyId string) (*Grading, error)
-	GetGradingsSvc(companyId string) ([]*Grading, error)
 	UpdateGradingSvc(req *UpdateGradingRequest, companyId string) (*Grading, error)
 	ReplaceAllGradingsSvc(createGradingsRequest *CreateGradingsRequest, companyId string) error
 	ReplaceAllGradingsNewSvc(createGradingsRequest *CreateGradingsNewRequest, companyId string) error
 	DeleteGradingsSvc(companyId string) error
+}
+
+func (svc *service) GetGradings(companyId string) (*AifResponse, error) {
+	response, err := svc.Repo.GetGradeList(companyId)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (svc *service) CreateGradingSvc(req *CreateGradingRequest, companyId string) (*Grading, error) {
@@ -74,15 +91,6 @@ func (svc *service) GetGradingByIdSvc(gradingId, companyId string) (*Grading, er
 	}
 
 	return grading, nil
-}
-
-func (svc *service) GetGradingsSvc(companyId string) ([]*Grading, error) {
-	gradings, err := svc.Repo.FindAllGradings(companyId)
-	if err != nil {
-		return nil, err
-	}
-
-	return gradings, nil
 }
 
 func (svc *service) UpdateGradingSvc(req *UpdateGradingRequest, companyId string) (*Grading, error) {
@@ -190,4 +198,19 @@ func (svc *service) DeleteGradingsSvc(companyId string) error {
 	}
 
 	return nil
+}
+
+func parseResponse(response *http.Response) (*AifResponse, error) {
+	var baseResponse *AifResponse
+
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
+			return nil, err
+		}
+	}
+
+	return baseResponse, nil
 }

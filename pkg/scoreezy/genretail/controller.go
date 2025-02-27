@@ -35,8 +35,18 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	// make sure parameter settings are set
-	gradings, _ := ctrl.SvcGrading.GetGradingsSvc(companyId)
-	if len(gradings) < 1 {
+	result, err := ctrl.SvcGrading.GetGradings(companyId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result == nil || result.Data == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if len(result.Data.Grades) < 1 {
 		statusCode, resp := helper.GetError(constant.ParamSettingIsNotSet)
 		return c.Status(statusCode).JSON(resp)
 	}

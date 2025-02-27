@@ -19,6 +19,13 @@ type Grading struct {
 	DeletedAt    gorm.DeletedAt  `gorm:"index" json:"-"`
 }
 
+type MstGrade struct {
+	Id    uint    `json:"id"`
+	Grade string  `json:"grade"`
+	Start float64 `json:"start"`
+	End   float64 `json:"end"`
+}
+
 type CreateGradingRequest struct {
 	GradingLabel string   `json:"grading_label"`
 	MinGrade     *float64 `json:"min_grade"`
@@ -50,4 +57,20 @@ type CreateGradingNewRequest struct {
 
 type CreateGradingsNewRequest struct {
 	CreateGradingsNewRequest []*CreateGradingNewRequest `json:"gradings"`
+}
+
+type DataGradesResponse struct {
+	ApiconfigId uint       `json:"apiconfig_id"`
+	CompanyId   uint       `json:"company_id"`
+	BasePrice   float64    `json:"base_price"`
+	Grades      []MstGrade `json:"grades"`
+	AddOns      []any      `json:"addons"`
+}
+
+type AifResponse struct {
+	Success bool                `json:"success"`
+	Data    *DataGradesResponse `json:"data"`
+	Message string              `json:"message"`
+	Meta    any                 `json:"meta,omitempty"`
+	Status  bool                `json:"status,omitempty"`
 }
