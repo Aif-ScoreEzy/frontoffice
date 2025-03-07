@@ -1,50 +1,44 @@
 package activationtoken
 
 import (
-	"gorm.io/gorm"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(cfg *config.Config) Repository {
+	return &repository{Cfg: cfg}
 }
 
 type repository struct {
-	DB *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
-	FindOneActivationTokenBytoken(token string) (*ActivationToken, error)
-	FindOneActivationTokenByUserID(userID string) (*ActivationToken, error)
-	CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error)
+	FindOneActivationTokenBytoken(token string) (*http.Response, error)
+	CreateActivationTokenAifCore(req *CreateActivationTokenRequest, memberId string) (*http.Response, error)
 }
 
-func (repo *repository) FindOneActivationTokenBytoken(token string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
+func (repo *repository) FindOneActivationTokenBytoken(token string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/activation-tokens/%v`, repo.Cfg.Env.AifcoreHost, token)
 
-	err := repo.DB.First(&activationToken, "token = ?", token).Error
-	if err != nil {
-		return nil, err
-	}
+	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	return activationToken, nil
+	client := &http.Client{}
+	return client.Do(request)
 }
 
-func (repo *repository) FindOneActivationTokenByUserID(userID string) (*ActivationToken, error) {
-	var activationToken *ActivationToken
+func (repo *repository) CreateActivationTokenAifCore(req *CreateActivationTokenRequest, memberId string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.Cfg.Env.AifcoreHost, memberId)
 
-	err := repo.DB.First(&activationToken, "user_id = ?", userID).Error
-	if err != nil {
-		return nil, err
-	}
+	jsonBodyValue, _ := json.Marshal(req)
+	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	return activationToken, nil
-}
-
-func (repo *repository) CreateActivationToken(activationToken *ActivationToken) (*ActivationToken, error) {
-	err := repo.DB.Create(&activationToken).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return activationToken, nil
+	client := &http.Client{}
+	return client.Do(request)
 }

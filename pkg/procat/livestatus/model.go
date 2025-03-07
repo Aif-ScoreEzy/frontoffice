@@ -8,21 +8,21 @@ import (
 )
 
 type Job struct {
-	ID        uint       `json:"id"`
+	Id        uint       `json:"id"`
 	Total     int        `json:"total"`
 	Success   int        `json:"success"`
 	Status    string     `json:"status"`
-	UserID    string     `json:"user_id"`
-	CompanyID string     `json:"company_id"`
+	UserId    string     `json:"user_id"`
+	CompanyId string     `json:"company_id"`
 	CreatedAt time.Time  `gorm:"not null;default:current_timestamp" json:"start_time"`
 	EndAt     *time.Time `json:"end_time"`
 }
 
 type JobDetail struct {
-	ID               uint      `json:"id"`
-	UserID           string    `json:"user_id"`
-	CompanyID        string    `json:"company_id"`
-	JobID            uint      `json:"job_id"`
+	Id               uint      `json:"id"`
+	UserId           string    `json:"user_id"`
+	CompanyId        string    `json:"company_id"`
+	JobId            uint      `json:"job_id"`
 	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
 	SubscriberStatus string    `json:"subscriber_status"`
 	DeviceStatus     string    `json:"device_status"`
@@ -41,8 +41,8 @@ type UpdateJobRequest struct {
 }
 
 type UpdateJobDetailRequest struct {
-	ID               uint      `json:"id"`
-	JobID            uint      `json:"job_id"`
+	Id               uint      `json:"id"`
+	JobId            uint      `json:"job_id"`
 	PhoneNumber      string    `json:"phone_number"`
 	SubscriberStatus string    `json:"subscriber_status"`
 	DeviceStatus     string    `json:"device_status"`
@@ -55,7 +55,7 @@ type UpdateJobDetailRequest struct {
 
 type LiveStatusRequest struct {
 	PhoneNumber string `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
-	TrxID       string `json:"trx_id"`
+	TrxId       string `json:"trx_id"`
 }
 
 type LiveStatusResponse struct {
@@ -94,8 +94,8 @@ type JobDetailResponse struct {
 }
 
 type JobDetailQueryResult struct {
-	ID               uint   `json:"id"`
-	JobID            uint   `json:"job_id"`
+	Id               uint   `json:"id"`
+	JobId            uint   `json:"job_id"`
 	PhoneNumber      string `json:"phone_number"`
 	SubscriberStatus string `json:"subscriber_status"`
 	DeviceStatus     string `json:"device_status"`

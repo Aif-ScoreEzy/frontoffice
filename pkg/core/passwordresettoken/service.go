@@ -1,12 +1,11 @@
 package passwordresettoken
 
 import (
+	"encoding/json"
 	"front-office/app/config"
 	"front-office/helper"
-	"front-office/pkg/core/user"
+	"io"
 	"strconv"
-
-	"github.com/google/uuid"
 )
 
 func NewService(repo Repository, cfg *config.Config) Service {
@@ -19,39 +18,70 @@ type service struct {
 }
 
 type Service interface {
-	CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error)
-	FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error)
+	FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error)
+	CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error)
+	DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error)
 }
 
-func (svc *service) CreatePasswordResetTokenSvc(user *user.User) (string, *PasswordResetToken, error) {
-	secret := svc.Cfg.Env.JwtSecretKey
-	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtResetPasswordExpiresMinutes)
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, user.ID, user.CompanyID, user.Role.TierLevel)
-	if err != nil {
-		return "", nil, err
-	}
-
-	tokenID := uuid.NewString()
-	passwordResetToken := &PasswordResetToken{
-		ID:     tokenID,
-		Token:  token,
-		UserID: user.ID,
-	}
-
-	passwordResetToken, err = svc.Repo.CreatePasswordResetToken(passwordResetToken)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return token, passwordResetToken, nil
-}
-
-func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*PasswordResetToken, error) {
-	result, err := svc.Repo.FindOnePasswordResetTokenByToken(token)
+func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error) {
+	response, err := svc.Repo.FindOnePasswordResetTokenByToken(token)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	var baseResponseSuccess *FindTokenResponse
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
+			return nil, err
+		}
+		baseResponseSuccess.StatusCode = response.StatusCode
+	}
+
+	return baseResponseSuccess, nil
+}
+
+func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error) {
+	secret := svc.Cfg.Env.JwtSecretKey
+	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId)
+	if err != nil {
+		return "", err
+	}
+
+	req := &CreatePasswordResetTokenRequest{
+		Token: token,
+	}
+
+	userIdStr := helper.ConvertUintToString(userId)
+	_, err = svc.Repo.CreatePasswordResetTokenAifCore(req, userIdStr)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (svc *service) DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error) {
+	idStr := strconv.Itoa(int(id))
+	response, err := svc.Repo.DeletePasswordResetToken(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	var baseResponseSuccess *helper.BaseResponseSuccess
+	if response != nil {
+		dataBytes, _ := io.ReadAll(response.Body)
+		defer response.Body.Close()
+
+		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
+			return nil, err
+		}
+		baseResponseSuccess.StatusCode = response.StatusCode
+	}
+
+	return baseResponseSuccess, nil
 }

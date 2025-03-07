@@ -6,9 +6,9 @@ import (
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/grading"
 	"front-office/pkg/core/log"
+	"front-office/pkg/core/member"
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
-	"front-office/pkg/core/user"
 	"front-office/pkg/procat/livestatus"
 	"front-office/pkg/scoreezy/genretail"
 
@@ -19,10 +19,10 @@ import (
 func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	userAPI := routeAPI.Group("users")
 	auth.SetupInit(userAPI, db, cfg)
-	user.SetupInit(userAPI, db, cfg)
+	member.SetupInit(userAPI, db, cfg)
 
 	roleAPI := routeAPI.Group("roles")
-	role.SetupInit(roleAPI, db)
+	role.SetupInit(roleAPI, cfg, db)
 
 	permissionAPI := routeAPI.Group("permissions")
 	permission.SetupInit(permissionAPI, db)
@@ -31,7 +31,7 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	company.SetupInit(companyAPI, db)
 
 	gradingAPI := routeAPI.Group("gradings")
-	grading.SetupInit(gradingAPI, db)
+	grading.SetupInit(gradingAPI, db, cfg)
 
 	genRetailAPI := routeAPI.Group("scores")
 	genretail.SetupInit(genRetailAPI, db, cfg)

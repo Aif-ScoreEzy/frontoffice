@@ -13,7 +13,7 @@ func SetupInit(permissionAPI fiber.Router, db *gorm.DB) {
 	controller := NewController(service)
 
 	permissionAPI.Post("/", middleware.Auth(), middleware.IsRequestValid(PermissionRequest{}), controller.CreatePermission)
-	permissionAPI.Get("/:id", middleware.Auth(), controller.GetPermissionByID)
-	permissionAPI.Put("/:id", middleware.Auth(), middleware.IsRequestValid(PermissionRequest{}), controller.UpdatePermissionByID)
-	permissionAPI.Delete("/:id", middleware.Auth(), controller.DeletePermissionByID)
+	permissionAPI.Get("/:id", middleware.Auth(), controller.GetPermissionById)
+	permissionAPI.Put("/:id", middleware.Auth(), middleware.IsRequestValid(PermissionRequest{}), controller.UpdatePermissionById)
+	permissionAPI.Delete("/:id", middleware.Auth(), controller.DeletePermissionById)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"front-office/app/config"
 	"io"
+	"net/http"
 )
 
 func NewService(repo Repository, cfg *config.Config) Service {
@@ -12,104 +13,83 @@ func NewService(repo Repository, cfg *config.Config) Service {
 
 type service struct {
 	Repo Repository
-	Cfg *config.Config
+	Cfg  *config.Config
 }
 
 type Service interface {
-	GetTransactionLogsSvc() (*AifResponse, int, error)
-	GetTransactionLogsByDateSvc(companyId, date string) (*AifResponse, int, error)
-	GetTransactionLogsByRangeDateSvc(startDate, endDate, companyId, page string) (*AifResponse, int, error)
-	GetTransactionLogsByMonthSvc(companyId, month string) (*AifResponse, int, error)
+	GetLogTransactions() (*AifResponse, int, error)
+	GetLogTransactionsByDate(companyId, date string) (*AifResponse, int, error)
+	GetLogTransactionsByRangeDate(startDate, endDate, companyId, page string) (*AifResponse, int, error)
+	GetLogTransactionsByMonth(companyId, month string) (*AifResponse, int, error)
 }
 
-func (svc *service) GetTransactionLogsSvc() (*AifResponse, int, error) {
-	response, err := svc.Repo.FindAllTransactionLogs()
+func (svc *service) GetLogTransactions() (*AifResponse, int, error) {
+	response, err := svc.Repo.FetchLogTransactions()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		responseBodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, 0, err
-		}
-		
-		defer response.Body.Close()
-		
-		if err := json.Unmarshal(responseBodyBytes, &baseResponse); err != nil {
-			return nil, 0, err
-		}
-	}
-
-	return baseResponse, response.StatusCode, nil
-}
-
-func (svc *service) GetTransactionLogsByDateSvc(companyId, date string) (*AifResponse, int, error) {
-	response, err := svc.Repo.FindAllTransactionLogsByDate(companyId, date)
+	result, err := parseResponse(response)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		responseBodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, 0, err
-		}
-		
-		defer response.Body.Close()
-		
-		if err := json.Unmarshal(responseBodyBytes, &baseResponse); err != nil {
-			return nil, 0, err
-		}
-	}
-
-	return baseResponse, response.StatusCode, nil
+	return result, response.StatusCode, nil
 }
 
-func (svc *service) GetTransactionLogsByRangeDateSvc(startDate, endDate, companyId, page string) (*AifResponse, int, error) {
-	response, err := svc.Repo.FindAllTransactionLogsByRangeDate(companyId, startDate, endDate)
+func (svc *service) GetLogTransactionsByDate(companyId, date string) (*AifResponse, int, error) {
+	response, err := svc.Repo.FetchLogTransactionsByDate(companyId, date)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		responseBodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, 0, err
-		}
-		
-		defer response.Body.Close()
-		
-		if err := json.Unmarshal(responseBodyBytes, &baseResponse); err != nil {
-			return nil, 0, err
-		}
-	}
-
-	return baseResponse, response.StatusCode, nil
-}
-
-func (svc *service) GetTransactionLogsByMonthSvc(companyId, month string) (*AifResponse, int, error) {
-	response, err := svc.Repo.FindAllTransactionLogsByMonth(companyId, month)
+	result, err := parseResponse(response)
 	if err != nil {
 		return nil, 0, err
 	}
 
+	return result, response.StatusCode, nil
+}
+
+func (svc *service) GetLogTransactionsByRangeDate(startDate, endDate, companyId, page string) (*AifResponse, int, error) {
+	response, err := svc.Repo.FetchLogTransactionsByRangeDate(companyId, startDate, endDate)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, response.StatusCode, nil
+}
+
+func (svc *service) GetLogTransactionsByMonth(companyId, month string) (*AifResponse, int, error) {
+	response, err := svc.Repo.FetchLogTransactionsByMonth(companyId, month)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return result, response.StatusCode, nil
+}
+
+func parseResponse(response *http.Response) (*AifResponse, error) {
 	var baseResponse *AifResponse
+
 	if response != nil {
-		responseBodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, 0, err
-		}
-		
+		dataBytes, _ := io.ReadAll(response.Body)
 		defer response.Body.Close()
-		
-		if err := json.Unmarshal(responseBodyBytes, &baseResponse); err != nil {
-			return nil, 0, err
+
+		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
+			return nil, err
 		}
 	}
 
-	return baseResponse, response.StatusCode, nil
+	return baseResponse, nil
 }

@@ -13,11 +13,11 @@ type repository struct {
 }
 
 type Repository interface {
-	FindOneByID(id string) (*Company, error)
-	UpdateOneByID(req Company, id string) (Company, error)
+	FindOneById(id string) (*Company, error)
+	UpdateOneById(req Company, id string) (Company, error)
 }
 
-func (repo *repository) FindOneByID(id string) (*Company, error) {
+func (repo *repository) FindOneById(id string) (*Company, error) {
 	var company *Company
 
 	err := repo.DB.First(&company, "id = ?", id).Error
@@ -28,7 +28,7 @@ func (repo *repository) FindOneByID(id string) (*Company, error) {
 	return company, nil
 }
 
-func (repo *repository) UpdateOneByID(req Company, id string) (Company, error) {
+func (repo *repository) UpdateOneById(req Company, id string) (Company, error) {
 	var company Company
 	repo.DB.First(&company, "id = ?", id)
 

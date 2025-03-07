@@ -16,7 +16,7 @@ func Auth() func(c *fiber.Ctx) error {
 	config := jwtware.Config{
 		SigningKey:   []byte(os.Getenv("JWT_SECRET_KEY")),
 		ErrorHandler: jwtError,
-		TokenLookup:  "cookie:access_token",
+		TokenLookup:  "cookie:aif_token",
 	}
 
 	return jwtware.New(config)
@@ -53,7 +53,12 @@ func SetCookiePasswordResetToken(c *fiber.Ctx) error {
 func GetJWTPayloadFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		token := c.Cookies("access_token")
+		token := c.Cookies("aif_token")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -62,29 +67,29 @@ func GetJWTPayloadFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		userID, err := helper.ExtractUserIDFromClaims(claims)
+		userId, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		companyId, err := helper.ExtractCompanyIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleId, err := helper.ExtractRoleIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userID", userID)
-		c.Locals("companyID", companyID)
-		c.Locals("tierLevel", tierLevel)
+		c.Locals("userId", userId)
+		c.Locals("companyId", companyId)
+		c.Locals("roleId", roleId)
 
 		return c.Next()
 	}
@@ -94,6 +99,11 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		token := c.Cookies("password_reset_cookie")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -102,28 +112,28 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		userID, err := helper.ExtractUserIDFromClaims(claims)
+		userId, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		companyId, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		tierLevel, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userID", userID)
-		c.Locals("companyID", companyID)
+		c.Locals("userId", userId)
+		c.Locals("companyId", companyId)
 		c.Locals("tierLevel", tierLevel)
 
 		return c.Next()
@@ -133,7 +143,7 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 func GetPayloadFromRefreshToken() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		token := c.Cookies("refresh_token")
+		token := c.Cookies("aif_refresh_token")
 		if token == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"message": "no refresh token provided",
@@ -146,29 +156,29 @@ func GetPayloadFromRefreshToken() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		userID, err := helper.ExtractUserIDFromClaims(claims)
+		userId, err := helper.ExtractUserIdFromClaims(claims)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		companyID, err := helper.ExtractCompanyIDFromClaims(claims)
+		companyId, err := helper.ExtractCompanyIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleId, err := helper.ExtractRoleIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userID", userID)
-		c.Locals("companyID", companyID)
-		c.Locals("tierLevel", tierLevel)
+		c.Locals("userId", userId)
+		c.Locals("companyId", companyId)
+		c.Locals("roleId", roleId)
 
 		return c.Next()
 	}
@@ -177,7 +187,12 @@ func GetPayloadFromRefreshToken() fiber.Handler {
 func AdminAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
-		token := c.Cookies("access_token")
+		token := c.Cookies("aif_token")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "no access token provided",
+			})
+		}
 
 		claims, err := helper.ExtractClaimsFromJWT(token, secret)
 		if err != nil {
@@ -185,12 +200,12 @@ func AdminAuth() fiber.Handler {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		tierLevel, err := helper.ExtractTierLevelFromClaims(claims)
+		roleId, err := helper.ExtractRoleIdFromClaims(claims)
 		if err != nil {
 			resp := helper.ResponseFailed(err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
-		if tierLevel == 2 {
+		if roleId == 2 {
 			resp := helper.ResponseFailed(constant.RequestProhibited)
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}

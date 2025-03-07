@@ -15,17 +15,17 @@ type repository struct {
 }
 
 type Repository interface {
-	FindOneByID(industry Industry) (Industry, error)
+	FindOneById(industry Industry) (Industry, error)
 }
 
-func (repo *repository) FindOneByID(industry Industry) (Industry, error) {
+func (repo *repository) FindOneById(industry Industry) (Industry, error) {
 	err := repo.DB.First(&industry).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return industry, fmt.Errorf("Industry with ID %s not found", industry.ID)
+			return industry, fmt.Errorf("Industry with Id %s not found", industry.Id)
 		}
 
-		return industry, fmt.Errorf("Failed to find industry with ID %s: %v", industry.ID, err)
+		return industry, fmt.Errorf("Failed to find industry with Id %s: %v", industry.Id, err)
 	}
 
 	return industry, nil

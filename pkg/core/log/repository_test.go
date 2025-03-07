@@ -57,7 +57,7 @@ const dummyDate = "2024-09-25"
 
 func TestNewRepository(t *testing.T) {
 	// Create mock instances of gorm.DB and config.Config
-	mockDB := &gorm.DB{} 
+	mockDB := &gorm.DB{}
 	mockConfig := &config.Config{}
 
 	// Act - Call NewRepository
@@ -98,7 +98,7 @@ func TestFindAllTransactionLogs(t *testing.T) {
 		Cfg: mockConfig,
 	}
 
-	resp, err := repo.FindAllTransactionLogs()
+	resp, err := repo.FetchLogTransactions()
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -144,7 +144,7 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 	// Act - Call the method with companyId and date
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.FindAllTransactionLogsByDate(companyId, date)
+	resp, err := repo.FetchLogTransactionsByDate(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -194,7 +194,7 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 	companyId := "1"
 	startDate := dummyDate
 	endDate := dummyDate
-	resp, err := repo.FindAllTransactionLogsByRangeDate(companyId, startDate, endDate)
+	resp, err := repo.FetchLogTransactionsByRangeDate(companyId, startDate, endDate)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -237,7 +237,7 @@ func TestFindAllTransactionLogsByMonth(t *testing.T) {
 
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.FindAllTransactionLogsByMonth(companyId, date)
+	resp, err := repo.FetchLogTransactionsByMonth(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)

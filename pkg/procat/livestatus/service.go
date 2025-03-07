@@ -21,21 +21,21 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(data []LiveStatusRequest, userID, companyID string, totalData int) (uint, error)
-	GetJobs(page, limit, userID, companyID, startDate, endDate string, tierLevel uint) ([]*Job, error)
-	GetJobByID(jobID uint) (*Job, error)
-	GetJobByIDAndUserID(jobID, tierLevel uint, userID, companyID string) (*Job, error)
-	GetJobsTotal(userID, companyID, startDate, endDate string, tierLevel uint) (int64, error)
-	GetJobsTotalByRangeDate(userID, companyID, startDate, endDate string, tierLevel uint) (int64, error)
-	GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, status string, tierLevel uint) (int64, error)
-	GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, column, keyword string, tierLevel uint) (int64, error)
-	GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error)
-	GetJobDetailsByRangeDate(userID, companyID, startTime, endTime string, tierLevel uint) ([]*JobDetailQueryResult, error)
-	GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error)
-	GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error)
-	GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error)
-	GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error)
-	GetFailedJobDetails(jobID uint) ([]*JobDetail, error)
+	CreateJob(data []LiveStatusRequest, userId, companyId string, totalData int) (uint, error)
+	GetJobs(page, limit, userId, companyId, startDate, endDate string, tierLevel uint) ([]*Job, error)
+	GetJobById(jobId uint) (*Job, error)
+	GetJobByIdAndUserId(jobId, tierLevel uint, userId, companyId string) (*Job, error)
+	GetJobsTotal(userId, companyId, startDate, endDate string, tierLevel uint) (int64, error)
+	GetJobsTotalByRangeDate(userId, companyId, startDate, endDate string, tierLevel uint) (int64, error)
+	GetJobDetailsTotalPercentageByRangeDate(userId, companyId, startDate, endDate, status string, tierLevel uint) (int64, error)
+	GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, column, keyword string, tierLevel uint) (int64, error)
+	GetJobDetailsByJobId(jobId uint) ([]*JobDetail, error)
+	GetJobDetailsByRangeDate(userId, companyId, startTime, endTime string, tierLevel uint) ([]*JobDetailQueryResult, error)
+	GetJobDetailsWithPagination(page, limit, keyword string, jobId uint) ([]*JobDetailQueryResult, error)
+	GetJobDetailsWithPaginationTotal(keyword string, jobId uint) (int64, error)
+	GetJobDetailsWithPaginationTotalPercentage(jobId uint, status string) (int64, error)
+	GetJobDetailsPercentage(column, keyword string, jobId uint) (int64, error)
+	GetFailedJobDetails(jobId uint) ([]*JobDetail, error)
 	ProcessJobDetails(jobDetail *JobDetail) error
 	CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error)
 	UpdateJob(id uint, req *UpdateJobRequest) error
@@ -44,28 +44,28 @@ type Service interface {
 	UpdateInvalidJobDetail(id uint, errMessage string) error
 	DeleteJobDetail(id uint) error
 	DeleteJob(id uint) error
-	GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error)
+	GetJobDetailsByJobIdExport(jobId uint) ([]*JobDetailQueryResult, error)
 	GetJobWithIncompleteStatus() ([]uint, error)
-	GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error)
-	CountOnProcessJobDetails(jobID uint, onProcess bool) (int, error)
+	GetOnProcessJobDetails(jobId uint, onProcess bool) ([]uint, error)
+	CountOnProcessJobDetails(jobId uint, onProcess bool) (int, error)
 }
 
-func (svc *service) CreateJob(data []LiveStatusRequest, userID, companyID string, totalData int) (uint, error) {
+func (svc *service) CreateJob(data []LiveStatusRequest, userId, companyId string, totalData int) (uint, error) {
 	dataJob := &Job{
-		UserID:    userID,
-		CompanyID: companyID,
+		UserId:    userId,
+		CompanyId: companyId,
 		Total:     totalData,
 	}
 
-	jobID, err := svc.Repo.CreateJobInTx(userID, companyID, dataJob, data)
+	jobId, err := svc.Repo.CreateJobInTx(userId, companyId, dataJob, data)
 	if err != nil {
 		return 0, err
 	}
 
-	return jobID, nil
+	return jobId, nil
 }
 
-func (svc *service) GetJobs(page, limit, userID, companyID, startDate, endDate string, tierLevel uint) ([]*Job, error) {
+func (svc *service) GetJobs(page, limit, userId, companyId, startDate, endDate string, tierLevel uint) ([]*Job, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
@@ -75,38 +75,38 @@ func (svc *service) GetJobs(page, limit, userID, companyID, startDate, endDate s
 		return nil, err
 	}
 
-	return svc.Repo.GetJobs(intLimit, offset, tierLevel, userID, companyID, startTime, endTime)
+	return svc.Repo.GetJobs(intLimit, offset, tierLevel, userId, companyId, startTime, endTime)
 }
 
-func (svc *service) GetJobsTotalByRangeDate(userID, companyID, startDate, endDate string, tierLevel uint) (int64, error) {
+func (svc *service) GetJobsTotalByRangeDate(userId, companyId, startDate, endDate string, tierLevel uint) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	return svc.Repo.GetJobsTotalByRangeDate(userID, companyID, startTime, endTime, tierLevel)
+	return svc.Repo.GetJobsTotalByRangeDate(userId, companyId, startTime, endTime, tierLevel)
 }
 
-func (svc *service) GetJobByID(jobID uint) (*Job, error) {
-	return svc.Repo.GetJobByID(jobID)
+func (svc *service) GetJobById(jobId uint) (*Job, error) {
+	return svc.Repo.GetJobById(jobId)
 }
 
-func (svc *service) GetJobByIDAndUserID(jobID, tierLevel uint, userID, companyID string) (*Job, error) {
-	return svc.Repo.GetJobByIDAndUserID(jobID, tierLevel, userID, companyID)
+func (svc *service) GetJobByIdAndUserId(jobId, tierLevel uint, userId, companyId string) (*Job, error) {
+	return svc.Repo.GetJobByIdAndUserId(jobId, tierLevel, userId, companyId)
 }
 
-func (svc *service) GetJobsTotal(userID, companyID, startDate, endDate string, tierLevel uint) (int64, error) {
+func (svc *service) GetJobsTotal(userId, companyId, startDate, endDate string, tierLevel uint) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
-	count, err := svc.Repo.GetJobsTotal(userID, companyID, startTime, endTime, tierLevel)
+	count, err := svc.Repo.GetJobsTotal(userId, companyId, startTime, endTime, tierLevel)
 
 	return count, err
 }
 
-func (svc *service) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
-	jobDetails, err := svc.Repo.GetJobDetailsByJobID(jobID)
+func (svc *service) GetJobDetailsByJobId(jobId uint) ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetJobDetailsByJobId(jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -114,13 +114,13 @@ func (svc *service) GetJobDetailsByJobID(jobID uint) ([]*JobDetail, error) {
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsByRangeDate(userID, companyID, startDate, endDate string, tierLevel uint) ([]*JobDetailQueryResult, error) {
+func (svc *service) GetJobDetailsByRangeDate(userId, companyId, startDate, endDate string, tierLevel uint) ([]*JobDetailQueryResult, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	jobDetails, err := svc.Repo.GetJobDetailsByRangeDate(userID, companyID, startTime, endTime, tierLevel)
+	jobDetails, err := svc.Repo.GetJobDetailsByRangeDate(userId, companyId, startTime, endTime, tierLevel)
 	if err != nil {
 		return nil, err
 	}
@@ -128,12 +128,12 @@ func (svc *service) GetJobDetailsByRangeDate(userID, companyID, startDate, endDa
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobID uint) ([]*JobDetailQueryResult, error) {
+func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, jobId uint) ([]*JobDetailQueryResult, error) {
 	intPage, _ := strconv.Atoi(page)
 	intLimit, _ := strconv.Atoi(limit)
 	offset := (intPage - 1) * intLimit
 
-	jobDetails, err := svc.Repo.GetJobDetailsByJobIDWithPagination(intLimit, offset, keyword, jobID)
+	jobDetails, err := svc.Repo.GetJobDetailsByJobIdWithPagination(intLimit, offset, keyword, jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -141,42 +141,42 @@ func (svc *service) GetJobDetailsWithPagination(page, limit, keyword string, job
 	return jobDetails, nil
 }
 
-func (svc *service) GetJobDetailsWithPaginationTotal(keyword string, jobID uint) (int64, error) {
-	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotal(keyword, jobID)
+func (svc *service) GetJobDetailsWithPaginationTotal(keyword string, jobId uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsByJobIdWithPaginationTotal(keyword, jobId)
 	return count, err
 }
 
-func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobID uint, status string) (int64, error) {
-	count, err := svc.Repo.GetJobDetailsByJobIDWithPaginationTotaPercentage(jobID, status)
+func (svc *service) GetJobDetailsWithPaginationTotalPercentage(jobId uint, status string) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsByJobIdWithPaginationTotaPercentage(jobId, status)
 	return count, err
 }
 
-func (svc *service) GetJobDetailsTotalPercentageByRangeDate(userID, companyID, startDate, endDate, status string, tierLevel uint) (int64, error) {
+func (svc *service) GetJobDetailsTotalPercentageByRangeDate(userId, companyId, startDate, endDate, status string, tierLevel uint) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(userID, companyID, startTime, endTime, status, tierLevel)
+	count, err := svc.Repo.GetJobDetailsTotalPercentageByStatusAndRangeDate(userId, companyId, startTime, endTime, status, tierLevel)
 	return count, err
 }
 
-func (svc *service) GetJobDetailsPercentage(column, keyword string, jobID uint) (int64, error) {
-	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobID)
+func (svc *service) GetJobDetailsPercentage(column, keyword string, jobId uint) (int64, error) {
+	count, err := svc.Repo.GetJobDetailsPercentage(column, keyword, jobId)
 	return count, err
 }
 
-func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startDate, endDate, column, keyword string, tierLevel uint) (int64, error) {
+func (svc *service) GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startDate, endDate, column, keyword string, tierLevel uint) (int64, error) {
 	startTime, endTime, err := formatTime(startDate, endDate)
 	if err != nil {
 		return 0, err
 	}
 
-	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(userID, companyID, startTime, endTime, column, keyword, tierLevel)
+	return svc.Repo.GetJobDetailsPercentageByDataAndRangeDate(userId, companyId, startTime, endTime, column, keyword, tierLevel)
 }
 
-func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
-	jobDetails, err := svc.Repo.GetFailedJobDetails(jobID)
+func (svc *service) GetFailedJobDetails(jobId uint) ([]*JobDetail, error) {
+	jobDetails, err := svc.Repo.GetFailedJobDetails(jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -186,15 +186,15 @@ func (svc *service) GetFailedJobDetails(jobID uint) ([]*JobDetail, error) {
 
 func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 	apiKey := svc.Cfg.Env.ApiKeyLiveStatus
-	jobIDStr := strconv.FormatUint(uint64(jobDetail.JobID), 10)
+	jobIdStr := strconv.FormatUint(uint64(jobDetail.JobId), 10)
 	request := &LiveStatusRequest{
 		PhoneNumber: jobDetail.PhoneNumber,
-		TrxID:       jobIDStr,
+		TrxId:       jobIdStr,
 	}
 
 	liveStatusResponse, err := svc.CreateLiveStatus(request, apiKey)
 	if err != nil {
-		if err := svc.UpdateInvalidJobDetail(jobDetail.ID, "can not connected to server"); err != nil {
+		if err := svc.UpdateInvalidJobDetail(jobDetail.Id, "can not connected to server"); err != nil {
 			return err
 		}
 
@@ -204,7 +204,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 	// todo: jika status code 200 kirim job detail ke aifcore
 	// todo: jika status code 200 maka hapus job detail pada temp tabel. Sampai aifcore menyediakan API untuk get job details, untuk sementara jika status code 200 lakukan update subcriber_status dan device_status pada job detail
 	if liveStatusResponse == nil {
-		err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+		err = svc.UpdateFailedJobDetail(jobDetail.Id, jobDetail.Sequence)
 		if err != nil {
 			return err
 		}
@@ -237,22 +237,19 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 
 		if liveStatusResponse.StatusCode == 200 {
 			// todo: pastikan errors bukan kode 6001, update kolom status "success", jika errors code 6001 update status "fail", hanya status "error" yg diulang
-			// err = svc.DeleteJobDetail(jobDetail.ID)
+			// err = svc.DeleteJobDetail(jobDetail.Id)
 			var status string
 			if errorCode == -60001 {
 				status = "fail"
 			} else {
 				status = "success"
 			}
-
-			jobDetail.Data = data
-
-			err = svc.UpdateSucceededJobDetail(jobDetail.ID, subscriberStatus, deviceStatus, status, data)
+			err = svc.UpdateSucceededJobDetail(jobDetail.Id, subscriberStatus, deviceStatus, status, data)
 			if err != nil {
 				return err
 			}
 		} else {
-			err = svc.UpdateFailedJobDetail(jobDetail.ID, jobDetail.Sequence)
+			err = svc.UpdateFailedJobDetail(jobDetail.Id, jobDetail.Sequence)
 			if err != nil {
 				return err
 			}
@@ -265,6 +262,7 @@ func (svc *service) ProcessJobDetails(jobDetail *JobDetail) error {
 func (svc *service) CreateLiveStatus(liveStatusRequest *LiveStatusRequest, apiKey string) (*LiveStatusResponse, error) {
 	response, err := svc.Repo.CallLiveStatus(liveStatusRequest, apiKey)
 	if err != nil {
+		log.Println("Error : ", err.Error())
 		return nil, err
 	}
 
@@ -373,8 +371,8 @@ func formatTime(startDate, endDate string) (string, string, error) {
 	return startTime, endTime, nil
 }
 
-func (svc *service) GetJobDetailsByJobIDExport(jobID uint) ([]*JobDetailQueryResult, error) {
-	jobDetails, err := svc.Repo.GetJobDetailsByJobIDExport(jobID)
+func (svc *service) GetJobDetailsByJobIdExport(jobId uint) ([]*JobDetailQueryResult, error) {
+	jobDetails, err := svc.Repo.GetJobDetailsByJobIdExport(jobId)
 	if err != nil {
 		return nil, err
 	}
@@ -386,12 +384,12 @@ func (svc *service) GetJobWithIncompleteStatus() ([]uint, error) {
 	return svc.Repo.GetJobWithIncompleteStatus()
 }
 
-func (svc *service) GetOnProcessJobDetails(jobID uint, onProcess bool) ([]uint, error) {
-	return svc.Repo.GetOnProcessJobDetails(jobID, onProcess)
+func (svc *service) GetOnProcessJobDetails(jobId uint, onProcess bool) ([]uint, error) {
+	return svc.Repo.GetOnProcessJobDetails(jobId, onProcess)
 }
 
-func (svc *service) CountOnProcessJobDetails(jobID uint, onProcess bool) (int, error) {
-	count, err := svc.Repo.CountOnProcessJobDetails(jobID, onProcess)
+func (svc *service) CountOnProcessJobDetails(jobId uint, onProcess bool) (int, error) {
+	count, err := svc.Repo.CountOnProcessJobDetails(jobId, onProcess)
 	if err != nil {
 		return 0, err
 	}

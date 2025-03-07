@@ -5,3 +5,5 @@ coverage.out
 
 /public/*
 !/public/default-profile-image.jpg
+
+.vscode

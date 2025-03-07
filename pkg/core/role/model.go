@@ -8,13 +8,29 @@ import (
 )
 
 type Role struct {
-	ID          string                  `gorm:"primarykey" json:"id"`
+	Id          string                  `gorm:"primarykey" json:"id"`
 	Name        string                  `gorm:"not null" json:"name"`
 	Permissions []permission.Permission `gorm:"many2many:role_permissions" json:"permissions"`
 	TierLevel   uint                    `gorm:"not null" json:"tier_level"`
 	CreatedAt   time.Time               `gorm:"not null;default:current_timestamp" json:"-"`
 	UpdatedAt   time.Time               `gorm:"not null;default:current_timestamp" json:"-"`
 	DeletedAt   gorm.DeletedAt          `gorm:"index" json:"-"`
+}
+
+type MstRole struct {
+	RoleId      uint            `json:"role_id" gorm:"primaryKey;autoIncrement"`
+	Name        string          `json:"name"`
+	Permissions []MstPermission `json:"permissions" gorm:"many2many:ref_role_permissions"`
+}
+
+type MstPermission struct {
+	PermissionId uint   `json:"permission_id" gorm:"primaryKey;autoIncrement"`
+	Slug         string `json:"slug"`
+	Name         string `json:"name"`
+}
+
+type RoleFilter struct {
+	Name string
 }
 
 type CreateRoleRequest struct {
@@ -24,7 +40,7 @@ type CreateRoleRequest struct {
 }
 
 type CreateRoleResponse struct {
-	ID          string                  `json:"-"`
+	Id          string                  `json:"-"`
 	Name        string                  `json:"name"`
 	Permissions []permission.Permission `json:"permissions"`
 	TierLevel   uint                    `json:"tier_level"`
@@ -34,8 +50,24 @@ type CreateRoleResponse struct {
 }
 
 type UpdateRoleRequest struct {
-	ID          string                  `json:"-"`
+	Id          string                  `json:"-"`
 	Name        string                  `json:"name"`
 	Permissions []permission.Permission `json:"permissions"`
 	TierLevel   uint                    `json:"tier_level" validate:"max=3~only available with tier level 1, 2"`
+}
+
+type AifResponse struct {
+	Success bool    `json:"success"`
+	Data    MstRole `json:"data"`
+	Message string  `json:"message"`
+	Meta    any     `json:"meta,omitempty"`
+	Status  bool    `json:"status,omitempty"`
+}
+
+type AifResponseWithMultipleData struct {
+	Success bool      `json:"success"`
+	Data    []MstRole `json:"data"`
+	Message string    `json:"message"`
+	Meta    any       `json:"meta,omitempty"`
+	Status  bool      `json:"status,omitempty"`
 }
