@@ -21,6 +21,8 @@ const (
 	RequestProhibited          = "request is prohibited"
 	UnverifiedUser             = "please check your email, you need to verify your email address before you can reset your password"
 	TokenExpired               = "Token is expired"
+	BcryptPasswordMismatch     = "crypto/bcrypt: hashedPassword is not the hash of the given password"
+	WrongCurrentPassword       = "current password is wrong"
 
 	//grading
 	DuplicateGrading       = "duplicate grading"
