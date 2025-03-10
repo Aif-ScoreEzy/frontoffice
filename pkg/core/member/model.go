@@ -36,24 +36,6 @@ type MstMember struct {
 	DeletedAt         gorm.DeletedAt     `json:"-" gorm:"index"`
 }
 
-type UserResponse struct {
-	Id         string          `json:"id"`
-	Name       string          `json:"name"`
-	Email      string          `json:"email"`
-	Password   string          `json:"-"`
-	Phone      string          `json:"phone"`
-	Status     string          `json:"status"`
-	Active     bool            `json:"active"`
-	IsVerified bool            `json:"is_verified"`
-	CompanyId  string          `json:"-"`
-	Company    company.Company `json:"company"`
-	RoleId     string          `json:"-"`
-	Role       role.Role       `json:"role"`
-	CreatedAt  time.Time       `json:"created_at"`
-	UpdatedAt  time.Time       `json:"-"`
-	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
-}
-
 type RegisterMemberRequest struct {
 	Name      string `json:"name" validate:"required~Field Name is required"`
 	Email     string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
@@ -72,21 +54,6 @@ type RegisterMemberResponse struct {
 	Data       *dataRegisterMemberResponse `json:"data"`
 	Message    string                      `json:"message"`
 	StatusCode int                         `json:"-"`
-}
-
-type GetUsersResponse struct {
-	Id         string         `json:"id"`
-	Name       string         `json:"name"`
-	Email      string         `json:"email"`
-	Status     string         `json:"status"`
-	Active     bool           `json:"active"`
-	IsVerified bool           `json:"is_verified"`
-	CompanyId  string         `json:"company_id"`
-	RoleId     string         `json:"-"`
-	Role       role.Role      `json:"role"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"-"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type UpdateUserRequest struct {

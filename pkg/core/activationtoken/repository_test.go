@@ -77,9 +77,9 @@ func TestFindOneActivationTokenBytoken(t *testing.T) {
 	resp, err := repo.FindOneActivationTokenBytoken(token)
 
 	// Assert
-	assert.NoError(t, err)                               // Check that no error occurred
-	assert.NotNil(t, resp)                               // Ensure that the response is not nil
-	assert.Equal(t, http.StatusOK, resp.StatusCode)      // Check that the status code is 200 OK
+	assert.NoError(t, err)                          // Check that no error occurred
+	assert.NotNil(t, resp)                          // Ensure that the response is not nil
+	assert.Equal(t, http.StatusOK, resp.StatusCode) // Check that the status code is 200 OK
 
 	// Optionally, check the body content (here we just validate the response, but you could unmarshal and check JSON)
 	defer resp.Body.Close()
@@ -99,12 +99,11 @@ func TestFindOneActivationTokenBytoken(t *testing.T) {
 			MemberID  int       `json:"member_id"`
 			CreatedAt time.Time `json:"created_at"`
 		}{
-			ID:       "d5f6975e-4537-4025-a677-7abcb98a5aec",
-			Token:    token,
-			MemberID: 5,
+			ID:        "d5f6975e-4537-4025-a677-7abcb98a5aec",
+			Token:     token,
+			MemberID:  5,
 			CreatedAt: time.Date(2024, 9, 18, 17, 5, 22, 348406000, time.Local),
 		},
-		Message: "",
 		Meta: struct {
 			Message string `json:"message"`
 		}{
