@@ -10,8 +10,6 @@ import (
 	"front-office/pkg/core/role"
 	"io"
 	"strconv"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 func NewService(
@@ -41,7 +39,7 @@ type Service interface {
 	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
 	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
 	LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error)
-	ChangePassword(member *member.AifResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
+	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 	generateTokens(memberId, companyId, roleId uint) (string, string, error)
 }
 
@@ -192,12 +190,7 @@ func (svc *service) LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberRespon
 	return baseResponse, nil
 }
 
-func (svc *service) ChangePassword(member *member.AifResponse, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
-	err := bcrypt.CompareHashAndPassword([]byte(member.Data.Password), []byte(req.CurrentPassword))
-	if err != nil {
-		return nil, errors.New("current password is wrong")
-	}
-
+func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.NewPassword)
 	if !isPasswordStrength {
 		return nil, errors.New(constant.InvalidPassword)
@@ -207,8 +200,7 @@ func (svc *service) ChangePassword(member *member.AifResponse, req *ChangePasswo
 		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
 	}
 
-	memberIdStr := helper.ConvertUintToString(member.Data.MemberId)
-	response, err := svc.Repo.ChangePasswordAifCore(memberIdStr, req)
+	response, err := svc.Repo.ChangePasswordAifCore(memberId, req)
 	if err != nil {
 		return nil, err
 	}

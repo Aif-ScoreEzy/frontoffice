@@ -259,9 +259,14 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.ChangePassword(member, req)
+	result, err := ctrl.Svc.ChangePassword(memberId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if !result.Success {
+		statusCode, resp := helper.GetError(result.Message)
 		return c.Status(statusCode).JSON(resp)
 	}
 

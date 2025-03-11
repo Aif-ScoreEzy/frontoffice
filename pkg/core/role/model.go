@@ -3,19 +3,7 @@ package role
 import (
 	"front-office/pkg/core/permission"
 	"time"
-
-	"gorm.io/gorm"
 )
-
-type Role struct {
-	Id          string                  `gorm:"primarykey" json:"id"`
-	Name        string                  `gorm:"not null" json:"name"`
-	Permissions []permission.Permission `gorm:"many2many:role_permissions" json:"permissions"`
-	TierLevel   uint                    `gorm:"not null" json:"tier_level"`
-	CreatedAt   time.Time               `gorm:"not null;default:current_timestamp" json:"-"`
-	UpdatedAt   time.Time               `gorm:"not null;default:current_timestamp" json:"-"`
-	DeletedAt   gorm.DeletedAt          `gorm:"index" json:"-"`
-}
 
 type MstRole struct {
 	RoleId      uint            `json:"role_id" gorm:"primaryKey;autoIncrement"`
