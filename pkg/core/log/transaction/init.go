@@ -1,4 +1,4 @@
-package log
+package transaction
 
 import (
 	"front-office/app/config"
@@ -20,7 +20,6 @@ func SetupInit(logAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	service := NewService(repository, cfg)
 	controller := NewController(service, memberService)
 
-	// scoreezy
 	logTransScoreezyAPI := logAPI.Group("scoreezy")
 	logTransScoreezyAPI.Get("/", controller.GetLogTransactions)
 	logTransScoreezyAPI.Get("/by-date", controller.GetLogTransactionsByDate)
