@@ -1,0 +1,39 @@
+package operation
+
+import "time"
+
+type LogOperation struct {
+	LogOpsID  uint      `json:"log_ops_id" gorm:"primaryKey;autoIncrement"`
+	MemberId  uint      `json:"member_id"`
+	Member    MstMember `json:"member" gorm:"foreignKey:MemberId"`
+	CompanyId uint      `json:"company_id"`
+	Module    string    `json:"module"`
+	Action    string    `json:"action"`
+	ClientIP  string    `json:"ip_address"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type MstMember struct {
+	MemberID uint    `json:"member_id" gorm:"primaryKey;autoIncrement"`
+	Name     string  `json:"name"`
+	RoleId   uint    `json:"role_id"`
+	Role     MstRole `json:"role"`
+}
+
+type MstRole struct {
+	RoleID uint   `json:"role_id" gorm:"primaryKey;autoIncrement"`
+	Name   string `json:"name"`
+}
+
+type GetLogOperationFilter struct {
+	Role  string
+	Event string
+}
+
+type AifResponse struct {
+	Success bool           `json:"success"`
+	Data    []LogOperation `json:"data"`
+	Message string         `json:"message"`
+	Meta    any            `json:"meta,omitempty"`
+	Status  bool           `json:"status,omitempty"`
+}
