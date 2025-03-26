@@ -5,7 +5,8 @@ import (
 	"front-office/pkg/core/auth"
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/grading"
-	"front-office/pkg/core/log"
+	"front-office/pkg/core/log/operation"
+	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
@@ -37,7 +38,8 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
 	genretail.SetupInit(genRetailAPI, db, cfg)
 
 	logAPI := routeAPI.Group("logs")
-	log.SetupInit(logAPI, db, cfg)
+	transaction.SetupInit(logAPI, db, cfg)
+	operation.SetupInit(logAPI, cfg)
 
 	productAPI := routeAPI.Group("products")
 	livestatus.SetupInit(productAPI, db, cfg)
