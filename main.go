@@ -3,7 +3,6 @@ package main
 import (
 	"front-office/app/config"
 	"front-office/app/database"
-	"front-office/app/database/migrate"
 	"front-office/app/server"
 	"time"
 )
@@ -15,7 +14,7 @@ func main() {
 	cfg := config.GetConfig()
 
 	db := database.NewPostgresDb(&cfg)
-	migrate.PostgreDB(db)
+	// migrate.PostgreDB(db)
 
 	server.NewServer(&cfg, db.GetDB()).Start()
 }

@@ -56,6 +56,10 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.HeaderTemplateNotValid,
 		constant.ParamSettingIsNotSet:
 		statusCode = 400
+	case
+		constant.WrongCurrentPassword:
+		statusCode = 400
+		errorMessage = constant.WrongCurrentPassword
 	case constant.RequestProhibited,
 		constant.TokenExpired,
 		constant.UnverifiedUser:

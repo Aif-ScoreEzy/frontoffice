@@ -1,13 +1,5 @@
 package auth
 
-import (
-	"front-office/pkg/core/company"
-	"front-office/pkg/core/role"
-	"time"
-
-	"gorm.io/gorm"
-)
-
 type RegisterAdminRequest struct {
 	Name            string `json:"name" validate:"required~Field Name is required"`
 	Email           string `json:"email" validate:"required~Field Email is required, email~Only email pattern are allowed"`
@@ -17,27 +9,9 @@ type RegisterAdminRequest struct {
 	CompanyAddress  string `json:"company_address"`
 	CompanyPhone    string `json:"company_phone"`
 	AgreementNumber string `json:"agreement_number"`
-	IndustryID      string `json:"industry_id"`
+	IndustryId      string `json:"industry_id"`
 	PaymentScheme   string `json:"payment_scheme"`
-	RoleID          string `json:"role_id" validate:"required~Field Role is required"`
-}
-
-type RegisterAdminResponse struct {
-	ID         string          `json:"id"`
-	Name       string          `json:"name"`
-	Email      string          `json:"email"`
-	Password   string          `json:"-"`
-	Phone      string          `json:"phone"`
-	Status     string          `json:"status"`
-	Active     bool            `json:"active"`
-	IsVerified bool            `json:"is_verified"`
-	CompanyID  string          `json:"-"`
-	Company    company.Company `json:"company"`
-	RoleID     string          `json:"-"`
-	Role       role.Role       `json:"role"`
-	CreatedAt  time.Time       `json:"-"`
-	UpdatedAt  time.Time       `json:"-"`
-	DeletedAt  gorm.DeletedAt  `gorm:"index" json:"-"`
+	RoleId          string `json:"role_id" validate:"required~Field Role is required"`
 }
 
 type UserLoginRequest struct {
@@ -46,13 +20,32 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	CompanyID   string `json:"company_id"`
-	CompanyName string `json:"company_name"`
-	TierLevel   uint   `json:"tier_level"`
-	Image       string `json:"image"`
+	Id                 uint        `json:"id"`
+	Name               string      `json:"name"`
+	Email              string      `json:"email"`
+	CompanyId          uint        `json:"company_id"`
+	CompanyName        string      `json:"company_name"`
+	TierLevel          uint        `json:"tier_level"`
+	Image              string      `json:"image"`
+	SubscriberProducts interface{} `json:"subscriber_products"`
+}
+
+type dataLoginResponse struct {
+	MemberId           uint        `json:"member_id"`
+	Name               string      `json:"name"`
+	Email              string      `json:"email"`
+	CompanyId          uint        `json:"company_id"`
+	CompanyName        string      `json:"company_name"`
+	RoleId             uint        `json:"role_id"`
+	Image              string      `json:"image"`
+	SubscriberProducts interface{} `json:"subscriber_products"`
+}
+
+type aifcoreAuthMemberResponse struct {
+	Success    bool               `json:"success"`
+	Data       *dataLoginResponse `json:"data"`
+	StatusCode int                `json:"status_code"`
+	Message    string             `json:"message"`
 }
 
 type LoginResponse struct {

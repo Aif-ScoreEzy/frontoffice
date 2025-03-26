@@ -15,5 +15,5 @@ func SetupInit(companyAPI fiber.Router, db *gorm.DB) {
 	serviceIndustry := industry.NewService(repoIndustry)
 	controller := NewController(service, serviceIndustry)
 
-	companyAPI.Put("/:id", middleware.IsRequestValid(UpdateCompanyRequest{}), controller.UpdateCompanyByID)
+	companyAPI.Put("/:id", middleware.IsRequestValid(UpdateCompanyRequest{}), controller.UpdateCompanyById)
 }

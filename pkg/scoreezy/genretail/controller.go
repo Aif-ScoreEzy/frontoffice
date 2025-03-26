@@ -32,11 +32,21 @@ type Controller interface {
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*GenRetailRequest)
 	apiKey := c.Get("X-API-KEY")
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	// make sure parameter settings are set
-	gradings, _ := ctrl.SvcGrading.GetGradingsSvc(companyID)
-	if len(gradings) < 1 {
+	result, err := ctrl.SvcGrading.GetGradings(companyId)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result == nil || result.Data == nil {
+		statusCode, resp := helper.GetError(constant.DataNotFound)
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if len(result.Data.Grades) < 1 {
 		statusCode, resp := helper.GetError(constant.ParamSettingIsNotSet)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -75,8 +85,8 @@ func (ctrl *controller) DownloadCSV(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	tempType := fmt.Sprintf("%v", c.Locals("tempType"))
 	apiKey := c.Get("X-API-KEY")
@@ -146,20 +156,20 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 		storeData = append(storeData, insertNew)
 	}
 
-	processInsert := ctrl.Svc.BulkSearchUploadSvc(storeData, tempType, apiKey, userID, companyID)
+	processInsert := ctrl.Svc.BulkSearchUploadSvc(storeData, tempType, apiKey, userId, companyId)
 
 	if processInsert != nil {
 		statusCode, resp := helper.GetError(constant.ErrorUploadDataCSV)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userID, companyID)
+	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userID, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userId, companyId)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,
@@ -175,18 +185,18 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetBulkSearch(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	// find user loggin detail
 
-	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userID, companyID)
+	bulkSearch, err := ctrl.Svc.GetBulkSearchSvc(uint(tierLevel), userId, companyId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userID, companyID)
+	totalData, _ := ctrl.Svc.GetTotalDataBulk(uint(tierLevel), userId, companyId)
 
 	fullResponsePage := map[string]interface{}{
 		"total_data": totalData,

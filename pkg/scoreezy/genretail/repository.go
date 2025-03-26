@@ -13,15 +13,15 @@ type repository struct {
 }
 
 type Repository interface {
-	StoreImportData(newData []*BulkSearch, userID string) error
-	GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]*BulkSearch, error)
-	CountData(tierLevel uint, userID, companyID string) (int64, error)
+	StoreImportData(newData []*BulkSearch, userId string) error
+	GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
+	CountData(tierLevel uint, userId, companyId string) (int64, error)
 }
 
-func (repo *repository) StoreImportData(newData []*BulkSearch, userID string) error {
+func (repo *repository) StoreImportData(newData []*BulkSearch, userId string) error {
 	errTx := repo.DB.Transaction(func(tx *gorm.DB) error {
 		// remove data existing in table
-		if err := repo.DB.Delete(&BulkSearch{}, "user_id = ?", userID).Error; err != nil {
+		if err := repo.DB.Delete(&BulkSearch{}, "user_id = ?", userId).Error; err != nil {
 			return err
 		}
 
@@ -40,17 +40,17 @@ func (repo *repository) StoreImportData(newData []*BulkSearch, userID string) er
 	return nil
 }
 
-func (repo *repository) GetAllBulkSearch(tierLevel uint, userID, companyID string) ([]*BulkSearch, error) {
+func (repo *repository) GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error) {
 	var bulkSearches []*BulkSearch
 
 	query := repo.DB.Preload("User")
 
 	if tierLevel == 1 {
 		// admin
-		query = query.Where("company_id = ?", companyID)
+		query = query.Where("company_id = ?", companyId)
 	} else {
 		// user
-		query = query.Where("user_id = ?", userID)
+		query = query.Where("user_id = ?", userId)
 	}
 
 	err := query.Find(&bulkSearches)
@@ -62,7 +62,7 @@ func (repo *repository) GetAllBulkSearch(tierLevel uint, userID, companyID strin
 	return bulkSearches, nil
 }
 
-func (repo *repository) CountData(tierLevel uint, userID, companyID string) (int64, error) {
+func (repo *repository) CountData(tierLevel uint, userId, companyId string) (int64, error) {
 	var bulkSearches []*BulkSearch
 	var count int64
 
@@ -70,10 +70,10 @@ func (repo *repository) CountData(tierLevel uint, userID, companyID string) (int
 
 	if tierLevel == 1 {
 		// admin
-		query = query.Where("company_id = ?", companyID)
+		query = query.Where("company_id = ?", companyId)
 	} else {
 		// user
-		query = query.Where("user_id = ?", userID)
+		query = query.Where("user_id = ?", userId)
 	}
 
 	err := query.Find(&bulkSearches).Count(&count).Error

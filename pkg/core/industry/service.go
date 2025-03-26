@@ -9,15 +9,15 @@ type service struct {
 }
 
 type Service interface {
-	IsIndustryIDExistSvc(id string) (Industry, error)
+	IsIndustryIdExistSvc(id string) (Industry, error)
 }
 
-func (svc *service) IsIndustryIDExistSvc(id string) (Industry, error) {
+func (svc *service) IsIndustryIdExistSvc(id string) (Industry, error) {
 	industry := Industry{
-		ID: id,
+		Id: id,
 	}
 
-	result, err := svc.Repo.FindOneByID(industry)
+	result, err := svc.Repo.FindOneById(industry)
 	if err != nil {
 		return result, err
 	}

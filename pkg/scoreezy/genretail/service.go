@@ -22,9 +22,9 @@ type service struct {
 
 type Service interface {
 	GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error)
-	BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, companyID string) error
-	GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchResponse, error)
-	GetTotalDataBulk(tierLevel uint, userID, companyID string) (int64, error)
+	BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
+	GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
+	GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
 }
 
 func (svc *service) GenRetailV3(requestData *GenRetailRequest, apiKey string) (*GenRetailV3ModelResponse, error) {
@@ -54,9 +54,9 @@ func (svc *service) GenRetailV3(requestData *GenRetailRequest, apiKey string) (*
 	return dataResponse, nil
 }
 
-func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userID, companyID string) error {
+func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error {
 	var bulkSearches []*BulkSearch
-	uploadID := uuid.NewString()
+	uploadId := uuid.NewString()
 
 	for _, v := range req {
 		// check api aif-core to get grade data
@@ -64,7 +64,7 @@ func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKe
 		genRetailRequest := &GenRetailRequest{
 			LoanNo:   v.LoanNo,
 			Name:     v.Name,
-			IDCardNo: v.NIK,
+			IdCardNo: v.NIK,
 			PhoneNo:  v.PhoneNumber,
 		}
 
@@ -74,24 +74,24 @@ func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKe
 		}
 
 		bulkSearch := &BulkSearch{
-			UploadID:             uploadID,
-			TransactionID:        genRetailResponse.Data.TransactionID, // from API
+			UploadId:             uploadId,
+			TransactionId:        genRetailResponse.Data.TransactionId, // from API
 			Name:                 v.Name,
-			IDCardNo:             v.NIK,
+			IdCardNo:             v.NIK,
 			PhoneNo:              v.PhoneNumber,
 			LoanNo:               v.LoanNo,
 			ProbabilityToDefault: genRetailResponse.Data.ProbabilityToDefault, // from API
 			Grade:                genRetailResponse.Data.Grade,                // from API
 			Date:                 genRetailResponse.Data.Date,                 // from API
 			Type:                 tempType,
-			UserID:               userID,
-			CompanyID:            companyID,
+			UserId:               userId,
+			CompanyId:            companyId,
 		}
 
 		bulkSearches = append(bulkSearches, bulkSearch)
 	}
 
-	err := svc.Repo.StoreImportData(bulkSearches, userID)
+	err := svc.Repo.StoreImportData(bulkSearches, userId)
 	if err != nil {
 		return err
 	}
@@ -99,9 +99,9 @@ func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKe
 	return nil
 }
 
-func (svc *service) GetBulkSearchSvc(tierLevel uint, userID, companyID string) ([]BulkSearchResponse, error) {
+func (svc *service) GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error) {
 
-	bulkSearches, err := svc.Repo.GetAllBulkSearch(tierLevel, userID, companyID)
+	bulkSearches, err := svc.Repo.GetAllBulkSearch(tierLevel, userId, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +109,9 @@ func (svc *service) GetBulkSearchSvc(tierLevel uint, userID, companyID string) (
 	var responseBulkSearches []BulkSearchResponse
 	for _, v := range bulkSearches {
 		bulkSearch := BulkSearchResponse{
-			TransactionID:        v.TransactionID,
+			TransactionId:        v.TransactionId,
 			Name:                 v.Name,
-			IDCardNo:             v.IDCardNo,
+			IdCardNo:             v.IdCardNo,
 			PhoneNo:              v.PhoneNo,
 			LoanNo:               v.LoanNo,
 			ProbabilityToDefault: v.ProbabilityToDefault,
@@ -122,7 +122,7 @@ func (svc *service) GetBulkSearchSvc(tierLevel uint, userID, companyID string) (
 
 		if tierLevel != 2 {
 			// make sure only pick from the member uploads
-			if userID != v.UserID {
+			if userId != v.UserId {
 				bulkSearch.PIC = v.User.Name
 			}
 		}
@@ -133,7 +133,7 @@ func (svc *service) GetBulkSearchSvc(tierLevel uint, userID, companyID string) (
 	return responseBulkSearches, nil
 }
 
-func (svc *service) GetTotalDataBulk(tierLevel uint, userID, companyID string) (int64, error) {
-	count, err := svc.Repo.CountData(tierLevel, userID, companyID)
+func (svc *service) GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error) {
+	count, err := svc.Repo.CountData(tierLevel, userId, companyId)
 	return count, err
 }

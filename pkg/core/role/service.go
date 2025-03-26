@@ -1,7 +1,10 @@
 package role
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 )
 
 func NewService(repo Repository) Service {
@@ -13,82 +16,62 @@ type service struct {
 }
 
 type Service interface {
-	CreateRoleSvc(req *CreateRoleRequest) (Role, error)
-	GetAllRolesSvc() ([]Role, error)
-	FindRoleByIDSvc(id string) (*Role, error)
-	GetRoleByNameSvc(name string) (*Role, error)
-	UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error)
-	DeleteRoleByIDSvc(id string) error
+	GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error)
+	GetRoleById(id string) (*AifResponse, error)
 }
 
-func (svc *service) CreateRoleSvc(req *CreateRoleRequest) (Role, error) {
-	roleID := uuid.NewString()
-	dataReq := Role{
-		ID:          roleID,
-		Name:        req.Name,
-		Permissions: req.Permissions,
-		TierLevel:   req.TierLevel,
-	}
-
-	role, err := svc.Repo.Create(dataReq)
-	if err != nil {
-		return role, err
-	}
-
-	return role, nil
-}
-
-func (svc *service) GetAllRolesSvc() ([]Role, error) {
-	roles, err := svc.Repo.FindAll()
-	if err != nil {
-		return roles, err
-	}
-
-	return roles, nil
-}
-
-func (svc *service) FindRoleByIDSvc(id string) (*Role, error) {
-	result, err := svc.Repo.FindOneByID(id)
+func (s *service) GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error) {
+	res, err := s.Repo.FindAll(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return parseMultipleResponse(res)
 }
 
-func (svc *service) GetRoleByNameSvc(name string) (*Role, error) {
-	result, err := svc.Repo.FindOneByName(name)
+func (s *service) GetRoleById(id string) (*AifResponse, error) {
+	res, err := s.Repo.FindOneById(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return parseSingleResponse(res)
 }
 
-func (svc *service) UpdateRoleByIDSvc(req *UpdateRoleRequest, id string) (*Role, error) {
-	dataReq := &Role{}
-
-	if req.Name != "" {
-		dataReq.Name = req.Name
+func parseResponse(response *http.Response, result interface{}) error {
+	if response == nil {
+		return fmt.Errorf("response is nil")
 	}
+	defer response.Body.Close()
 
-	if req.Permissions != nil {
-		dataReq.Permissions = req.Permissions
-	}
-
-	role, err := svc.Repo.UpdateByID(dataReq, id)
+	dataByte, err := io.ReadAll(response.Body)
 	if err != nil {
-		return role, err
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return role, nil
-}
-
-func (svc *service) DeleteRoleByIDSvc(id string) error {
-	err := svc.Repo.Delete(id)
-	if err != nil {
-		return err
+	if err := json.Unmarshal(dataByte, result); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return nil
+}
+
+func parseSingleResponse(response *http.Response) (*AifResponse, error) {
+	var baseResponse AifResponse
+
+	if err := parseResponse(response, &baseResponse); err != nil {
+		return nil, err
+	}
+
+	return &baseResponse, nil
+}
+
+func parseMultipleResponse(response *http.Response) (*AifResponseWithMultipleData, error) {
+	var baseResponse AifResponseWithMultipleData
+
+	if err := parseResponse(response, &baseResponse); err != nil {
+		return nil, err
+	}
+
+	return &baseResponse, nil
 }

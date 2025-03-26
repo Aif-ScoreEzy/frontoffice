@@ -17,28 +17,28 @@ type repository struct {
 
 type Repository interface {
 	Create(permission Permission) (Permission, error)
-	FindOneByID(permission Permission) (Permission, error)
+	FindOneById(permission Permission) (Permission, error)
 	FindOneByName(name string) (Permission, error)
-	UpdateByID(req PermissionRequest, id string) (Permission, error)
+	UpdateById(req PermissionRequest, id string) (Permission, error)
 	Delete(id string) error
 }
 
 func (repo *repository) Create(permission Permission) (Permission, error) {
 	result := repo.DB.Create(&permission)
 
-	repo.DB.First(&permission, "id = ?", permission.ID)
+	repo.DB.First(&permission, "id = ?", permission.Id)
 
 	return permission, result.Error
 }
 
-func (repo *repository) FindOneByID(permission Permission) (Permission, error) {
+func (repo *repository) FindOneById(permission Permission) (Permission, error) {
 	err := repo.DB.First(&permission).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return permission, fmt.Errorf("Permission with ID %s not found", permission.ID)
+			return permission, fmt.Errorf("Permission with Id %s not found", permission.Id)
 		}
 
-		return permission, fmt.Errorf("Failed to find permission with ID %s: %v", permission.ID, err)
+		return permission, fmt.Errorf("Failed to find permission with Id %s: %v", permission.Id, err)
 	}
 
 	return permission, nil
@@ -54,7 +54,7 @@ func (repo *repository) FindOneByName(name string) (Permission, error) {
 	return permission, nil
 }
 
-func (repo *repository) UpdateByID(req PermissionRequest, id string) (Permission, error) {
+func (repo *repository) UpdateById(req PermissionRequest, id string) (Permission, error) {
 	var permission Permission
 	result := repo.DB.Model(&permission).
 		Where("id = ?", id).Updates(req)

@@ -1,81 +1,61 @@
 package role
 
 import (
+	"fmt"
+	"front-office/app/config"
+	"front-office/common/constant"
+	"net/http"
+
 	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{DB: db}
+func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+	return &repository{
+		Db:  db,
+		Cfg: cfg,
+	}
 }
 
 type repository struct {
-	DB *gorm.DB
+	Db  *gorm.DB
+	Cfg *config.Config
 }
 
 type Repository interface {
-	Create(role Role) (Role, error)
-	FindAll() ([]Role, error)
-	FindOneByID(id string) (*Role, error)
-	FindOneByName(name string) (*Role, error)
-	UpdateByID(req *Role, id string) (*Role, error)
-	Delete(id string) error
+	FindAll(filter RoleFilter) (*http.Response, error)
+	FindOneById(id string) (*http.Response, error)
 }
 
-func (repo *repository) Create(role Role) (Role, error) {
-	result := repo.DB.Create(&role)
+func (repo *repository) FindOneById(id string) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/role/%v`, repo.Cfg.Env.AifcoreHost, id)
 
-	repo.DB.Preload("Permissions").First(&role, "id = ?", role.ID)
-
-	return role, result.Error
-}
-
-func (repo *repository) FindAll() ([]Role, error) {
-	var roles []Role
-
-	result := repo.DB.Preload("Permissions").Find(&roles)
-	if result.Error != nil {
-		return roles, result.Error
-	}
-
-	return roles, nil
-}
-
-func (repo *repository) FindOneByID(id string) (*Role, error) {
-	var role *Role
-
-	err := repo.DB.Preload("Permissions").First(&role, "id = ?", id).Error
+	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return role, nil
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	client := &http.Client{}
+
+	return client.Do(request)
 }
 
-func (repo *repository) FindOneByName(name string) (*Role, error) {
-	var role *Role
-	result := repo.DB.First(&role, "name = ?", name)
-	if result.Error != nil {
-		return nil, result.Error
+func (repo *repository) FindAll(filter RoleFilter) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/role`, repo.Cfg.Env.AifcoreHost)
+
+	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return role, nil
-}
+	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-func (repo *repository) UpdateByID(req *Role, id string) (*Role, error) {
-	var role *Role
+	q := request.URL.Query()
+	q.Add("name", filter.Name)
+	request.URL.RawQuery = q.Encode()
 
-	result := repo.DB.Model(&role).
-		Where("id = ?", id).Updates(req)
-	if result.Error != nil {
-		return nil, result.Error
-	}
+	client := &http.Client{}
 
-	return role, nil
-}
-
-func (repo *repository) Delete(id string) error {
-	var role Role
-	err := repo.DB.Where("id = ?", id).Delete(&role).Error
-
-	return err
+	return client.Do(request)
 }
