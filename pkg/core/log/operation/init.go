@@ -13,5 +13,6 @@ func SetupInit(logAPI fiber.Router, cfg *config.Config) {
 	controller := NewController(service)
 
 	logOperationAPI := logAPI.Group("operation")
-	logOperationAPI.Get("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetLogOperationsByCompany)
+	logOperationAPI.Get("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetList)
+	logOperationAPI.Get("/range", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetListByRange)
 }

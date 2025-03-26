@@ -16,20 +16,48 @@ type controller struct {
 }
 
 type Controller interface {
-	GetLogOperationsByCompany(c *fiber.Ctx) error
+	GetList(c *fiber.Ctx) error
+	GetListByRange(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) GetLogOperationsByCompany(c *fiber.Ctx) error {
+func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	role := c.Query("role")
 	event := c.Query("event")
 
-	filter := &GetLogOperationFilter{
-		Role:  role,
-		Event: event,
+	filter := &LogOperationFilter{
+		CompanyId: companyId,
+		Role:      role,
+		Event:     event,
 	}
 
-	result, err := ctrl.Svc.GetLogOperations(companyId, filter)
+	result, err := ctrl.Svc.GetLogOperations(filter)
+	if err != nil {
+		statusCode, res := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(res)
+	}
+
+	responseBody := helper.ResponseSuccess(
+		"succeed to get list of log operation",
+		result,
+	)
+
+	return c.Status(responseBody.StatusCode).JSON(responseBody)
+}
+
+func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	startDate := c.Query("start_date")
+	endDate := c.Query(("end_date"))
+
+	filter := &LogRangeFilter{
+		CompanyId: companyId,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	result, err := ctrl.Svc.GetByRange(filter)
 	if err != nil {
 		statusCode, res := helper.GetError(err.Error())
 

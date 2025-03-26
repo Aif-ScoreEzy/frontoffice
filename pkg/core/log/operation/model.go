@@ -25,15 +25,20 @@ type MstRole struct {
 	Name   string `json:"name"`
 }
 
-type GetLogOperationFilter struct {
-	Role  string
-	Event string
+type LogOperationFilter struct {
+	CompanyId string
+	Role      string
+	Event     string
+}
+
+type LogRangeFilter struct {
+	CompanyId string
+	StartDate string
+	EndDate   string
 }
 
 type AifResponse struct {
 	Success bool           `json:"success"`
 	Data    []LogOperation `json:"data"`
-	Message string         `json:"message"`
 	Meta    any            `json:"meta,omitempty"`
-	Status  bool           `json:"status,omitempty"`
 }

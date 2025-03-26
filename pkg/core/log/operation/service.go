@@ -15,11 +15,26 @@ type service struct {
 }
 
 type Service interface {
-	GetLogOperations(companyId string, filter *GetLogOperationFilter) (*AifResponse, error)
+	GetLogOperations(filter *LogOperationFilter) (*AifResponse, error)
+	GetByRange(filter *LogRangeFilter) (*AifResponse, error)
 }
 
-func (svc *service) GetLogOperations(companyId string, filter *GetLogOperationFilter) (*AifResponse, error) {
-	response, err := svc.Repo.FetchLogOperations(companyId, filter)
+func (svc *service) GetLogOperations(filter *LogOperationFilter) (*AifResponse, error) {
+	response, err := svc.Repo.FetchLogOperations(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (svc *service) GetByRange(filter *LogRangeFilter) (*AifResponse, error) {
+	response, err := svc.Repo.FetchByRange(filter)
 	if err != nil {
 		return nil, err
 	}
