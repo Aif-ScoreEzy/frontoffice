@@ -1,5 +1,6 @@
 package constant
 
 const (
-	EventSignIn = "sign in"
+	EventSignIn  = "sign in"
+	EventSignOut = "sign out"
 )

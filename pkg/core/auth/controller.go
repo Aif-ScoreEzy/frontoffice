@@ -171,6 +171,8 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Logout(c *fiber.Ctx) error {
+	memberId, _ := helper.InterfaceToUint(c.Locals("userId"))
+	companyId, _ := helper.InterfaceToUint(c.Locals("companyId"))
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "aif_token",
@@ -189,6 +191,18 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 		Secure:   true,
 		SameSite: "Lax", // Adjust as needed
 	})
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  memberId,
+		CompanyId: companyId,
+		Action:    constant.EventSignOut,
+	}
+
+	_, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
 
 	resp := helper.ResponseSuccess(
 		"succeed to logout",
