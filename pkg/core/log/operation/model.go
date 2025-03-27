@@ -37,6 +37,12 @@ type LogRangeFilter struct {
 	EndDate   string
 }
 
+type AddLogRequest struct {
+	MemberId  uint   `json:"member_id" validate:"required~Field Member ID is required"`
+	CompanyId uint   `json:"company_id" validate:"required~Field Company ID is required"`
+	Action    string `json:"action" validate:"required~Field Action is required"`
+}
+
 type AifResponse struct {
 	Success bool           `json:"success"`
 	Data    []LogOperation `json:"data"`
