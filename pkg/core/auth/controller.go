@@ -200,8 +200,7 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 
 	_, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		fmt.Println("Failed to log operation for user logout:", err)
 	}
 
 	resp := helper.ResponseSuccess(
@@ -293,6 +292,17 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		return err
 	}
 
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  member.Data.MemberId,
+		CompanyId: member.Data.CompanyId,
+		Action:    constant.EventChangePassword,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for change password:", err)
+	}
+
 	resp := helper.ResponseSuccess(
 		"succeed to change password",
 		nil,
@@ -379,8 +389,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 
 	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		fmt.Println("Failed to log operation for user login:", err)
 	}
 
 	data := &UserLoginResponse{
