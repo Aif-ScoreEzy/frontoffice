@@ -3,6 +3,7 @@ package auth
 import (
 	"front-office/app/config"
 	"front-office/pkg/core/activationtoken"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/passwordresettoken"
 	"front-office/pkg/core/role"
@@ -18,14 +19,16 @@ func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repoRole := role.NewRepository(db, cfg)
 	repoActivationToken := activationtoken.NewRepository(cfg)
 	repoPasswordResetToken := passwordresettoken.NewRepository(db, cfg)
+	repoLogOperation := operation.NewRepository(cfg)
 
 	service := NewService(repo, repoUser, repoRole, cfg)
 	serviceRole := role.NewService(repoRole)
 	serviceUser := member.NewService(repoUser, serviceRole)
 	serviceActivationToken := activationtoken.NewService(repoActivationToken, cfg)
 	servicePasswordResetToken := passwordresettoken.NewService(repoPasswordResetToken, cfg)
+	serviceLogOperation := operation.NewService(repoLogOperation)
 
-	controller := NewController(service, serviceUser, serviceActivationToken, servicePasswordResetToken, cfg)
+	controller := NewController(service, serviceUser, serviceActivationToken, servicePasswordResetToken, serviceLogOperation, cfg)
 
 	authAPI.Post("/register-member", middleware.AdminAuth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(member.RegisterMemberRequest{}), controller.RegisterMember)
 	authAPI.Post("/request-password-reset", middleware.IsRequestValid(RequestPasswordResetRequest{}), controller.RequestPasswordReset)

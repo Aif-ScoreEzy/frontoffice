@@ -6,6 +6,7 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/activationtoken"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/passwordresettoken"
 	"front-office/utility/mailjet"
@@ -20,6 +21,7 @@ func NewController(
 	svcUser member.Service,
 	svcActivationToken activationtoken.Service,
 	svcPasswordResetToken passwordresettoken.Service,
+	svcLogOperation operation.Service,
 	cfg *config.Config,
 ) Controller {
 	return &controller{
@@ -27,6 +29,7 @@ func NewController(
 		SvcUser:               svcUser,
 		SvcActivationToken:    svcActivationToken,
 		SvcPasswordResetToken: svcPasswordResetToken,
+		SvcLogOperation:       svcLogOperation,
 		Cfg:                   cfg,
 	}
 }
@@ -36,6 +39,7 @@ type controller struct {
 	SvcUser               member.Service
 	SvcActivationToken    activationtoken.Service
 	SvcPasswordResetToken passwordresettoken.Service
+	SvcLogOperation       operation.Service
 	Cfg                   *config.Config
 }
 
@@ -353,7 +357,19 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		SameSite: "Lax",
 	})
 
-	data := UserLoginResponse{
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  res.Data.MemberId,
+		CompanyId: res.Data.CompanyId,
+		Action:    constant.EventSignIn,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	data := &UserLoginResponse{
 		Id:                 res.Data.MemberId,
 		Name:               res.Data.Name,
 		Email:              res.Data.Email,
