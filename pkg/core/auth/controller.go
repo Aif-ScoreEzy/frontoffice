@@ -170,7 +170,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 
 	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		fmt.Println("Failed to log operation for request password reset:", err)
+		fmt.Println("Failed to log operation for verify user:", err)
 	}
 
 	resp := helper.ResponseSuccess(

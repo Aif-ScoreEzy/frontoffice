@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
 	"strconv"
@@ -12,16 +13,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service, roleService role.Service) Controller {
+func NewController(
+	service Service,
+	roleService role.Service,
+	logOperationService operation.Service) Controller {
 	return &controller{
-		Svc:     service,
-		RoleSvc: roleService,
+		Svc:             service,
+		RoleSvc:         roleService,
+		LogOperationSvc: logOperationService,
 	}
 }
 
 type controller struct {
-	Svc     Service
-	RoleSvc role.Service
+	Svc             Service
+	RoleSvc         role.Service
+	LogOperationSvc operation.Service
 }
 
 type Controller interface {
@@ -196,6 +202,17 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  updatedMember.Data.MemberId,
+		CompanyId: updatedMember.Data.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}
+
+	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for update profile:", err)
+	}
+
 	dataResponse := &UserUpdateResponse{
 		Id:        updatedMember.Data.MemberId,
 		Name:      updatedMember.Data.Name,
@@ -229,6 +246,17 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  user.Data.MemberId,
+		CompanyId: user.Data.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}
+
+	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for upload profile photo:", err)
 	}
 
 	dataResponse := &UserUpdateResponse{
