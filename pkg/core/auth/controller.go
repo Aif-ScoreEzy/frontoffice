@@ -414,7 +414,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RequestPasswordResetRequest)
 
-	userExists, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	member, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
 		Email: req.Email,
 	})
 	if err != nil {
@@ -422,21 +422,32 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !userExists.Data.IsVerified {
+	if !member.Data.IsVerified {
 		statusCode, resp := helper.GetError(constant.UnverifiedUser)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(member.Data.MemberId, member.Data.CompanyId, member.Data.RoleId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = mailjet.SendEmailPasswordReset(req.Email, userExists.Data.Name, token)
+	err = mailjet.SendEmailPasswordReset(req.Email, member.Data.Name, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  member.Data.MemberId,
+		CompanyId: member.Data.CompanyId,
+		Action:    constant.EventRequestPasswordReset,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for request password reset:", err)
 	}
 
 	resp := helper.ResponseSuccess(
