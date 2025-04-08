@@ -6,4 +6,5 @@ const (
 	EventChangePassword       = "change password"
 	EventRequestPasswordReset = "request password reset"
 	EventPasswordReset        = "password reset"
+	EventVerifyUser           = "verify user"
 )
