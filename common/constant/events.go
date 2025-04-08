@@ -5,4 +5,5 @@ const (
 	EventSignOut              = "sign out"
 	EventChangePassword       = "change password"
 	EventRequestPasswordReset = "request password reset"
+	EventPasswordReset        = "password reset"
 )

@@ -494,6 +494,17 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  result.Data.User.MemberId,
+		CompanyId: result.Data.User.CompanyId,
+		Action:    constant.EventPasswordReset,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for password reset:", err)
+	}
+
 	resp := helper.ResponseSuccess(
 		"succeed to reset password",
 		nil,
