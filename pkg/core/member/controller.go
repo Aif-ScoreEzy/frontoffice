@@ -280,7 +280,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	memberId := c.Params("id")
 
-	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Id: memberId,
 	})
 	if err != nil {
@@ -288,7 +288,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if result.Data.MemberId == 0 {
+	if member.Data.MemberId == 0 {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -302,12 +302,23 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	currentTime := time.Now()
 	formattedTime := helper.FormatWIB(currentTime)
 
-	if req.Email != nil && result.Data.Email != *req.Email {
-		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(result.Data.Name, result.Data.Email, *req.Email, formattedTime)
+	if req.Email != nil && member.Data.Email != *req.Email {
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(member.Data.Name, member.Data.Email, *req.Email, formattedTime)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  member.Data.MemberId,
+		CompanyId: member.Data.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}
+
+	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for update member data by admin:", err)
 	}
 
 	resp := helper.ResponseSuccess(
