@@ -58,6 +58,12 @@ type Controller interface {
 func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 	req := c.Locals("request").(*member.RegisterMemberRequest)
 
+	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
 	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -100,6 +106,17 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 
 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
 		return c.Status(statusCode).JSON(resp)
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  currentUserId,
+		CompanyId: companyId,
+		Action:    constant.EventRegisterMember,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for register member:", err)
 	}
 
 	resp := helper.ResponseSuccess(
