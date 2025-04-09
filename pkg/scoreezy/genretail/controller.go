@@ -7,6 +7,7 @@ import (
 	"front-office/pkg/core/grading"
 	"front-office/pkg/core/log/operation"
 	"io"
+	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -97,7 +98,7 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 
 	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		fmt.Println("Failed to log operation for calculate score:", err)
+		log.Println("Failed to log operation for calculate score:", err)
 	}
 
 	resp := GenRetailV3ClientReturnSuccess{

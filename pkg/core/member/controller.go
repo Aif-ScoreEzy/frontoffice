@@ -7,6 +7,7 @@ import (
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
+	"log"
 	"strconv"
 	"time"
 
@@ -210,7 +211,7 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 
 	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
 	if err != nil {
-		fmt.Println("Failed to log operation for update profile:", err)
+		log.Println("Failed to log operation for update profile:", err)
 	}
 
 	dataResponse := &UserUpdateResponse{
@@ -256,7 +257,7 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 
 	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
 	if err != nil {
-		fmt.Println("Failed to log operation for upload profile photo:", err)
+		log.Println("Failed to log operation for upload profile photo:", err)
 	}
 
 	dataResponse := &UserUpdateResponse{
@@ -313,12 +314,12 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	addLogRequest := &operation.AddLogRequest{
 		MemberId:  member.Data.MemberId,
 		CompanyId: member.Data.CompanyId,
-		Action:    constant.EventUpdateProfile,
+		Action:    constant.EventUpdateUserData,
 	}
 
 	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
 	if err != nil {
-		fmt.Println("Failed to log operation for update member data by admin:", err)
+		log.Println("Failed to log operation for update member data by admin:", err)
 	}
 
 	resp := helper.ResponseSuccess(
