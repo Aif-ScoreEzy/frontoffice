@@ -179,17 +179,6 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  userExists.Data.MemberId,
-		CompanyId: userExists.Data.CompanyId,
-		Action:    constant.EventVerifyUser,
-	}
-
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		fmt.Println("Failed to log operation for verify user:", err)
-	}
-
 	resp := helper.ResponseSuccess(
 		"your account has been verified",
 		nil,

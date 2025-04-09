@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"front-office/helper"
 	"front-office/pkg/core/grading"
+	"front-office/pkg/core/log/operation"
 	"io"
 	"strconv"
 
@@ -13,13 +14,22 @@ import (
 	"front-office/common/constant"
 )
 
-func NewController(service Service, svcGrading grading.Service) Controller {
-	return &controller{Svc: service, SvcGrading: svcGrading}
+func NewController(
+	service Service,
+	svcGrading grading.Service,
+	svcLogOperation operation.Service,
+) Controller {
+	return &controller{
+		Svc:             service,
+		SvcGrading:      svcGrading,
+		SvcLogOperation: svcLogOperation,
+	}
 }
 
 type controller struct {
-	Svc        Service
-	SvcGrading grading.Service
+	Svc             Service
+	SvcGrading      grading.Service
+	SvcLogOperation operation.Service
 }
 
 type Controller interface {
@@ -32,10 +42,22 @@ type Controller interface {
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*GenRetailRequest)
 	apiKey := c.Get("X-API-KEY")
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := c.Locals("companyId")
+
+	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	companyIdUint, err := helper.InterfaceToUint(c.Locals("companyId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
 
 	// make sure parameter settings are set
-	result, err := ctrl.SvcGrading.GetGradings(companyId)
+	result, err := ctrl.SvcGrading.GetGradings(fmt.Sprintf("%v", companyId))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -65,6 +87,17 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		}
 
 		return c.Status(genRetailResponse.StatusCode).JSON(dataReturn)
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  currentUserId,
+		CompanyId: companyIdUint,
+		Action:    constant.EventCalculateScore,
+	}
+
+	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
+		fmt.Println("Failed to log operation for calculate score:", err)
 	}
 
 	resp := GenRetailV3ClientReturnSuccess{

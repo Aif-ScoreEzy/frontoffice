@@ -33,7 +33,6 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"sign_out":               constant.EventSignOut,
 		"change_password":        constant.EventChangePassword,
 		"register_member":        constant.EventRegisterMember,
-		"verify_user":            constant.EventVerifyUser,
 		"request_password_reset": constant.EventRequestPasswordReset,
 		"password_reset":         constant.EventPasswordReset,
 		"update_profile":         constant.EventUpdateProfile,

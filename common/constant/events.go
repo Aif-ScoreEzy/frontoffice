@@ -7,7 +7,6 @@ const (
 	EventRequestPasswordReset = "request password reset"
 	EventPasswordReset        = "password reset"
 	EventRegisterMember       = "register member"
-	EventVerifyUser           = "verify user"
 	EventUpdateProfile        = "update profile"
 	EventUpdateUserData       = "update user data"
 	EventCalculateScore       = "calculate score"
