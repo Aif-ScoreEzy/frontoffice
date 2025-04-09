@@ -115,9 +115,9 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 		Action:    constant.EventRegisterMember,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for register member:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for register member")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -216,9 +216,9 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 		Action:    constant.EventSignOut,
 	}
 
-	_, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for user logout:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for user logout")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -316,9 +316,9 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		Action:    constant.EventChangePassword,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for change password:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for change password")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -405,9 +405,9 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		Action:    constant.EventSignIn,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for user login:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for user login")
 	}
 
 	data := &UserLoginResponse{
@@ -463,9 +463,9 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		Action:    constant.EventRequestPasswordReset,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for request password reset:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for request password reset")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -477,15 +477,17 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
 	result, err := ctrl.SvcPasswordResetToken.FindPasswordResetTokenByTokenSvc(token)
-	if err != nil || result == nil || result.Data == nil || result.Data.Activation {
+	if err != nil || result == nil || result.Data == nil {
 		statusCode, resp := helper.GetError(constant.InvalidPasswordResetLink)
 		return c.Status(statusCode).JSON(resp)
 	}
+
+	memberId := result.Data.Member.MemberId
+	companyId := result.Data.Member.CompanyId
 
 	jwtResetPasswordExpiresMinutesStr := ctrl.Cfg.Env.JwtResetPasswordExpiresMinutes
 	minutesToExpired, err := strconv.Atoi(jwtResetPasswordExpiresMinutesStr)
@@ -506,21 +508,21 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = ctrl.Svc.PasswordResetSvc(userId, token, req)
+	err = ctrl.Svc.PasswordResetSvc(memberId, token, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  result.Data.User.MemberId,
-		CompanyId: result.Data.User.CompanyId,
+		MemberId:  memberId,
+		CompanyId: companyId,
 		Action:    constant.EventPasswordReset,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for password reset:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for password reset")
 	}
 
 	resp := helper.ResponseSuccess(

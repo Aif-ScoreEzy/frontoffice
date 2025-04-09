@@ -27,7 +27,7 @@ type repository struct {
 type Repository interface {
 	CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
-	PasswordReset(id, token string, req *PasswordResetRequest) (*http.Response, error)
+	PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error)
 	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
 	AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error)
@@ -80,7 +80,7 @@ func (repo *repository) CreateMember(user *member.MstMember, activationToken *ac
 	return user, nil
 }
 
-func (repo *repository) PasswordReset(memberId, token string, req *PasswordResetRequest) (*http.Response, error) {
+func (repo *repository) PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error) {
 	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.Cfg.Env.AifcoreHost, memberId, token)
 
 	jsonBodyValue, _ := json.Marshal(req)

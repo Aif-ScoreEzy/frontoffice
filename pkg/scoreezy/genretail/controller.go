@@ -96,9 +96,9 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		Action:    constant.EventCalculateScore,
 	}
 
-	_, err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for calculate score:", err)
+	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for calculate score")
 	}
 
 	resp := GenRetailV3ClientReturnSuccess{

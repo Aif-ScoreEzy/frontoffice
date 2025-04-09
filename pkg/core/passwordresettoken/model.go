@@ -11,8 +11,8 @@ type PasswordResetToken struct {
 	Id         uint             `gorm:"primarykey" json:"id"`
 	Token      string           `gorm:"not null" json:"token"`
 	Activation bool             `gorm:"not null;default:false" json:"activation"`
-	UserId     string           `json:"user_id"`
-	User       member.MstMember `gorm:"foreignKey:UserId" json:"user"`
+	MemberId   uint             `json:"member_id"`
+	Member     member.MstMember `gorm:"foreignKey:MemberId" json:"member"`
 	CreatedAt  time.Time        `json:"created_at"`
 	UpdatedAt  time.Time        `json:"-"`
 	DeletedAt  gorm.DeletedAt   `gorm:"index" json:"-"`

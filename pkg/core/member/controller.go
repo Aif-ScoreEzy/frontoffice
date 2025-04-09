@@ -209,9 +209,9 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		Action:    constant.EventUpdateProfile,
 	}
 
-	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for update profile:", err)
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for update profile")
 	}
 
 	dataResponse := &UserUpdateResponse{
@@ -255,9 +255,9 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		Action:    constant.EventUpdateProfile,
 	}
 
-	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for upload profile photo:", err)
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for upload profile photo")
 	}
 
 	dataResponse := &UserUpdateResponse{
@@ -317,9 +317,9 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		Action:    constant.EventUpdateUserData,
 	}
 
-	_, err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for update member data by admin:", err)
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for update member data by admin")
 	}
 
 	resp := helper.ResponseSuccess(
