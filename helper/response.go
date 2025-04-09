@@ -2,7 +2,6 @@ package helper
 
 import (
 	"front-office/common/constant"
-	"log"
 )
 
 type BaseResponseSuccess struct {
@@ -76,6 +75,5 @@ func GetError(errorMessage string) (int, interface{}) {
 	}
 
 	resp := ResponseFailed(errorMessage)
-	log.Println(errorMessage)
 	return statusCode, resp
 }

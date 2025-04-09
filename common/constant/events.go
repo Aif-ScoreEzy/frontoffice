@@ -9,4 +9,7 @@ const (
 	EventRegisterMember       = "register member"
 	EventVerifyUser           = "verify user"
 	EventUpdateProfile        = "update profile"
+	EventUpdateUserData       = "update user data"
+	EventCalculateScore       = "calculate score"
+	EventDownloadScoreHistory = "download score history"
 )
