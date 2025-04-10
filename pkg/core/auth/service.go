@@ -35,7 +35,7 @@ type service struct {
 
 type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
-	PasswordResetSvc(userId, token string, req *PasswordResetRequest) error
+	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
 	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
 	LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error)
@@ -136,7 +136,7 @@ func (svc *service) VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) PasswordResetSvc(memberId, token string, req *PasswordResetRequest) error {
+func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error {
 	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
 	if !isPasswordStrength {
 		return errors.New(constant.InvalidPassword)

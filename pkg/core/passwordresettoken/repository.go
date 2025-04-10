@@ -34,6 +34,7 @@ func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*http.Re
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	client := &http.Client{}
+
 	return client.Do(request)
 }
 
