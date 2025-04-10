@@ -101,10 +101,11 @@ type MemberFilter struct {
 }
 
 type FindUserQuery struct {
-	Id       string
-	Email    string
-	Username string
-	Key      string
+	Id        string
+	CompanyId string
+	Email     string
+	Username  string
+	Key       string
 }
 
 type FindUserAifCoreResponse struct {

@@ -280,9 +280,17 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	memberId := c.Params("id")
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+
+	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
 
 	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-		Id: memberId,
+		Id:        memberId,
+		CompanyId: companyId,
 	})
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -312,7 +320,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  member.Data.MemberId,
+		MemberId:  currentUserId,
 		CompanyId: member.Data.CompanyId,
 		Action:    constant.EventUpdateUserData,
 	}
