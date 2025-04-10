@@ -65,6 +65,7 @@ func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error
 
 	q := request.URL.Query()
 	q.Add("id", query.Id)
+	q.Add("company_id", query.CompanyId)
 	q.Add("email", query.Email)
 	q.Add("username", query.Username)
 	q.Add("key", query.Key)

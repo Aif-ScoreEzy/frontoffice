@@ -2,7 +2,9 @@ package operation
 
 import (
 	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,6 +26,28 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	role := c.Query("role")
 	event := c.Query("event")
+
+	// validation for query input
+	var eventMap = map[string]string{
+		"sign_in":                constant.EventSignIn,
+		"sign_out":               constant.EventSignOut,
+		"change_password":        constant.EventChangePassword,
+		"register_member":        constant.EventRegisterMember,
+		"request_password_reset": constant.EventRequestPasswordReset,
+		"password_reset":         constant.EventPasswordReset,
+		"update_profile":         constant.EventUpdateProfile,
+		"update_user_data":       constant.EventUpdateUserData,
+		"calculate_score":        constant.EventCalculateScore,
+		"download_score_history": constant.EventDownloadScoreHistory,
+	}
+
+	normalized := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
+	event, ok := eventMap[normalized]
+	if !ok {
+		statusCode, res := helper.GetError("invalid event type")
+
+		return c.Status(statusCode).JSON(res)
+	}
 
 	filter := &LogOperationFilter{
 		CompanyId: companyId,

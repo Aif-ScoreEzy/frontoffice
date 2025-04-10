@@ -4,24 +4,31 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
+	"log"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service, roleService role.Service) Controller {
+func NewController(
+	service Service,
+	roleService role.Service,
+	logOperationService operation.Service) Controller {
 	return &controller{
-		Svc:     service,
-		RoleSvc: roleService,
+		Svc:             service,
+		RoleSvc:         roleService,
+		LogOperationSvc: logOperationService,
 	}
 }
 
 type controller struct {
-	Svc     Service
-	RoleSvc role.Service
+	Svc             Service
+	RoleSvc         role.Service
+	LogOperationSvc operation.Service
 }
 
 type Controller interface {
@@ -196,6 +203,17 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  updatedMember.Data.MemberId,
+		CompanyId: updatedMember.Data.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}
+
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for update profile")
+	}
+
 	dataResponse := &UserUpdateResponse{
 		Id:        updatedMember.Data.MemberId,
 		Name:      updatedMember.Data.Name,
@@ -231,6 +249,17 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  user.Data.MemberId,
+		CompanyId: user.Data.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}
+
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for upload profile photo")
+	}
+
 	dataResponse := &UserUpdateResponse{
 		Id:        user.Data.MemberId,
 		Name:      user.Data.Name,
@@ -251,16 +280,24 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 	memberId := c.Params("id")
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-		Id: memberId,
+	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id:        memberId,
+		CompanyId: companyId,
 	})
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if result.Data.MemberId == 0 {
+	if member.Data.MemberId == 0 {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -274,12 +311,23 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	currentTime := time.Now()
 	formattedTime := helper.FormatWIB(currentTime)
 
-	if req.Email != nil && result.Data.Email != *req.Email {
-		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(result.Data.Name, result.Data.Email, *req.Email, formattedTime)
+	if req.Email != nil && member.Data.Email != *req.Email {
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(member.Data.Name, member.Data.Email, *req.Email, formattedTime)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
 		}
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  currentUserId,
+		CompanyId: member.Data.CompanyId,
+		Action:    constant.EventUpdateUserData,
+	}
+
+	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil || !resAddLog.Success {
+		log.Println("Failed to log operation for update member data by admin")
 	}
 
 	resp := helper.ResponseSuccess(

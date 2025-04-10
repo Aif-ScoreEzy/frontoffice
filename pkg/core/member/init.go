@@ -2,6 +2,7 @@ package member
 
 import (
 	"front-office/app/config"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/pkg/middleware"
 
@@ -12,10 +13,13 @@ import (
 func SetupInit(userAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repo := NewRepository(db, cfg)
 	roleRepo := role.NewRepository(db, cfg)
+	repoLogOperation := operation.NewRepository(cfg)
 
 	serviceRole := role.NewService(roleRepo)
 	service := NewService(repo, serviceRole)
-	controller := NewController(service, serviceRole)
+	serviceLogOperation := operation.NewService(repoLogOperation)
+
+	controller := NewController(service, serviceRole, serviceLogOperation)
 
 	userAPI.Get("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetList)
 	userAPI.Put("/profile", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(UpdateProfileRequest{}), controller.UpdateProfile)
