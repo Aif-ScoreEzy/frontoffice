@@ -41,9 +41,10 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"download_score_history": constant.EventDownloadScoreHistory,
 	}
 
-	normalized := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
-	event, ok := eventMap[normalized]
-	if !ok {
+	role = strings.ToLower(strings.ReplaceAll(role, " ", "_"))
+	normalizedEventQuery := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
+	event, ok := eventMap[normalizedEventQuery]
+	if event != "" && !ok {
 		statusCode, res := helper.GetError("invalid event type")
 
 		return c.Status(statusCode).JSON(res)
