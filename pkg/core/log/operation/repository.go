@@ -37,6 +37,7 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*http.Re
 	q := request.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Size)
+	q.Add("name", filter.Name)
 	q.Add("role", filter.Role)
 	q.Add("event", filter.Event)
 	request.URL.RawQuery = q.Encode()

@@ -28,6 +28,7 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	size := c.Query("size", "10")
 	role := c.Query("role")
 	event := c.Query("event")
+	name := c.Query("name", "")
 
 	// validation for query input
 	var eventMap = map[string]string{
@@ -43,7 +44,6 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"download_score_history": constant.EventDownloadScoreHistory,
 	}
 
-	role = strings.ToLower(strings.ReplaceAll(role, " ", "_"))
 	normalizedEventQuery := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
 	event, ok := eventMap[normalizedEventQuery]
 	if event != "" && !ok {
@@ -56,8 +56,9 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		CompanyId: companyId,
 		Page:      page,
 		Size:      size,
-		Role:      role,
+		Role:      strings.ToLower(role),
 		Event:     event,
+		Name:      strings.ToLower(name),
 	}
 
 	result, err := ctrl.Svc.GetLogOperations(filter)
