@@ -32,25 +32,30 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 	// validation for query input
 	var eventMap = map[string]string{
-		"sign_in":                constant.EventSignIn,
-		"sign_out":               constant.EventSignOut,
-		"change_password":        constant.EventChangePassword,
-		"register_member":        constant.EventRegisterMember,
-		"request_password_reset": constant.EventRequestPasswordReset,
-		"password_reset":         constant.EventPasswordReset,
-		"update_profile":         constant.EventUpdateProfile,
-		"update_user_data":       constant.EventUpdateUserData,
-		"calculate_score":        constant.EventCalculateScore,
-		"download_score_history": constant.EventDownloadScoreHistory,
+		"sign_in":                     constant.EventSignIn,
+		"sign_out":                    constant.EventSignOut,
+		"change_password":             constant.EventChangePassword,
+		"register_member":             constant.EventRegisterMember,
+		"request_password_reset":      constant.EventRequestPasswordReset,
+		"password_reset":              constant.EventPasswordReset,
+		"update_profile":              constant.EventUpdateProfile,
+		"update_user_data":            constant.EventUpdateUserData,
+		"calculate_score":             constant.EventCalculateScore,
+		"download_score_history":      constant.EventDownloadScoreHistory,
+		"change_billing_information":  constant.EventChangeBillingInformation,
+		"topup_balance":               constant.EventTopupBalance,
+		"submit_payment_confirmation": constant.EventSubmitPaymentConfirmation,
 	}
 
 	normalizedEventQuery := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
-	event, ok := eventMap[normalizedEventQuery]
+	mappedEvent, ok := eventMap[normalizedEventQuery]
 	if event != "" && !ok {
 		statusCode, res := helper.GetError("invalid event type")
 
 		return c.Status(statusCode).JSON(res)
 	}
+
+	event = mappedEvent
 
 	filter := &LogOperationFilter{
 		CompanyId: companyId,
