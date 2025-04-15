@@ -27,12 +27,16 @@ type MstRole struct {
 
 type LogOperationFilter struct {
 	CompanyId string
+	Page      string
+	Size      string
 	Role      string
 	Event     string
 }
 
 type LogRangeFilter struct {
 	CompanyId string
+	Page      string
+	Size      string
 	StartDate string
 	EndDate   string
 }

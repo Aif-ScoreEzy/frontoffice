@@ -24,6 +24,8 @@ type Controller interface {
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	page := c.Query("page", "1")
+	size := c.Query("size", "10")
 	role := c.Query("role")
 	event := c.Query("event")
 
@@ -52,6 +54,8 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 	filter := &LogOperationFilter{
 		CompanyId: companyId,
+		Page:      page,
+		Size:      size,
 		Role:      role,
 		Event:     event,
 	}
@@ -73,10 +77,14 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	page := c.Query("page", "1")
+	size := c.Query("size", "10")
 	startDate := c.Query("start_date")
 	endDate := c.Query(("end_date"))
 
 	filter := &LogRangeFilter{
+		Page:      page,
+		Size:      size,
 		CompanyId: companyId,
 		StartDate: startDate,
 		EndDate:   endDate,

@@ -35,6 +35,8 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*http.Re
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := request.URL.Query()
+	q.Add("page", filter.Page)
+	q.Add("size", filter.Size)
 	q.Add("role", filter.Role)
 	q.Add("event", filter.Event)
 	request.URL.RawQuery = q.Encode()
@@ -55,6 +57,8 @@ func (repo *repository) FetchByRange(filter *LogRangeFilter) (*http.Response, er
 	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := request.URL.Query()
+	q.Add("page", filter.Page)
+	q.Add("size", filter.Size)
 	q.Add("company_id", filter.CompanyId)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
