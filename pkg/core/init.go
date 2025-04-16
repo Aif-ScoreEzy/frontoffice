@@ -11,36 +11,38 @@ import (
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
 	"front-office/pkg/procat/livestatus"
+	"front-office/pkg/procat/loanrecordchecker"
 	"front-office/pkg/scoreezy/genretail"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
-func SetupInit(routeAPI fiber.Router, cfg *config.Config, db *gorm.DB) {
-	userAPI := routeAPI.Group("users")
-	auth.SetupInit(userAPI, db, cfg)
-	member.SetupInit(userAPI, db, cfg)
+func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
+	userGroup := routeGroup.Group("users")
+	auth.SetupInit(userGroup, db, cfg)
+	member.SetupInit(userGroup, db, cfg)
 
-	roleAPI := routeAPI.Group("roles")
-	role.SetupInit(roleAPI, cfg, db)
+	roleGroup := routeGroup.Group("roles")
+	role.SetupInit(roleGroup, cfg, db)
 
-	permissionAPI := routeAPI.Group("permissions")
-	permission.SetupInit(permissionAPI, db)
+	permissionGroup := routeGroup.Group("permissions")
+	permission.SetupInit(permissionGroup, db)
 
-	companyAPI := routeAPI.Group("companies")
-	company.SetupInit(companyAPI, db)
+	companyGroup := routeGroup.Group("companies")
+	company.SetupInit(companyGroup, db)
 
-	gradingAPI := routeAPI.Group("gradings")
-	grading.SetupInit(gradingAPI, db, cfg)
+	gradingGroup := routeGroup.Group("gradings")
+	grading.SetupInit(gradingGroup, db, cfg)
 
-	genRetailAPI := routeAPI.Group("scores")
-	genretail.SetupInit(genRetailAPI, db, cfg)
+	genRetailGroup := routeGroup.Group("scores")
+	genretail.SetupInit(genRetailGroup, db, cfg)
 
-	logAPI := routeAPI.Group("logs")
-	transaction.SetupInit(logAPI, db, cfg)
-	operation.SetupInit(logAPI, cfg)
+	logGroup := routeGroup.Group("logs")
+	transaction.SetupInit(logGroup, db, cfg)
+	operation.SetupInit(logGroup, cfg)
 
-	productAPI := routeAPI.Group("products")
-	livestatus.SetupInit(productAPI, db, cfg)
+	productGroup := routeGroup.Group("products")
+	livestatus.SetupInit(productGroup, db, cfg)
+	loanrecordchecker.SetupInit(productGroup, cfg)
 }

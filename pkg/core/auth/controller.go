@@ -86,8 +86,14 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 	}
 
 	token, result, err := ctrl.SvcActivationToken.CreateActivationToken(resAddMember.Data.MemberId, companyId, uint(memberRoleId))
-	if err != nil || !result.Success {
+	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if !result.Success {
+		statusCode, resp := helper.GetError(fiber.ErrInternalServerError.Error())
+
 		return c.Status(statusCode).JSON(resp)
 	}
 
