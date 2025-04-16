@@ -30,7 +30,7 @@ func (s *fiberServer) Start() {
 	s.App.Static("/", "./public")
 	s.App.Use(cors.New(cors.Config{
 		AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization",
-		AllowOrigins:     s.Cfg.Env.AllowingDomains,
+		AllowOrigins:     s.Cfg.Env.FrontendBaseUrl,
 		AllowCredentials: true,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		ExposeHeaders:    "Set-Cookie",
