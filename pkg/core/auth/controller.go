@@ -333,10 +333,11 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 	userId, _ := helper.InterfaceToUint(c.Locals("userId"))
 	companyId, _ := helper.InterfaceToUint(c.Locals("companyId"))
 	tierLevel, _ := helper.InterfaceToUint(c.Locals("tierLevel"))
+	apiKey, _ := c.Locals("apiKey").(string)
 
 	secret := ctrl.Cfg.Env.JwtSecretKey
 	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
-	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userId, companyId, uint(tierLevel))
+	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userId, companyId, uint(tierLevel), apiKey)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -373,7 +374,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	accessToken, refreshToken, err := ctrl.Svc.generateTokens(res.Data.MemberId, res.Data.CompanyId, res.Data.RoleId)
+	accessToken, refreshToken, err := ctrl.Svc.generateTokens(res.Data.MemberId, res.Data.CompanyId, res.Data.RoleId, res.Data.ApiKey)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)

@@ -40,7 +40,7 @@ type Service interface {
 	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
 	LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error)
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
-	generateTokens(memberId, companyId, roleId uint) (string, string, error)
+	generateTokens(memberId, companyId, roleId uint, apiKey string) (string, string, error)
 }
 
 // func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -219,16 +219,16 @@ func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) 
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) generateTokens(memberId, companyId, roleId uint) (string, string, error) {
+func (svc *service) generateTokens(memberId, companyId, roleId uint, apiKey string) (string, string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
-	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, memberId, companyId, roleId)
+	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, memberId, companyId, roleId, apiKey)
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, memberId, companyId, roleId)
+	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, memberId, companyId, roleId, apiKey)
 	if err != nil {
 		return "", "", err
 	}

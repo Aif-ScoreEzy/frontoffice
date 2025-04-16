@@ -9,14 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const (
-	keyEmpty = "key doesn't exist"
-)
-
 func GenerateToken(
 	secret string,
 	minutesToExpired int,
 	userId, companyId, roleId uint,
+	apiKey string,
 ) (string, error) {
 	willExpiredAt := time.Now().Add(time.Duration(minutesToExpired) * time.Minute)
 
@@ -24,6 +21,7 @@ func GenerateToken(
 	claims["user_id"] = userId
 	claims["company_id"] = companyId
 	claims["role_id"] = roleId
+	claims["api_key"] = apiKey
 	claims["exp"] = willExpiredAt.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -48,50 +46,47 @@ func ExtractClaimsFromJWT(token, secret string) (*jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ExtractUserIdFromClaims(claims *jwt.MapClaims) (uint, error) {
-	x, found := (*claims)["user_id"]
-	if found {
-		userIdStr := fmt.Sprintf("%v", x)
-
-		roleId, err := strconv.ParseUint(userIdStr, 10, 32)
-		if err != nil {
-			return 0, err
-		}
-
-		return uint(roleId), nil
-	} else {
-		return 0, errors.New(keyEmpty)
+func extractUintClaim(claims *jwt.MapClaims, key string) (uint, error) {
+	val, found := (*claims)[key]
+	if !found {
+		return 0, errors.New("missing key in claims: " + key)
 	}
+
+	strVal := fmt.Sprintf("%v", val)
+	parsedVal, err := strconv.ParseUint(strVal, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s format: %v", key, err)
+	}
+
+	return uint(parsedVal), nil
+}
+
+func extractStringClaim(claims *jwt.MapClaims, key string) (string, error) {
+	val, found := (*claims)[key]
+	if !found {
+		return "", errors.New("missing key in claims: " + key)
+	}
+
+	strVal, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("claim %s is not a string", key)
+	}
+
+	return strVal, nil
+}
+
+func ExtractUserIdFromClaims(claims *jwt.MapClaims) (uint, error) {
+	return extractUintClaim(claims, "user_id")
 }
 
 func ExtractCompanyIdFromClaims(claims *jwt.MapClaims) (uint, error) {
-	x, found := (*claims)["company_id"]
-	if found {
-		companyIdStr := fmt.Sprintf("%v", x)
-
-		roleId, err := strconv.ParseUint(companyIdStr, 10, 32)
-		if err != nil {
-			return 0, err
-		}
-
-		return uint(roleId), nil
-	} else {
-		return 0, errors.New(keyEmpty)
-	}
+	return extractUintClaim(claims, "company_id")
 }
 
 func ExtractRoleIdFromClaims(claims *jwt.MapClaims) (uint, error) {
-	x, found := (*claims)["role_id"]
-	if found {
-		roleIdStr := fmt.Sprintf("%v", x)
+	return extractUintClaim(claims, "role_id")
+}
 
-		roleId, err := strconv.ParseUint(roleIdStr, 10, 32)
-		if err != nil {
-			return 0, err
-		}
-
-		return uint(roleId), nil
-	} else {
-		return 0, errors.New(keyEmpty)
-	}
+func ExtractApiKeyFromClaims(claims *jwt.MapClaims) (string, error) {
+	return extractStringClaim(claims, "api_key")
 }
