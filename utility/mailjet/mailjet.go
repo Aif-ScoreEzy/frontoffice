@@ -44,7 +44,7 @@ func SendEmailActivation(email, token string) error {
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%sactivation?key=%s", baseURL, token),
+		"link": fmt.Sprintf("%susers-management/verif/%s", baseURL, token),
 	}
 
 	err := createMailjet(email, 5188578, variables)
