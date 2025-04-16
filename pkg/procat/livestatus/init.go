@@ -8,18 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupInit(liveStatusAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
+func SetupInit(apiGroup fiber.Router, db *gorm.DB, cfg *config.Config) {
 	repository := NewRepository(db, cfg)
 	service := NewService(cfg, repository)
 	controller := NewController(service)
 
-	liveStatusAPI.Post("/live-status", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.Search)
-	liveStatusAPI.Post("/live-status/bulk", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.UploadCSVFile(), controller.BulkSearch)
-	liveStatusAPI.Get("/live-status", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobs)
-	liveStatusAPI.Get("/live-status/jobs-summary", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobsSummary)
-	liveStatusAPI.Get("/live-status/jobs-summary/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobsSummary)
-	liveStatusAPI.Get("/live-status/:id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
-	liveStatusAPI.Get("/live-status/:id/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetailsExport)
+	liveStatusGroup := apiGroup.Group("live-status")
+	liveStatusGroup.Post("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.Search)
+	liveStatusGroup.Post("/bulk", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.UploadCSVFile(), controller.BulkSearch)
+	liveStatusGroup.Get("/", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobs)
+	liveStatusGroup.Get("/jobs-summary", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobsSummary)
+	liveStatusGroup.Get("/jobs-summary/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobsSummary)
+	liveStatusGroup.Get("/:id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
+	liveStatusGroup.Get("/:id/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetailsExport)
 
 	// Cron Reprocess Unsuccessful Job Details
 	// jakartaTime, _ := time.LoadLocation("Asia/Jakarta")

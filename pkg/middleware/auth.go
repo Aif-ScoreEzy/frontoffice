@@ -87,9 +87,17 @@ func GetJWTPayloadFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
+		apiKey, err := helper.ExtractApiKeyFromClaims(claims)
+		if err != nil {
+			resp := helper.ResponseFailed(err.Error())
+
+			return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		}
+
 		c.Locals("userId", userId)
 		c.Locals("companyId", companyId)
 		c.Locals("roleId", roleId)
+		c.Locals("apiKey", apiKey)
 
 		return c.Next()
 	}

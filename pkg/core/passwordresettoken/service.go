@@ -47,7 +47,7 @@ func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId ui
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
 	if err != nil {
 		return "", err
 	}

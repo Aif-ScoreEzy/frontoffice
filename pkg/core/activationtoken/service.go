@@ -31,7 +31,7 @@ func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (strin
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId)
+	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
 	if err != nil {
 		return "", nil, err
 	}

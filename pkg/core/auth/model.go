@@ -38,6 +38,7 @@ type dataLoginResponse struct {
 	CompanyName        string      `json:"company_name"`
 	RoleId             uint        `json:"role_id"`
 	Image              string      `json:"image"`
+	ApiKey             string      `json:"api_key"`
 	SubscriberProducts interface{} `json:"subscriber_products"`
 }
 
