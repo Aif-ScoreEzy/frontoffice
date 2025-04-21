@@ -44,7 +44,7 @@ func SendEmailActivation(email, token string) error {
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%susers-management/verif/%s", baseURL, token),
+		"link": fmt.Sprintf("%s/users-management/verif/%s", baseURL, token),
 	}
 
 	err := createMailjet(email, 5188578, variables)
@@ -60,7 +60,7 @@ func SendEmailPasswordReset(email, name, token string) error {
 
 	variables := map[string]interface{}{
 		"name": name,
-		"link": fmt.Sprintf("%sverification?key=%s", baseURL, token),
+		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
 	}
 
 	err := createMailjet(email, 5202383, variables)
@@ -75,7 +75,7 @@ func SendEmailVerification(email, token string) error {
 	baseURL := os.Getenv("FRONTEND_BASE_URL")
 
 	variables := map[string]interface{}{
-		"link": fmt.Sprintf("%sverify/%s", baseURL, token),
+		"link": fmt.Sprintf("%s/verify/%s", baseURL, token),
 	}
 
 	err := createMailjet(email, 5075167, variables)
