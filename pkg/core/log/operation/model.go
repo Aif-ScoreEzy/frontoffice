@@ -32,6 +32,8 @@ type LogOperationFilter struct {
 	Role      string
 	Event     string
 	Name      string
+	StartDate string
+	EndDate   string
 }
 
 type LogRangeFilter struct {

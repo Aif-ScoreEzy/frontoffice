@@ -319,15 +319,31 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		}
 	}
 
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  currentUserId,
-		CompanyId: member.Data.CompanyId,
-		Action:    constant.EventUpdateUserData,
+	var logEvents []string
+
+	if req.Name != nil || req.Email != nil || req.RoleId != nil {
+		logEvents = append(logEvents, constant.EventUpdateUserData)
 	}
 
-	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
-		log.Println("Failed to log operation for update member data by admin")
+	if req.Active != nil {
+		if *req.Active {
+			logEvents = append(logEvents, constant.EventActivateUser)
+		} else {
+			logEvents = append(logEvents, constant.EventInactivateUser)
+		}
+	}
+
+	for _, event := range logEvents {
+		logRequest := &operation.AddLogRequest{
+			MemberId:  currentUserId,
+			CompanyId: member.Data.CompanyId,
+			Action:    event,
+		}
+
+		resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(logRequest)
+		if err != nil || !resAddLog.Success {
+			log.Println("Failed to log operation for update member data by admin")
+		}
 	}
 
 	resp := helper.ResponseSuccess(

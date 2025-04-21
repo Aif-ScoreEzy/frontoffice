@@ -29,6 +29,8 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	role := c.Query("role")
 	event := c.Query("event")
 	name := c.Query("name", "")
+	startDate := c.Query("start_date")
+	endDate := c.Query(("end_date"))
 
 	// validation for query input
 	var eventMap = map[string]string{
@@ -40,6 +42,8 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"password_reset":              constant.EventPasswordReset,
 		"update_profile_account":      constant.EventUpdateProfile,
 		"updates_user_data":           constant.EventUpdateUserData,
+		"activate_user":               constant.EventActivateUser,
+		"inactivate_user":             constant.EventInactivateUser,
 		"calculate_score":             constant.EventCalculateScore,
 		"download_history_hit":        constant.EventDownloadScoreHistory,
 		"change_billing_information":  constant.EventChangeBillingInformation,
@@ -64,6 +68,8 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		Role:      strings.ToLower(role),
 		Event:     event,
 		Name:      strings.ToLower(name),
+		StartDate: startDate,
+		EndDate:   endDate,
 	}
 
 	result, err := ctrl.Svc.GetLogOperations(filter)

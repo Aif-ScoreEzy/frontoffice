@@ -9,6 +9,8 @@ const (
 	EventRegisterMember            = "add new user"
 	EventUpdateProfile             = "update profile account"
 	EventUpdateUserData            = "updates user data"
+	EventActivateUser              = "activate user"
+	EventInactivateUser            = "inactivate user"
 	EventCalculateScore            = "calculate score"
 	EventDownloadScoreHistory      = "download history hit"
 	EventChangeBillingInformation  = "change billing information"

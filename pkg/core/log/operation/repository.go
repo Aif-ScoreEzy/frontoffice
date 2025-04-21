@@ -40,6 +40,8 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*http.Re
 	q.Add("name", filter.Name)
 	q.Add("role", filter.Role)
 	q.Add("event", filter.Event)
+	q.Add("start_date", filter.StartDate)
+	q.Add("end_date", filter.EndDate)
 	request.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
