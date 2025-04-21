@@ -40,6 +40,8 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"password_reset":              constant.EventPasswordReset,
 		"update_profile_account":      constant.EventUpdateProfile,
 		"updates_user_data":           constant.EventUpdateUserData,
+		"activate_user":               constant.EventActivateUser,
+		"inactivate_user":             constant.EventInactivateUser,
 		"calculate_score":             constant.EventCalculateScore,
 		"download_history_hit":        constant.EventDownloadScoreHistory,
 		"change_billing_information":  constant.EventChangeBillingInformation,
