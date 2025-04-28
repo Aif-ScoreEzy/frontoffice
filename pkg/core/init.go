@@ -12,6 +12,7 @@ import (
 	"front-office/pkg/core/role"
 	"front-office/pkg/procat/livestatus"
 	"front-office/pkg/procat/loanrecordchecker"
+	"front-office/pkg/procat/multipleloan"
 	"front-office/pkg/scoreezy/genretail"
 
 	"github.com/gofiber/fiber/v2"
@@ -45,4 +46,5 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
 	productGroup := routeGroup.Group("products")
 	livestatus.SetupInit(productGroup, db, cfg)
 	loanrecordchecker.SetupInit(productGroup, cfg)
+	multipleloan.SetupInit(productGroup, cfg)
 }
