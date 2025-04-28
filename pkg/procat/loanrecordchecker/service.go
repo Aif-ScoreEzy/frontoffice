@@ -47,6 +47,8 @@ func parseResponse(response *http.Response) (*LoanRecordCheckerRawResponse, erro
 		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
 			return nil, err
 		}
+
+		baseResponse.StatusCode = response.StatusCode
 	}
 
 	return baseResponse, nil

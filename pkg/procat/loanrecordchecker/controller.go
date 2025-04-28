@@ -35,9 +35,11 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 			msg = "failed to process loan record checker"
 		}
 
-		statusCode, resp := helper.GetError(msg)
+		resp := helper.ResponseFailed(
+			msg,
+		)
 
-		return c.Status(statusCode).JSON(resp)
+		return c.Status(res.StatusCode).JSON(resp)
 	}
 
 	result := LoanRecordCheckerResponse{
