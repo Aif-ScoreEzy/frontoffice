@@ -22,6 +22,7 @@ type service struct {
 type Service interface {
 	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
 	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
+	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
 }
 
 func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error) {
@@ -52,6 +53,20 @@ func (svc *service) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey 
 	return result, nil
 }
 
+func (svc *service) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error) {
+	response, err := svc.Repo.CallMultipleLoan90Days(request, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func parseResponse(response *http.Response) (*MultipleLoanRawResponse, error) {
 	var baseResponse *MultipleLoanRawResponse
 
@@ -66,6 +81,8 @@ func parseResponse(response *http.Response) (*MultipleLoanRawResponse, error) {
 		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
 			return nil, err
 		}
+
+		baseResponse.StatusCode = response.StatusCode
 	}
 
 	return baseResponse, nil
