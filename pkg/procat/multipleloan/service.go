@@ -21,10 +21,25 @@ type service struct {
 
 type Service interface {
 	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
+	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
 }
 
 func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error) {
 	response, err := svc.Repo.CallMultipleLoan7Days(request, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (svc *service) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error) {
+	response, err := svc.Repo.CallMultipleLoan30Days(request, apiKey)
 	if err != nil {
 		return nil, err
 	}

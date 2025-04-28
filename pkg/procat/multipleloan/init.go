@@ -14,4 +14,5 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config) {
 
 	multipleLoanGroup := apiGroup.Group("multiple-loan")
 	multipleLoanGroup.Post("/7-days", middleware.Auth(), middleware.IsRequestValid(MultipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan7Days)
+	multipleLoanGroup.Post("/30-days", middleware.Auth(), middleware.IsRequestValid(MultipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan30Days)
 }
