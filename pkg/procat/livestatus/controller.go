@@ -34,8 +34,8 @@ type Controller interface {
 }
 
 func (ctrl *controller) Search(c *fiber.Ctx) error {
-	userID := fmt.Sprintf("%v", c.Locals("userID"))
-	companyID := fmt.Sprintf("%v", c.Locals("companyID"))
+	userID := fmt.Sprintf("%v", c.Locals("userId"))
+	companyID := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	var req LiveStatusRequest
 	if err := c.BodyParser(&req); err != nil {
