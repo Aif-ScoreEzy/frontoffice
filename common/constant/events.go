@@ -15,5 +15,5 @@ const (
 	EventDownloadScoreHistory      = "download history hit"
 	EventChangeBillingInformation  = "change billing information"
 	EventTopupBalance              = "topup balance"
-	EventSubmitPaymentConfirmation = "sumbmit payment confirmation"
+	EventSubmitPaymentConfirmation = "submit payment confirmation"
 )
