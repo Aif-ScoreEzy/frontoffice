@@ -198,11 +198,6 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: API_KEY_PRODUCT_CATALOG
-          - name: API_KEY_LIVE_STATUS
-            valueFrom:
-              configMapKeyRef:
-                name: frontoffice-be-config
-                key: API_KEY_LIVE_STATUS
           - name: X_MODULE_KEY
             valueFrom:
               configMapKeyRef:
