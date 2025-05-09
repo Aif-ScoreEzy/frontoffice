@@ -1,6 +1,8 @@
 package phonelivestatus
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
@@ -17,6 +19,7 @@ type repository struct {
 
 type Repository interface {
 	CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
+	CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error)
 }
 
 func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
@@ -41,6 +44,28 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilt
 	httpRequest.URL.RawQuery = q.Encode()
 
 	fmt.Println("hittttt", httpRequest)
+
+	client := http.Client{}
+
+	return client.Do(httpRequest)
+}
+
+func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/phone-live-status/single-search"
+
+	jsonBodyValue, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	if err != nil {
+		return nil, err
+	}
+
+	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
 
 	client := http.Client{}
 

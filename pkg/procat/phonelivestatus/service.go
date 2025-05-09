@@ -22,6 +22,7 @@ type service struct {
 
 type Service interface {
 	GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
+	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
 }
 
 func (svc *service) GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
@@ -36,6 +37,15 @@ func (svc *service) GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*AP
 	}
 
 	return result, nil
+}
+
+func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
+	_, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseGenericResponse[T any](response *http.Response) (*APIResponse[T], error) {

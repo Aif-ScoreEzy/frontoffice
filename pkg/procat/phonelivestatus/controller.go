@@ -17,6 +17,7 @@ type controller struct {
 
 type Controller interface {
 	GetJobs(c *fiber.Ctx) error
+	SingleSearch(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
@@ -52,4 +53,24 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
+	req := c.Locals("request").(*PhoneLiveStatusRequest)
+	memberId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+
+	err := ctrl.Svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
