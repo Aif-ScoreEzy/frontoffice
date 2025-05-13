@@ -18,6 +18,7 @@ type controller struct {
 type Controller interface {
 	GetJobs(c *fiber.Ctx) error
 	SingleSearch(c *fiber.Ctx) error
+	BulkSearch(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
@@ -61,6 +62,38 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	err := ctrl.Svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	resp := helper.ResponseSuccess(
+		"success",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
+	memberId := fmt.Sprintf("%v", c.Locals("userId"))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
+		_, resp := helper.GetError(err.Error())
+
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	err = ctrl.Svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"front-office/app/config"
 	"io"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -23,6 +24,7 @@ type service struct {
 type Service interface {
 	GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
+	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
 func (svc *service) GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
@@ -41,6 +43,15 @@ func (svc *service) GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*AP
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
 	_, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error {
+	_, err := svc.Repo.CallBulkPhoneLiveStatusAPI(memberId, companyId, fileHeader)
 	if err != nil {
 		return err
 	}
