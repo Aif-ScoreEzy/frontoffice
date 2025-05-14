@@ -77,3 +77,14 @@ type JobDetailsResponse struct {
 	DevUnavailable             int64                          `json:"dev_unavailable"`
 	JobDetails                 []*MstPhoneLiveStatusJobDetail `json:"job_details"`
 }
+
+type JobsSummaryResponse struct {
+	TotalData        int64 `json:"total_data"`
+	TotalDataSuccess int64 `json:"total_data_percentage_success"`
+	TotalDataFail    int64 `json:"total_data_percentage_fail"`
+	TotalDataError   int64 `json:"total_data_percentage_error"`
+	SubscriberActive int64 `json:"subs_active"`
+	DeviceReachable  int64 `json:"dev_reachable"`
+	Mobile           int64 `json:"mobile"`
+	FixedLine        int64 `json:"fixed_line"`
+}

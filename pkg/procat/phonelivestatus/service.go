@@ -25,6 +25,7 @@ type service struct {
 type Service interface {
 	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
 	GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
+	GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
@@ -55,6 +56,20 @@ func (svc *service) GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*A
 	}
 
 	return parseGenericResponse[JobDetailsResponse](response)
+}
+
+func (svc *service) GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error) {
+	response, err := svc.Repo.CallGetJobsSummary(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 400 {
+		body, _ := io.ReadAll(response.Body)
+		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
+	}
+
+	return parseGenericResponse[JobsSummaryResponse](response)
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
