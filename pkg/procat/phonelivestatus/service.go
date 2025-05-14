@@ -3,6 +3,7 @@ package phonelivestatus
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"front-office/app/config"
 	"io"
 	"mime/multipart"
@@ -22,23 +23,38 @@ type service struct {
 }
 
 type Service interface {
-	GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
+	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
+	GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
-func (svc *service) GetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
+func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
 	response, err := svc.Repo.CallGetPhoneLiveStatusJobAPI(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := parseGenericResponse[JobListResponse](response)
+	if response.StatusCode >= 400 {
+		body, _ := io.ReadAll(response.Body)
+		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
+	}
+
+	return parseGenericResponse[JobListResponse](response)
+}
+
+func (svc *service) GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {
+	response, err := svc.Repo.CallGetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	if response.StatusCode >= 400 {
+		body, _ := io.ReadAll(response.Body)
+		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
+	}
+
+	return parseGenericResponse[JobDetailsResponse](response)
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
@@ -77,5 +93,6 @@ func parseGenericResponse[T any](response *http.Response) (*APIResponse[T], erro
 	}
 
 	apiResponse.StatusCode = response.StatusCode
+
 	return &apiResponse, nil
 }

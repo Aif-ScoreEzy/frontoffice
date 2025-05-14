@@ -47,9 +47,11 @@ type PhoneLiveStatusFilter struct {
 	Offset    string
 	StartDate string
 	EndDate   string
+	JobId     string
 	MemberId  string
 	CompanyId string
 	TierLevel string
+	Keyword   string
 }
 
 type APIResponse[T any] struct {
@@ -62,4 +64,16 @@ type APIResponse[T any] struct {
 type JobListResponse struct {
 	Jobs      []*MstPhoneLiveStatusJob `json:"jobs"`
 	TotalData int                      `json:"total_data"`
+}
+
+type JobDetailsResponse struct {
+	TotalData                  int64                          `json:"total_data"`
+	TotalDataPercentageSuccess int64                          `json:"total_data_percentage_success"`
+	TotalDataPercentageFail    int64                          `json:"total_data_percentage_fail"`
+	TotalDataPercentageError   int64                          `json:"total_data_percentage_error"`
+	SubsActive                 int64                          `json:"subs_active"`
+	DevReachable               int64                          `json:"dev_reachable"`
+	DevUnreachable             int64                          `json:"dev_unreachable"`
+	DevUnavailable             int64                          `json:"dev_unavailable"`
+	JobDetails                 []*MstPhoneLiveStatusJobDetail `json:"job_details"`
 }

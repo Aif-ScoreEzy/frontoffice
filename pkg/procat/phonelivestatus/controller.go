@@ -17,30 +17,49 @@ type controller struct {
 
 type Controller interface {
 	GetJobs(c *fiber.Ctx) error
+	GetJobDetails(c *fiber.Ctx) error
 	SingleSearch(c *fiber.Ctx) error
 	BulkSearch(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
-	page := c.Query("page", "1")
-	size := c.Query("size", "10")
-	startDate := c.Query("startDate", "")
-	endDate := c.Query("endDate", "")
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
-	tierLevel := fmt.Sprintf("%v", c.Locals("roleId"))
-
 	filter := &PhoneLiveStatusFilter{
-		Page:      page,
-		Size:      size,
-		StartDate: startDate,
-		EndDate:   endDate,
-		MemberId:  memberId,
-		CompanyId: companyId,
-		TierLevel: tierLevel,
+		Page:      c.Query("page", "1"),
+		Size:      c.Query("size", "10"),
+		StartDate: c.Query("startDate", ""),
+		EndDate:   c.Query("endDate", ""),
+		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusJobAPI(filter)
+	result, err := ctrl.Svc.GetPhoneLiveStatusJob(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result.StatusCode != fiber.StatusOK {
+		_, resp := helper.GetError(result.Message)
+
+		return c.Status(result.StatusCode).JSON(resp)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
+	filter := &PhoneLiveStatusFilter{
+		Page:      c.Query("page", "1"),
+		Size:      c.Query("size", "10"),
+		JobId:     c.Params("id"),
+		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+	}
+
+	result, err := ctrl.Svc.GetPhoneLiveStatusDetails(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

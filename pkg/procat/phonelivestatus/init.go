@@ -14,6 +14,7 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config) {
 
 	phoneLiveStatusGroup := apiGroup.Group("phone-live-status")
 	phoneLiveStatusGroup.Get("/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobs)
+	phoneLiveStatusGroup.Get("/job/:id/details", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
 	phoneLiveStatusGroup.Post("/single-search", middleware.Auth(), middleware.IsRequestValid(PhoneLiveStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
 	phoneLiveStatusGroup.Post("/bulk-search", middleware.Auth(), middleware.IsRequestValid(PhoneLiveStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
 }
