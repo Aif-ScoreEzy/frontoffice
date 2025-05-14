@@ -28,13 +28,17 @@ type MstPhoneLiveStatusJobDetail struct {
 	JobId            uint                  `json:"job_id"`
 	Job              MstPhoneLiveStatusJob `json:"-"`
 	PhoneNumber      string                `json:"phone_number"`
-	SubscriberStatus string                `json:"subscriber_status"`
-	DeviceStatus     string                `json:"device_status"`
 	InProgress       bool                  `json:"in_progess"`
 	Sequence         int                   `json:"sequence"`
 	Status           string                `json:"status"`
 	Message          *string               `json:"message"`
-	CreatedAt        time.Time             `json:"-"`
+	SubscriberStatus string                `json:"subscriber_status"`
+	DeviceStatus     string                `json:"device_status"`
+	PhoneType        string                `json:"phone_type"`
+	Operator         string                `json:"operator"`
+	PricingStrategy  string                `json:"pricing_strategy"`
+	TransactionId    string                `json:"transaction_id"`
+	CreatedAt        time.Time             `json:"created_at"`
 }
 
 type PhoneLiveStatusRequest struct {
