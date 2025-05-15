@@ -1,6 +1,7 @@
 package phonelivestatus
 
 import (
+	"bytes"
 	"fmt"
 	"front-office/helper"
 
@@ -19,6 +20,7 @@ type Controller interface {
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
 	GetJobsSummary(c *fiber.Ctx) error
+	ExportJobsSummary(c *fiber.Ctx) error
 	SingleSearch(c *fiber.Ctx) error
 	BulkSearch(c *fiber.Ctx) error
 }
@@ -27,8 +29,8 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	filter := &PhoneLiveStatusFilter{
 		Page:      c.Query("page", "1"),
 		Size:      c.Query("size", "10"),
-		StartDate: c.Query("startDate", ""),
-		EndDate:   c.Query("endDate", ""),
+		StartDate: c.Query("start_date", ""),
+		EndDate:   c.Query("end_date", ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
@@ -99,6 +101,37 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
+	filter := &PhoneLiveStatusFilter{
+		StartDate: c.Query("start_date", ""),
+		EndDate:   c.Query("end_date", ""),
+		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+	}
+
+	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsByRangeDate(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var buf bytes.Buffer
+
+	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
 func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
