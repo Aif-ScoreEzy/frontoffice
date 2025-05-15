@@ -26,9 +26,10 @@ type service struct {
 
 type Service interface {
 	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
-	GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
+	GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
+	GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
 	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *PhoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
@@ -40,37 +41,31 @@ func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIRe
 		return nil, err
 	}
 
-	if response.StatusCode >= 400 {
-		body, _ := io.ReadAll(response.Body)
-		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
-	}
-
 	return parseGenericResponse[JobListResponse](response)
 }
 
-func (svc *service) GetPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {
+func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {
 	response, err := svc.Repo.CallGetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	if response.StatusCode >= 400 {
-		body, _ := io.ReadAll(response.Body)
-		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
+	return parseGenericResponse[JobDetailsResponse](response)
+}
+
+func (svc *service) GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
+	response, err := svc.Repo.CallGetAllJobDetailsAPI(filter)
+	if err != nil {
+		return nil, err
 	}
 
-	return parseGenericResponse[JobDetailsResponse](response)
+	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
 	response, err := svc.Repo.CallGetJobDetailsByRangeDateAPI(filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if response.StatusCode >= 400 {
-		body, _ := io.ReadAll(response.Body)
-		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
 	}
 
 	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
@@ -80,11 +75,6 @@ func (svc *service) GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[
 	response, err := svc.Repo.CallGetJobsSummary(filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if response.StatusCode >= 400 {
-		body, _ := io.ReadAll(response.Body)
-		return nil, fmt.Errorf("API error: %s, body: %s", response.Status, string(body))
 	}
 
 	return parseGenericResponse[JobsSummaryResponse](response)
@@ -114,7 +104,7 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 	if filter.EndDate != "" && filter.EndDate != filter.StartDate {
 		filename = fmt.Sprintf("jobs_summary_%s_until_%s.csv", filter.StartDate, filter.EndDate)
 	} else {
-		filename = fmt.Sprintf("jobs_summary_%s.csv", filter.StartDate)
+		filename = fmt.Sprintf("job_details_%s.csv", filter.JobId)
 	}
 
 	return filename, nil

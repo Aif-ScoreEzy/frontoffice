@@ -19,6 +19,7 @@ type controller struct {
 type Controller interface {
 	GetJobs(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
+	ExportJobDetails(c *fiber.Ctx) error
 	GetJobsSummary(c *fiber.Ctx) error
 	ExportJobsSummary(c *fiber.Ctx) error
 	SingleSearch(c *fiber.Ctx) error
@@ -62,7 +63,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusDetails(filter)
+	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsSummary(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -116,6 +117,38 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	var buf bytes.Buffer
+
+	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
+}
+
+func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+	filter := &PhoneLiveStatusFilter{
+		JobId:     c.Params("id"),
+		StartDate: c.Query("start_date", ""),
+		EndDate:   c.Query("end_date", ""),
+		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+	}
+
+	// Get JobDetails By JobId
+	result, err := ctrl.Svc.GetAllPhoneLiveStatusDetails(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
