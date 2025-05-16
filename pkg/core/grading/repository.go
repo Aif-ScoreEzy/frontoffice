@@ -46,8 +46,6 @@ func (repo *repository) GetGradeList(apiconfigId string) (*http.Response, error)
 	q.Add("id", apiconfigId)
 	request.URL.RawQuery = q.Encode()
 
-	fmt.Println("ppp", request)
-
 	client := &http.Client{}
 
 	return client.Do(request)

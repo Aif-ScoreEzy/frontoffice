@@ -7,6 +7,7 @@ const (
 	FileSizeIsTooLarge = "file size should not exceed 200 KB"
 	InvalidDateFormat  = "invalid date format"
 	RecordNotFound     = "record not found"
+	OnlyUploadCSVfile  = "only CSV files allowed"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"

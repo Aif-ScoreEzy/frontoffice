@@ -53,6 +53,7 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.InvalidPassword,
 		constant.InvalidPasswordResetLink,
 		constant.HeaderTemplateNotValid,
+		constant.OnlyUploadCSVfile,
 		constant.ParamSettingIsNotSet:
 		statusCode = 400
 	case
