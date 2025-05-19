@@ -104,7 +104,7 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 	if filter.EndDate != "" && filter.EndDate != filter.StartDate {
 		filename = fmt.Sprintf("jobs_summary_%s_until_%s.csv", filter.StartDate, filter.EndDate)
 	} else {
-		filename = fmt.Sprintf("job_details_%s.csv", filter.JobId)
+		filename = fmt.Sprintf("job_summary_%s.csv", filter.StartDate)
 	}
 
 	return filename, nil
