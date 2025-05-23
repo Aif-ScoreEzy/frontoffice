@@ -41,7 +41,7 @@ func FileUpload() fiber.Handler {
 		}
 
 		filename := fmt.Sprintf("%d%s", userId, ext)
-		filePath := fmt.Sprintf("./public/%s", filename)
+		filePath := fmt.Sprintf("./storage/uploads/profile/%s", filename)
 
 		if _, err := os.Stat(filePath); err == nil {
 			if err := os.Remove(filePath); err != nil {
