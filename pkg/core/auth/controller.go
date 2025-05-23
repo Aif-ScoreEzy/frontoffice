@@ -447,6 +447,11 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
+	if member.Data.MemberId == 0 {
+		statusCode, resp := helper.GetError(constant.UserNotFoundForgotEmail)
+		return c.Status(statusCode).JSON(resp)
+	}
+
 	if !member.Data.IsVerified {
 		statusCode, resp := helper.GetError(constant.UnverifiedUser)
 		return c.Status(statusCode).JSON(resp)

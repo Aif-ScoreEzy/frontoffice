@@ -10,6 +10,7 @@ import (
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
+	"front-office/pkg/core/template"
 	"front-office/pkg/procat/loanrecordchecker"
 	"front-office/pkg/procat/multipleloan"
 	"front-office/pkg/procat/phonelivestatus"
@@ -47,4 +48,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
 	phonelivestatus.SetupInit(productGroup, cfg)
 	loanrecordchecker.SetupInit(productGroup, cfg)
 	multipleloan.SetupInit(productGroup, cfg)
+
+	templateGroup := routeGroup.Group("templates")
+	template.SetupInit(templateGroup)
 }
