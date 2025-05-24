@@ -3,7 +3,9 @@ tmp
 bin
 coverage.out
 
-/public/*
-!/public/default-profile-image.jpg
+/storage/**/*
+!/storage/uploads/
+!/storage/uploads/profile/
+!/storage/uploads/profile/default-profile-image.jpg
 
 .vscode
