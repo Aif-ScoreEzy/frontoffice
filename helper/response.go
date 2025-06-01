@@ -1,7 +1,12 @@
 package helper
 
 import (
+	"encoding/json"
+	"errors"
 	"front-office/common/constant"
+	"front-office/common/model"
+	"io"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -74,10 +79,34 @@ func GetError(errorMessage string) (int, interface{}) {
 	case constant.DataAlreadyExist,
 		constant.EmailAlreadyExists:
 		statusCode = fiber.StatusConflict
+	case constant.UpstreamError:
+		statusCode = fiber.StatusBadGateway
 	default:
 		statusCode = fiber.StatusInternalServerError
 	}
 
 	resp := ResponseFailed(errorMessage)
 	return statusCode, resp
+}
+
+func ParseProCatAPIResponse[T any](response *http.Response) (*model.ProCatAPIResponse[T], error) {
+	var apiResponse model.ProCatAPIResponse[T]
+
+	if response == nil {
+		return nil, errors.New("nil response")
+	}
+
+	dataBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
+		return nil, err
+	}
+
+	apiResponse.StatusCode = response.StatusCode
+
+	return &apiResponse, nil
 }

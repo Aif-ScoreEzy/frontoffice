@@ -10,6 +10,7 @@ const (
 	RecordNotFound          = "record not found"
 	OnlyUploadCSVfile       = "only CSV files allowed"
 	TemplateNotFound        = "template not found"
+	UpstreamError           = "upstream error"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"
