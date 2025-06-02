@@ -15,3 +15,14 @@ type Meta struct {
 	EndData   any    `json:"end_data,omitempty"`
 	Size      any    `json:"size,omitempty"`
 }
+
+type ProCatAPIResponse[T any] struct {
+	Success         bool        `json:"success"`
+	Data            T           `json:"data"`
+	Input           interface{} `json:"input"`
+	Message         string      `json:"message"`
+	StatusCode      int         `json:"-"`
+	PricingStrategy interface{} `json:"pricing_strategy"`
+	TransactionId   interface{} `json:"transaction_id"`
+	Date            interface{} `json:"datetime"`
+}

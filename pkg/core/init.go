@@ -2,6 +2,7 @@ package core
 
 import (
 	"front-office/app/config"
+	"front-office/internal/httpclient"
 	"front-office/pkg/core/auth"
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/grading"
@@ -14,13 +15,17 @@ import (
 	"front-office/pkg/procat/loanrecordchecker"
 	"front-office/pkg/procat/multipleloan"
 	"front-office/pkg/procat/phonelivestatus"
+	taxcompliancestatus "front-office/pkg/procat/taxcompliencestatus"
 	"front-office/pkg/scoreezy/genretail"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
+	client := httpclient.NewDefaultClient(10 * time.Second)
+
 	userGroup := routeGroup.Group("users")
 	auth.SetupInit(userGroup, db, cfg)
 	member.SetupInit(userGroup, db, cfg)
@@ -48,6 +53,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
 	phonelivestatus.SetupInit(productGroup, cfg)
 	loanrecordchecker.SetupInit(productGroup, cfg)
 	multipleloan.SetupInit(productGroup, cfg)
+	taxcompliancestatus.SetupInit(productGroup, cfg, client)
 
 	templateGroup := routeGroup.Group("templates")
 	template.SetupInit(templateGroup)
