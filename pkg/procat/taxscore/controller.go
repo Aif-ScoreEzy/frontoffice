@@ -1,4 +1,4 @@
-package taxcompliancestatus
+package taxscore
 
 import (
 	"front-office/helper"
@@ -15,14 +15,14 @@ type controller struct {
 }
 
 type Controller interface {
-	TaxComplianceStatus(c *fiber.Ctx) error
+	TaxScore(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
-	req := c.Locals("request").(*taxComplianceStatusRequest)
+func (ctrl *controller) TaxScore(c *fiber.Ctx) error {
+	req := c.Locals("request").(*taxScoreRequest)
 	apiKey, _ := c.Locals("apiKey").(string)
 
-	res, err := ctrl.svc.CallTaxCompliance(apiKey, req)
+	res, err := ctrl.svc.CallTaxScore(apiKey, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
