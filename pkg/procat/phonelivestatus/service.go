@@ -6,21 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"front-office/app/config"
 	"io"
 	"mime/multipart"
 	"net/http"
 )
 
-func NewService(cfg *config.Config, repo Repository) Service {
-	return &service{
-		Cfg:  cfg,
-		Repo: repo,
-	}
+func NewService(repo Repository) Service {
+	return &service{}
 }
 
 type service struct {
-	Cfg  *config.Config
 	Repo Repository
 }
 
