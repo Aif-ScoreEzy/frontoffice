@@ -10,7 +10,7 @@ import (
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repository := NewRepository(cfg, client)
-	service := NewService(cfg, repository)
+	service := NewService(repository)
 	controller := NewController(service)
 
 	taxComplianceGroup := apiGroup.Group("tax-score")

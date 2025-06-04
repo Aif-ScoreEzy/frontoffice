@@ -35,5 +35,5 @@ func (ctrl *controller) TaxScore(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(res)
+	return c.Status(res.StatusCode).JSON(res)
 }
