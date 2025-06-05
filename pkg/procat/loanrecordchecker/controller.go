@@ -54,5 +54,5 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 		result,
 	)
 
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(res.StatusCode).JSON(resp)
 }

@@ -1,4 +1,4 @@
-package taxcompliancestatus
+package taxpayerstatus
 
 import (
 	"front-office/app/config"
@@ -13,6 +13,6 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	service := NewService(repository)
 	controller := NewController(service)
 
-	taxComplianceGroup := apiGroup.Group("tax-compliance-status")
-	taxComplianceGroup.Post("/", middleware.Auth(), middleware.IsRequestValid(taxComplianceStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.TaxComplianceStatus)
+	taxComplianceGroup := apiGroup.Group("tax-payer-status")
+	taxComplianceGroup.Post("/", middleware.Auth(), middleware.IsRequestValid(taxPayerStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.TaxPayerStatus)
 }

@@ -9,7 +9,7 @@ import (
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config) {
 	repository := NewRepository(cfg)
-	service := NewService(cfg, repository)
+	service := NewService(repository)
 	controller := NewController(service)
 
 	phoneLiveStatusGroup := apiGroup.Group("phone-live-status")

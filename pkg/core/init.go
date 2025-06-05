@@ -16,6 +16,7 @@ import (
 	"front-office/pkg/procat/multipleloan"
 	"front-office/pkg/procat/phonelivestatus"
 	taxcompliancestatus "front-office/pkg/procat/taxcompliencestatus"
+	"front-office/pkg/procat/taxpayerstatus"
 	"front-office/pkg/procat/taxscore"
 	"front-office/pkg/scoreezy/genretail"
 	"time"
@@ -56,6 +57,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
 	multipleloan.SetupInit(productGroup, cfg)
 	taxcompliancestatus.SetupInit(productGroup, cfg, client)
 	taxscore.SetupInit(productGroup, cfg, client)
+	taxpayerstatus.SetupInit(productGroup, cfg, client)
 
 	templateGroup := routeGroup.Group("templates")
 	template.SetupInit(templateGroup)

@@ -1,20 +1,17 @@
 package taxscore
 
 import (
-	"front-office/app/config"
 	"front-office/common/model"
 	"front-office/helper"
 )
 
-func NewService(cfg *config.Config, repo Repository) Service {
+func NewService(repo Repository) Service {
 	return &service{
-		cfg,
 		repo,
 	}
 }
 
 type service struct {
-	cfg  *config.Config
 	repo Repository
 }
 
