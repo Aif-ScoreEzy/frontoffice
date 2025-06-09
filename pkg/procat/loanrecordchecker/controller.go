@@ -2,6 +2,7 @@ package loanrecordchecker
 
 import (
 	"front-office/helper"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,8 +22,13 @@ type Controller interface {
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 	req := c.Locals("request").(*LoanRecordCheckerRequest)
 	apiKey, _ := c.Locals("apiKey").(string)
+	memberId, _ := c.Locals("userId").(uint)
+	companyId, _ := c.Locals("companyId").(uint)
 
-	res, err := ctrl.Svc.CallLoanRecordChecker(req, apiKey)
+	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
+	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
+
+	res, err := ctrl.Svc.CallLoanRecordChecker(req, apiKey, memberIdStr, companyIdStr)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

@@ -20,11 +20,11 @@ type service struct {
 }
 
 type Service interface {
-	CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey string) (*LoanRecordCheckerRawResponse, error)
+	CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error)
 }
 
-func (svc *service) CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey string) (*LoanRecordCheckerRawResponse, error) {
-	response, err := svc.Repo.CallLoanRecordChecker(request, apiKey)
+func (svc *service) CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error) {
+	response, err := svc.Repo.CallLoanRecordChecker(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}

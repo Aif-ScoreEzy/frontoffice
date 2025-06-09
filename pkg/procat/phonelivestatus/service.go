@@ -12,7 +12,9 @@ import (
 )
 
 func NewService(repo Repository) Service {
-	return &service{}
+	return &service{
+		Repo: repo,
+	}
 }
 
 type service struct {

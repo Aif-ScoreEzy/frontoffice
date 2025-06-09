@@ -3,25 +3,31 @@ package loanrecordchecker
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/internal/httpclient"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{Cfg: cfg}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{
+		Cfg:    cfg,
+		Client: client,
+	}
 }
 
 type repository struct {
-	Cfg *config.Config
+	Cfg    *config.Config
+	Client httpclient.HTTPClient
 }
 
 type Repository interface {
-	CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey string) (*http.Response, error)
+	CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*http.Response, error)
 }
 
-func (repo *repository) CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/loan-record-checker"
+func (repo *repository) CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/loan-record-checker"
 
 	jsonBodyValue, err := json.Marshal(request)
 	if err != nil {
@@ -35,8 +41,13 @@ func (repo *repository) CallLoanRecordChecker(request *LoanRecordCheckerRequest,
 
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set("X-API-KEY", apiKey)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	client := http.Client{}
+	response, err := repo.Client.Do(httpRequest)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
 
-	return client.Do(httpRequest)
+	return response, nil
 }
