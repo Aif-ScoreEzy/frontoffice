@@ -3,6 +3,8 @@ package loanrecordchecker
 import (
 	"encoding/json"
 	"front-office/app/config"
+	"front-office/common/model"
+	"front-office/helper"
 	"io"
 	"net/http"
 )
@@ -20,11 +22,12 @@ type service struct {
 }
 
 type Service interface {
-	CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error)
+	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error)
+	GetLoanRecordCheckerJob(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error)
 }
 
-func (svc *service) CallLoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error) {
-	response, err := svc.Repo.CallLoanRecordChecker(request, apiKey, memberId, companyId)
+func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error) {
+	response, err := svc.Repo.CallLoanRecordCheckerAPI(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +38,15 @@ func (svc *service) CallLoanRecordChecker(request *LoanRecordCheckerRequest, api
 	}
 
 	return result, nil
+}
+
+func (svc *service) GetLoanRecordCheckerJob(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error) {
+	response, err := svc.Repo.CallGetLoanRecordCheckerJobAPI(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[any](response)
 }
 
 func parseResponse(response *http.Response) (*LoanRecordCheckerRawResponse, error) {

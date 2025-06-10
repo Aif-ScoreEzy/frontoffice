@@ -1,6 +1,8 @@
 package loanrecordchecker
 
 import (
+	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
 	"strconv"
 
@@ -17,6 +19,7 @@ type controller struct {
 
 type Controller interface {
 	LoanRecordChecker(c *fiber.Ctx) error
+	GetLoanRecordCheckerJob(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
@@ -28,7 +31,7 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
 	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
 
-	res, err := ctrl.Svc.CallLoanRecordChecker(req, apiKey, memberIdStr, companyIdStr)
+	res, err := ctrl.Svc.LoanRecordChecker(req, apiKey, memberIdStr, companyIdStr)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -61,4 +64,32 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 	)
 
 	return c.Status(res.StatusCode).JSON(resp)
+}
+
+func (ctrl *controller) GetLoanRecordCheckerJob(c *fiber.Ctx) error {
+	filter := &loanRecordCheckerFilter{
+		Page:        c.Query("page", "1"),
+		Size:        c.Query("size", "10"),
+		StartDate:   c.Query("start_date", ""),
+		EndDate:     c.Query("end_date", ""),
+		ProductSlug: constant.SlugLoanRecordChecker,
+		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel:   fmt.Sprintf("%v", c.Locals("roleId")),
+	}
+
+	result, err := ctrl.Svc.GetLoanRecordCheckerJob(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result.StatusCode != fiber.StatusOK {
+		_, resp := helper.GetError(result.Message)
+
+		return c.Status(result.StatusCode).JSON(resp)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
 }

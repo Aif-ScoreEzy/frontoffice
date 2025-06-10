@@ -16,6 +16,13 @@ type Meta struct {
 	Size      any    `json:"size,omitempty"`
 }
 
+type AifcoreAPIResponse[T any] struct {
+	Success    bool   `json:"success"`
+	Data       T      `json:"data"`
+	Message    string `json:"message"`
+	StatusCode int    `json:"-"`
+}
+
 type ProCatAPIResponse[T any] struct {
 	Success         bool        `json:"success"`
 	Data            T           `json:"data"`
