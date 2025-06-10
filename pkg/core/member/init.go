@@ -7,12 +7,11 @@ import (
 	"front-office/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
-func SetupInit(userAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
-	repo := NewRepository(db, cfg)
-	roleRepo := role.NewRepository(db, cfg)
+func SetupInit(userAPI fiber.Router, cfg *config.Config) {
+	repo := NewRepository(cfg)
+	roleRepo := role.NewRepository(cfg)
 	repoLogOperation := operation.NewRepository(cfg)
 
 	serviceRole := role.NewService(roleRepo)

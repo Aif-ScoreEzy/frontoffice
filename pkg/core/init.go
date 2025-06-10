@@ -21,33 +21,32 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
-func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
+func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	client := httpclient.NewDefaultClient(10 * time.Second)
 
 	userGroup := routeGroup.Group("users")
-	auth.SetupInit(userGroup, db, cfg)
-	member.SetupInit(userGroup, db, cfg)
+	auth.SetupInit(userGroup, cfg)
+	member.SetupInit(userGroup, cfg)
 
 	roleGroup := routeGroup.Group("roles")
-	role.SetupInit(roleGroup, cfg, db)
+	role.SetupInit(roleGroup, cfg)
 
 	permissionGroup := routeGroup.Group("permissions")
-	permission.SetupInit(permissionGroup, db)
+	permission.SetupInit(permissionGroup)
 
 	companyGroup := routeGroup.Group("companies")
-	company.SetupInit(companyGroup, db)
+	company.SetupInit(companyGroup)
 
 	gradingGroup := routeGroup.Group("gradings")
-	grading.SetupInit(gradingGroup, db, cfg)
+	grading.SetupInit(gradingGroup, cfg)
 
 	genRetailGroup := routeGroup.Group("scores")
-	genretail.SetupInit(genRetailGroup, db, cfg)
+	genretail.SetupInit(genRetailGroup, cfg)
 
 	logGroup := routeGroup.Group("logs")
-	transaction.SetupInit(logGroup, db, cfg)
+	transaction.SetupInit(logGroup, cfg)
 	operation.SetupInit(logGroup, cfg)
 
 	productGroup := routeGroup.Group("products")

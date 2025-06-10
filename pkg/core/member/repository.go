@@ -8,19 +8,15 @@ import (
 	"front-office/common/constant"
 	"mime/multipart"
 	"net/http"
-
-	"gorm.io/gorm"
 )
 
-func NewRepository(db *gorm.DB, cfg *config.Config) Repository {
+func NewRepository(cfg *config.Config) Repository {
 	return &repository{
-		Db:  db,
 		Cfg: cfg,
 	}
 }
 
 type repository struct {
-	Db  *gorm.DB
 	Cfg *config.Config
 }
 

@@ -8,19 +8,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"gorm.io/gorm"
 )
 
 type fiberServer struct {
 	App *fiber.App
-	Db  *gorm.DB
 	Cfg *config.Config
 }
 
-func NewServer(cfg *config.Config, db *gorm.DB) Server {
+func NewServer(cfg *config.Config) Server {
 	return &fiberServer{
 		App: fiber.New(),
-		Db:  db,
 		Cfg: cfg,
 	}
 }
@@ -37,7 +34,7 @@ func (s *fiberServer) Start() {
 	}))
 
 	api := s.App.Group("/api/fo")
-	core.SetupInit(api, s.Cfg, s.Db)
+	core.SetupInit(api, s.Cfg)
 
 	log.Fatal(s.App.Listen(":" + s.Cfg.Env.Port))
 }
