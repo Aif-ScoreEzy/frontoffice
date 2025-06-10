@@ -29,6 +29,7 @@ type loanRecordCheckerFilter struct {
 	Offset      string
 	StartDate   string
 	EndDate     string
+	JobId       string
 	ProductSlug string
 	MemberId    string
 	CompanyId   string

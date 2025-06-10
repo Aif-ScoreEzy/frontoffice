@@ -20,6 +20,7 @@ type controller struct {
 type Controller interface {
 	LoanRecordChecker(c *fiber.Ctx) error
 	GetLoanRecordCheckerJob(c *fiber.Ctx) error
+	GetLoanRecordCheckerJobDetail(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
@@ -79,6 +80,30 @@ func (ctrl *controller) GetLoanRecordCheckerJob(c *fiber.Ctx) error {
 	}
 
 	result, err := ctrl.Svc.GetLoanRecordCheckerJob(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result.StatusCode != fiber.StatusOK {
+		_, resp := helper.GetError(result.Message)
+
+		return c.Status(result.StatusCode).JSON(resp)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) GetLoanRecordCheckerJobDetail(c *fiber.Ctx) error {
+	filter := &loanRecordCheckerFilter{
+		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		JobId:     c.Params("job_id"),
+	}
+
+	result, err := ctrl.Svc.GetLoanRecordCheckerJobDetail(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

@@ -24,6 +24,7 @@ type service struct {
 type Service interface {
 	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error)
 	GetLoanRecordCheckerJob(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error)
+	GetLoanRecordCheckerJobDetail(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error)
 }
 
 func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error) {
@@ -42,6 +43,15 @@ func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey,
 
 func (svc *service) GetLoanRecordCheckerJob(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error) {
 	response, err := svc.Repo.CallGetLoanRecordCheckerJobAPI(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[any](response)
+}
+
+func (svc *service) GetLoanRecordCheckerJobDetail(filter *loanRecordCheckerFilter) (*model.AifcoreAPIResponse[any], error) {
+	response, err := svc.Repo.CallGetLoanRecordCheckerJobDetailAPI(filter)
 	if err != nil {
 		return nil, err
 	}
