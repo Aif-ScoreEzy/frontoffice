@@ -2,12 +2,15 @@ package constant
 
 const (
 	// general
-	DataAlreadyExist   = "data already exists"
-	DataNotFound       = "data not found"
-	FileSizeIsTooLarge = "file size should not exceed 200 KB"
-	InvalidDateFormat  = "invalid date format"
-	RecordNotFound     = "record not found"
-	OnlyUploadCSVfile  = "only CSV files allowed"
+	DataAlreadyExist        = "data already exists"
+	DataNotFound            = "data not found"
+	UserNotFoundForgotEmail = "if your account exists, we've sent password reset instructions to your email"
+	FileSizeIsTooLarge      = "file size should not exceed 200 KB"
+	InvalidDateFormat       = "invalid date format"
+	RecordNotFound          = "record not found"
+	OnlyUploadCSVfile       = "only CSV files allowed"
+	TemplateNotFound        = "template not found"
+	UpstreamError           = "upstream error"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"

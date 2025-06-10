@@ -27,7 +27,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) Server {
 
 func (s *fiberServer) Start() {
 	s.App.Use(recover.New())
-	s.App.Static("/", "./public")
+	s.App.Static("/", "./storage/uploads")
 	s.App.Use(cors.New(cors.Config{
 		AllowHeaders:     "Origin,Content-Type,Accept,Content-Length,Accept-Language,Accept-Encoding,Connection,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Authorization",
 		AllowOrigins:     s.Cfg.Env.FrontendBaseUrl,

@@ -235,7 +235,7 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
-	_, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	res, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {
@@ -243,15 +243,15 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	user, err := ctrl.Svc.UploadProfileImage(userId, &filename)
+	_, err = ctrl.Svc.UploadProfileImage(userId, &filename)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  user.Data.MemberId,
-		CompanyId: user.Data.CompanyId,
+		MemberId:  res.Data.MemberId,
+		CompanyId: res.Data.CompanyId,
 		Action:    constant.EventUpdateProfile,
 	}
 
@@ -261,12 +261,12 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	}
 
 	dataResponse := &UserUpdateResponse{
-		Id:        user.Data.MemberId,
-		Name:      user.Data.Name,
-		Email:     user.Data.Email,
-		Active:    user.Data.Active,
-		CompanyId: user.Data.CompanyId,
-		RoleId:    user.Data.RoleId,
+		Id:        res.Data.MemberId,
+		Name:      res.Data.Name,
+		Email:     res.Data.Email,
+		Active:    res.Data.Active,
+		CompanyId: res.Data.CompanyId,
+		RoleId:    res.Data.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(

@@ -1,7 +1,14 @@
 package helper
 
 import (
+	"encoding/json"
+	"errors"
 	"front-office/common/constant"
+	"front-office/common/model"
+	"io"
+	"net/http"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type BaseResponseSuccess struct {
@@ -36,6 +43,8 @@ func GetError(errorMessage string) (int, interface{}) {
 	var statusCode int
 
 	switch errorMessage {
+	case constant.UserNotFoundForgotEmail:
+		statusCode = fiber.StatusOK
 	case constant.AlreadyVerified,
 		constant.ConfirmNewPasswordMismatch,
 		constant.ConfirmPasswordMismatch,
@@ -54,27 +63,72 @@ func GetError(errorMessage string) (int, interface{}) {
 		constant.InvalidPasswordResetLink,
 		constant.HeaderTemplateNotValid,
 		constant.OnlyUploadCSVfile,
+		constant.WrongCurrentPassword,
 		constant.ParamSettingIsNotSet:
-		statusCode = 400
-	case
-		constant.WrongCurrentPassword:
-		statusCode = 400
-		errorMessage = constant.WrongCurrentPassword
+		statusCode = fiber.StatusBadRequest
 	case constant.RequestProhibited,
 		constant.TokenExpired,
 		constant.UnverifiedUser:
-		statusCode = 401
+		statusCode = fiber.StatusUnauthorized
 	case constant.DataNotFound,
 		constant.RecordNotFound:
-		statusCode = 404
+		statusCode = fiber.StatusNotFound
 		errorMessage = constant.DataNotFound
+	case constant.TemplateNotFound:
+		statusCode = fiber.StatusNotFound
 	case constant.DataAlreadyExist,
 		constant.EmailAlreadyExists:
-		statusCode = 409
+		statusCode = fiber.StatusConflict
+	case constant.UpstreamError:
+		statusCode = fiber.StatusBadGateway
 	default:
-		statusCode = 500
+		statusCode = fiber.StatusInternalServerError
 	}
 
 	resp := ResponseFailed(errorMessage)
 	return statusCode, resp
+}
+
+func ParseAifcoreAPIResponse[T any](response *http.Response) (*model.AifcoreAPIResponse[T], error) {
+	var apiResponse model.AifcoreAPIResponse[T]
+
+	if response == nil {
+		return nil, errors.New("nil response")
+	}
+
+	dataBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
+		return nil, err
+	}
+
+	apiResponse.StatusCode = response.StatusCode
+
+	return &apiResponse, nil
+}
+
+func ParseProCatAPIResponse[T any](response *http.Response) (*model.ProCatAPIResponse[T], error) {
+	var apiResponse model.ProCatAPIResponse[T]
+
+	if response == nil {
+		return nil, errors.New("nil response")
+	}
+
+	dataBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
+		return nil, err
+	}
+
+	apiResponse.StatusCode = response.StatusCode
+
+	return &apiResponse, nil
 }

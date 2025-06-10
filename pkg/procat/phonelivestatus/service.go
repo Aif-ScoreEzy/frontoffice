@@ -6,21 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"front-office/app/config"
 	"io"
 	"mime/multipart"
 	"net/http"
 )
 
-func NewService(cfg *config.Config, repo Repository) Service {
+func NewService(repo Repository) Service {
 	return &service{
-		Cfg:  cfg,
 		Repo: repo,
 	}
 }
 
 type service struct {
-	Cfg  *config.Config
 	Repo Repository
 }
 
@@ -111,7 +108,9 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
-	_, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
+	response, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
+	fmt.Println("phone live status resss==> ", response, err)
+
 	if err != nil {
 		return err
 	}
