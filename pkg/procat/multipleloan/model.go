@@ -5,6 +5,10 @@ type MultipleLoanRequest struct {
 	Phone string `json:"phone_number" validate:"required~Phone Number cannot be empty, indophone, min(9)"`
 }
 
+type dataMultipleLoanResponse struct {
+	QueryCount uint `json:"query_count"`
+}
+
 type MultipleLoanRawResponse struct {
 	Success         bool        `json:"success"`
 	Data            interface{} `json:"data"`

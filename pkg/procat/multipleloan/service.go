@@ -3,6 +3,8 @@ package multipleloan
 import (
 	"encoding/json"
 	"front-office/app/config"
+	"front-office/common/model"
+	"front-office/helper"
 	"io"
 	"net/http"
 )
@@ -20,18 +22,18 @@ type service struct {
 }
 
 type Service interface {
-	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
+	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
 	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error)
 }
 
-func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*MultipleLoanRawResponse, error) {
-	response, err := svc.Repo.CallMultipleLoan7Days(request, apiKey)
+func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	response, err := svc.Repo.CallMultipleLoan7Days(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := parseResponse(response)
+	result, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](response)
 	if err != nil {
 		return nil, err
 	}
