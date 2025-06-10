@@ -17,4 +17,6 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	multipleLoanGroup.Post("/7-days", middleware.Auth(), middleware.IsRequestValid(MultipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan7Days)
 	multipleLoanGroup.Post("/30-days", middleware.Auth(), middleware.IsRequestValid(MultipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan30Days)
 	multipleLoanGroup.Post("/90-days", middleware.Auth(), middleware.IsRequestValid(MultipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan90Days)
+
+	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetMultipleLoanJob)
 }

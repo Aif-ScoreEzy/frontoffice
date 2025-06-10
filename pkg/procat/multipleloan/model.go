@@ -9,6 +9,19 @@ type dataMultipleLoanResponse struct {
 	QueryCount uint `json:"query_count"`
 }
 
+type multipleLoanFilter struct {
+	Page        string
+	Size        string
+	Offset      string
+	StartDate   string
+	EndDate     string
+	JobId       string
+	ProductSlug string
+	MemberId    string
+	CompanyId   string
+	TierLevel   string
+}
+
 type MultipleLoanRawResponse struct {
 	Success         bool        `json:"success"`
 	Data            interface{} `json:"data"`

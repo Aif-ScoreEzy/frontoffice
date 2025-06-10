@@ -1,5 +1,8 @@
 package constant
 
 const (
-	SlugLoanRecordChecker = "COMPLIANCE_loan_record_checker"
+	SlugLoanRecordChecker  = "COMPLIANCE_loan_record_checker"
+	SlugMultipleLoan7Days  = "COMPLIANCE_7d_multiple_loan"
+	SlugMultipleLoan30Days = "COMPLIANCE_30d_multiple_loan"
+	SlugMultipleLoan90Days = "COMPLIANCE_90d_multiple_loan"
 )

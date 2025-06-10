@@ -22,6 +22,7 @@ type Service interface {
 	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	GetMultipleLoanJob(filter *multipleLoanFilter) (*model.AifcoreAPIResponse[any], error)
 }
 
 func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
@@ -64,4 +65,13 @@ func (svc *service) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey,
 	}
 
 	return result, nil
+}
+
+func (svc *service) GetMultipleLoanJob(filter *multipleLoanFilter) (*model.AifcoreAPIResponse[any], error) {
+	response, err := svc.Repo.CallGetMultipleLoanJobAPI(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[any](response)
 }

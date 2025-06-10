@@ -1,6 +1,7 @@
 package multipleloan
 
 import (
+	"fmt"
 	"front-office/helper"
 	"strconv"
 
@@ -18,6 +19,8 @@ type Controller interface {
 	MultipleLoan7Days(c *fiber.Ctx) error
 	MultipleLoan30Days(c *fiber.Ctx) error
 	MultipleLoan90Days(c *fiber.Ctx) error
+	GetMultipleLoanJob(c *fiber.Ctx) error
+	GetMultipleLoanJobDetail(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) MultipleLoan7Days(c *fiber.Ctx) error {
@@ -114,4 +117,38 @@ func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(res)
+}
+
+func (ctrl *controller) GetMultipleLoanJob(c *fiber.Ctx) error {
+	slug := c.Params("product_slug")
+
+	filter := &multipleLoanFilter{
+		Page:        c.Query("page", "1"),
+		Size:        c.Query("size", "10"),
+		StartDate:   c.Query("start_date", ""),
+		EndDate:     c.Query("end_date", ""),
+		ProductSlug: slug,
+		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		TierLevel:   fmt.Sprintf("%v", c.Locals("roleId")),
+	}
+
+	result, err := ctrl.Svc.GetMultipleLoanJob(filter)
+	if err != nil {
+		statusCode, resp := helper.GetError(err.Error())
+
+		return c.Status(statusCode).JSON(resp)
+	}
+
+	if result.StatusCode != fiber.StatusOK {
+		_, resp := helper.GetError(result.Message)
+
+		return c.Status(result.StatusCode).JSON(resp)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) GetMultipleLoanJobDetail(c *fiber.Ctx) error {
+	return nil
 }
