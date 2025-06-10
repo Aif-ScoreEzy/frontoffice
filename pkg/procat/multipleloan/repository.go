@@ -55,7 +55,7 @@ func (repo *repository) CallMultipleLoan7Days(request *MultipleLoanRequest, apiK
 }
 
 func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/30-days"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/30-days"
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {
@@ -79,7 +79,7 @@ func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, api
 }
 
 func (repo *repository) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/90-days"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/90-days"
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {

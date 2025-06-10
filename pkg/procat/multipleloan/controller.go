@@ -55,8 +55,13 @@ func (ctrl *controller) MultipleLoan7Days(c *fiber.Ctx) error {
 func (ctrl *controller) MultipleLoan30Days(c *fiber.Ctx) error {
 	req := c.Locals("request").(*MultipleLoanRequest)
 	apiKey, _ := c.Locals("apiKey").(string)
+	memberId, _ := c.Locals("userId").(uint)
+	companyId, _ := c.Locals("companyId").(uint)
 
-	res, err := ctrl.Svc.CallMultipleLoan30Days(req, apiKey)
+	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
+	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
+
+	res, err := ctrl.Svc.CallMultipleLoan30Days(req, apiKey, memberIdStr, companyIdStr)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -76,26 +81,19 @@ func (ctrl *controller) MultipleLoan30Days(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	result := MultipleLoanResponse{
-		Data:            res.Data,
-		PricingStrategy: res.PricingStrategy,
-		TransactionID:   res.TransactionId,
-		Datetime:        res.DateTime,
-	}
-
-	resp := helper.ResponseSuccess(
-		"success",
-		result,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(res)
 }
 
 func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
 	req := c.Locals("request").(*MultipleLoanRequest)
 	apiKey, _ := c.Locals("apiKey").(string)
+	memberId, _ := c.Locals("userId").(uint)
+	companyId, _ := c.Locals("companyId").(uint)
 
-	res, err := ctrl.Svc.CallMultipleLoan90Days(req, apiKey)
+	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
+	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
+
+	res, err := ctrl.Svc.CallMultipleLoan90Days(req, apiKey, memberIdStr, companyIdStr)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -115,17 +113,5 @@ func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	result := MultipleLoanResponse{
-		Data:            res.Data,
-		PricingStrategy: res.PricingStrategy,
-		TransactionID:   res.TransactionId,
-		Datetime:        res.DateTime,
-	}
-
-	resp := helper.ResponseSuccess(
-		"success",
-		result,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(res)
 }
