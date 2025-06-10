@@ -22,3 +22,17 @@ type LoanRecordCheckerResponse struct {
 	TransactionID   interface{} `json:"transaction_id"`
 	Datetime        interface{} `json:"datetime"`
 }
+
+type loanRecordCheckerFilter struct {
+	Page        string
+	Size        string
+	Offset      string
+	StartDate   string
+	EndDate     string
+	JobId       string
+	ProductSlug string
+	MemberId    string
+	CompanyId   string
+	TierLevel   string
+	Keyword     string
+}

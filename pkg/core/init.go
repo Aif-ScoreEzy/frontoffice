@@ -12,8 +12,7 @@ import (
 	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/template"
-	"front-office/pkg/procat/loanrecordchecker"
-	"front-office/pkg/procat/multipleloan"
+	"front-office/pkg/procat"
 	"front-office/pkg/procat/phonelivestatus"
 	taxcompliancestatus "front-office/pkg/procat/taxcompliencestatus"
 	"front-office/pkg/procat/taxpayerstatus"
@@ -52,9 +51,8 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config, db *gorm.DB) {
 	operation.SetupInit(logGroup, cfg)
 
 	productGroup := routeGroup.Group("products")
+	procat.SetupInit(productGroup, cfg)
 	phonelivestatus.SetupInit(productGroup, cfg)
-	loanrecordchecker.SetupInit(productGroup, cfg)
-	multipleloan.SetupInit(productGroup, cfg)
 	taxcompliancestatus.SetupInit(productGroup, cfg, client)
 	taxscore.SetupInit(productGroup, cfg, client)
 	taxpayerstatus.SetupInit(productGroup, cfg, client)

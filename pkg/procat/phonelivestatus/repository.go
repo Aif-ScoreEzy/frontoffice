@@ -159,6 +159,8 @@ func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, reque
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
 
+	fmt.Println("phone live status reqqq==> ", httpRequest)
+
 	client := http.Client{}
 
 	return client.Do(httpRequest)

@@ -3,55 +3,66 @@ package multipleloan
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/internal/httpclient"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{Cfg: cfg}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{
+		Cfg:    cfg,
+		Client: client,
+	}
 }
 
 type repository struct {
-	Cfg *config.Config
+	Cfg    *config.Config
+	Client httpclient.HTTPClient
 }
 
 type Repository interface {
-	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error)
+	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
 	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error)
 	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error)
 }
 
-func (repo *repository) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/7-days"
+func (repo *repository) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/7-days"
 
-	jsonBodyValue, err := json.Marshal(request)
+	jsonBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
 	}
 
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-API-Key", apiKey)
+	httpRequest.Header.Set("X-API-KEY", apiKey)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	client := http.Client{}
+	response, err := repo.Client.Do(httpRequest)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
 
-	return client.Do(httpRequest)
+	return response, nil
 }
 
 func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/30-days"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/30-days"
 
-	jsonBodyValue, err := json.Marshal(request)
+	jsonBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
 	}
@@ -59,20 +70,23 @@ func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, api
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set("X-API-Key", apiKey)
 
-	client := http.Client{}
+	response, err := repo.Client.Do(httpRequest)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
 
-	return client.Do(httpRequest)
+	return response, nil
 }
 
 func (repo *repository) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/90-days"
+	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/90-days"
 
-	jsonBodyValue, err := json.Marshal(request)
+	jsonBody, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +94,10 @@ func (repo *repository) CallMultipleLoan90Days(request *MultipleLoanRequest, api
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set("X-API-Key", apiKey)
 
-	client := http.Client{}
+	response, err := repo.Client.Do(httpRequest)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
 
-	return client.Do(httpRequest)
+	return response, nil
 }
