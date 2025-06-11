@@ -4,6 +4,7 @@ import (
 	"front-office/app/config"
 	"front-office/common/model"
 	"front-office/helper"
+	"log"
 )
 
 func NewService(cfg *config.Config, repo Repository) Service {
@@ -24,6 +25,8 @@ type Service interface {
 
 func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	response, err := svc.Repo.CallLoanRecordCheckerAPI(request, apiKey, memberId, companyId)
+	log.Println("loan record responseee====>", response)
+
 	if err != nil {
 		return nil, err
 	}
