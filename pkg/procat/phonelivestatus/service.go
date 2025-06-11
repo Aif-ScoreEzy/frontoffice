@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 )
@@ -109,7 +110,7 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
 	response, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
-	fmt.Println("phone live status resss==> ", response, err)
+	log.Println("phone live status resss==> ", response, err)
 
 	if err != nil {
 		return err
