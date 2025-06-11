@@ -19,13 +19,12 @@ type service struct {
 }
 
 type Service interface {
-	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
-	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
-	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
-	GetMultipleLoanJob(filter *multipleLoanFilter) (*model.AifcoreAPIResponse[any], error)
+	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 }
 
-func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+func (svc *service) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
 	response, err := svc.Repo.CallMultipleLoan7Days(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
@@ -39,8 +38,8 @@ func (svc *service) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, 
 	return result, nil
 }
 
-func (svc *service) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	response, err := svc.Repo.CallMultipleLoan30Days(request, apiKey)
+func (svc *service) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	response, err := svc.Repo.CallMultipleLoan30Days(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +52,8 @@ func (svc *service) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey,
 	return result, nil
 }
 
-func (svc *service) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	response, err := svc.Repo.CallMultipleLoan90Days(request, apiKey)
+func (svc *service) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	response, err := svc.Repo.CallMultipleLoan90Days(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +64,4 @@ func (svc *service) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey,
 	}
 
 	return result, nil
-}
-
-func (svc *service) GetMultipleLoanJob(filter *multipleLoanFilter) (*model.AifcoreAPIResponse[any], error) {
-	response, err := svc.Repo.CallGetMultipleLoanJobAPI(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return helper.ParseAifcoreAPIResponse[any](response)
 }

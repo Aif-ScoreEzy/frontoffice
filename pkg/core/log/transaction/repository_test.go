@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
 func initMockConfig(mockServerURL string) *config.Config {
@@ -57,11 +56,10 @@ const dummyDate = "2024-09-25"
 
 func TestNewRepository(t *testing.T) {
 	// Create mock instances of gorm.DB and config.Config
-	mockDB := &gorm.DB{}
 	mockConfig := &config.Config{}
 
 	// Act - Call NewRepository
-	repo := NewRepository(mockDB, mockConfig)
+	repo := NewRepository(mockConfig)
 
 	// Assert - Ensure that repo is not nil
 	assert.NotNil(t, repo)
@@ -71,7 +69,6 @@ func TestNewRepository(t *testing.T) {
 	assert.True(t, ok, "Expected *repository, got something else")
 
 	// Assert - Ensure that the DB and Cfg fields are correctly assigned
-	assert.Equal(t, mockDB, repo.(*repository).DB)
 	assert.Equal(t, mockConfig, repo.(*repository).Cfg)
 }
 
@@ -94,7 +91,6 @@ func TestFindAllTransactionLogs(t *testing.T) {
 	mockConfig := initMockConfig(mockServer.URL)
 
 	repo := &repository{
-		DB:  &gorm.DB{},
 		Cfg: mockConfig,
 	}
 
@@ -137,7 +133,6 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 
 	// Create repository with the mock config
 	repo := &repository{
-		DB:  &gorm.DB{},
 		Cfg: mockConfig,
 	}
 
@@ -186,7 +181,6 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 
 	// Create repository with the mock config
 	repo := &repository{
-		DB:  &gorm.DB{},
 		Cfg: mockConfig,
 	}
 
@@ -231,7 +225,6 @@ func TestFindAllTransactionLogsByMonth(t *testing.T) {
 	mockConfig := initMockConfig(mockServer.URL)
 
 	repo := &repository{
-		DB:  &gorm.DB{},
 		Cfg: mockConfig,
 	}
 

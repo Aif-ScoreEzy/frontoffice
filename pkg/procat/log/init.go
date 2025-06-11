@@ -1,4 +1,4 @@
-package loanrecordchecker
+package log
 
 import (
 	"front-office/app/config"
@@ -13,6 +13,6 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	service := NewService(cfg, repository)
 	controller := NewController(service)
 
-	loanRecordCheckerGroup := apiGroup.Group("loan-record-checker")
-	loanRecordCheckerGroup.Post("/", middleware.Auth(), middleware.IsRequestValid(LoanRecordCheckerRequest{}), middleware.GetJWTPayloadFromCookie(), controller.LoanRecordChecker)
+	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJob)
+	apiGroup.Get("/:product_slug/jobs/:job_id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJobDetail)
 }

@@ -4,6 +4,7 @@ import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
 	"front-office/pkg/procat/loanrecordchecker"
+	"front-office/pkg/procat/log"
 	"front-office/pkg/procat/multipleloan"
 	"time"
 
@@ -16,4 +17,5 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config) {
 	complianceGroupAPI := routeAPI.Group("compliance")
 	loanrecordchecker.SetupInit(complianceGroupAPI, cfg, client)
 	multipleloan.SetupInit(complianceGroupAPI, cfg, client)
+	log.SetupInit(complianceGroupAPI, cfg, client)
 }
