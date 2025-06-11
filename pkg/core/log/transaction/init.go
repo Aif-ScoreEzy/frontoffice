@@ -6,17 +6,16 @@ import (
 	"front-office/pkg/core/role"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
-func SetupInit(logAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
-	roleRepository := role.NewRepository(db, cfg)
+func SetupInit(logAPI fiber.Router, cfg *config.Config) {
+	roleRepository := role.NewRepository(cfg)
 	roleService := role.NewService(roleRepository)
 
-	memberRepository := member.NewRepository(db, cfg)
+	memberRepository := member.NewRepository(cfg)
 	memberService := member.NewService(memberRepository, roleService)
 
-	repository := NewRepository(db, cfg)
+	repository := NewRepository(cfg)
 	service := NewService(repository, cfg)
 	controller := NewController(service, memberService)
 

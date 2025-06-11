@@ -10,15 +10,14 @@ import (
 	"front-office/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
-func SetupInit(authAPI fiber.Router, db *gorm.DB, cfg *config.Config) {
-	repo := NewRepository(db, cfg)
-	repoUser := member.NewRepository(db, cfg)
-	repoRole := role.NewRepository(db, cfg)
+func SetupInit(authAPI fiber.Router, cfg *config.Config) {
+	repo := NewRepository(cfg)
+	repoUser := member.NewRepository(cfg)
+	repoRole := role.NewRepository(cfg)
 	repoActivationToken := activationtoken.NewRepository(cfg)
-	repoPasswordResetToken := passwordresettoken.NewRepository(db, cfg)
+	repoPasswordResetToken := passwordresettoken.NewRepository(cfg)
 	repoLogOperation := operation.NewRepository(cfg)
 
 	service := NewService(repo, repoUser, repoRole, cfg)

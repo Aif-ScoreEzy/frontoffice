@@ -23,12 +23,12 @@ type repository struct {
 }
 
 type Repository interface {
-	CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
-	CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error)
-	CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error)
+	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
 }
 
-func (repo *repository) CallMultipleLoan7Days(request *MultipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
+func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/7-days"
 
 	jsonBody, err := json.Marshal(request)
@@ -54,7 +54,7 @@ func (repo *repository) CallMultipleLoan7Days(request *MultipleLoanRequest, apiK
 	return response, nil
 }
 
-func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
+func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/30-days"
 
 	jsonBody, err := json.Marshal(request)
@@ -69,6 +69,8 @@ func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, api
 
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set("X-API-Key", apiKey)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
 
 	response, err := repo.Client.Do(httpRequest)
 	if err != nil {
@@ -78,7 +80,7 @@ func (repo *repository) CallMultipleLoan30Days(request *MultipleLoanRequest, api
 	return response, nil
 }
 
-func (repo *repository) CallMultipleLoan90Days(request *MultipleLoanRequest, apiKey string) (*http.Response, error) {
+func (repo *repository) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
 	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/90-days"
 
 	jsonBody, err := json.Marshal(request)
@@ -93,6 +95,8 @@ func (repo *repository) CallMultipleLoan90Days(request *MultipleLoanRequest, api
 
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set("X-API-Key", apiKey)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
 
 	response, err := repo.Client.Do(httpRequest)
 	if err != nil {
