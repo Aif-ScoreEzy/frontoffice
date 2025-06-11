@@ -6,19 +6,7 @@ type LoanRecordCheckerRequest struct {
 	Phone string `json:"phone_number" validate:"required~Phone Number cannot be empty, indophone, min(9)"`
 }
 
-type LoanRecordCheckerRawResponse struct {
-	Success         bool        `json:"success"`
-	Data            interface{} `json:"data"`
-	PricingStrategy interface{} `json:"pricing_strategy"`
-	TransactionId   interface{} `json:"transaction_id"`
-	DateTime        interface{} `json:"datetime"`
-	Message         string      `json:"message"`
-	StatusCode      int         `json:"status_code"`
-}
-
-type LoanRecordCheckerResponse struct {
-	Data            interface{} `json:"data"`
-	PricingStrategy interface{} `json:"pricing_strategy"`
-	TransactionID   interface{} `json:"transaction_id"`
-	Datetime        interface{} `json:"datetime"`
+type dataLoanRecord struct {
+	Remarks string `json:"remarks"`
+	Status  string `json:"status"`
 }

@@ -1,10 +1,9 @@
 package loanrecordchecker
 
 import (
-	"encoding/json"
 	"front-office/app/config"
-	"io"
-	"net/http"
+	"front-office/common/model"
+	"front-office/helper"
 )
 
 func NewService(cfg *config.Config, repo Repository) Service {
@@ -20,36 +19,19 @@ type service struct {
 }
 
 type Service interface {
-	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error)
+	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*LoanRecordCheckerRawResponse, error) {
+func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	response, err := svc.Repo.CallLoanRecordCheckerAPI(request, apiKey, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := parseResponse(response)
+	result, err := helper.ParseProCatAPIResponse[dataLoanRecord](response)
 	if err != nil {
 		return nil, err
 	}
 
 	return result, nil
-}
-
-func parseResponse(response *http.Response) (*LoanRecordCheckerRawResponse, error) {
-	var baseResponse *LoanRecordCheckerRawResponse
-
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return nil, err
-		}
-
-		baseResponse.StatusCode = response.StatusCode
-	}
-
-	return baseResponse, nil
 }
