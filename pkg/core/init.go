@@ -13,6 +13,7 @@ import (
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/template"
 	"front-office/pkg/procat"
+	"front-office/pkg/procat/incometax/taxverificationdetail"
 	"front-office/pkg/procat/phonelivestatus"
 	taxcompliancestatus "front-office/pkg/procat/taxcompliencestatus"
 	"front-office/pkg/procat/taxpayerstatus"
@@ -54,6 +55,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	phonelivestatus.SetupInit(productGroup, cfg)
 	taxcompliancestatus.SetupInit(productGroup, cfg, client)
 	taxscore.SetupInit(productGroup, cfg, client)
+	taxverificationdetail.SetupInit(productGroup, cfg, client)
 	taxpayerstatus.SetupInit(productGroup, cfg, client)
 
 	templateGroup := routeGroup.Group("templates")
