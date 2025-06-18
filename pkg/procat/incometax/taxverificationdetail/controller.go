@@ -66,8 +66,8 @@ func (ctrl *controller) TaxVerificationDetail(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if taxVerificationRes.StatusCode >= 400 {
-		_, resp := helper.GetError(taxVerificationRes.Message)
+	if taxVerificationRes.StatusCode >= fiber.StatusBadRequest {
+		_, resp := helper.GetError("failed to process tax verification detail")
 
 		return c.Status(taxVerificationRes.StatusCode).JSON(resp)
 	}
