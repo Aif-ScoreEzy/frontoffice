@@ -46,7 +46,6 @@ func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	// create job
 	jobRes, err := ctrl.logSvc.CreateProCatJob(&log.CreateJobRequest{
 		ProductId: productRes.Data.ProductId,
 		MemberId:  memberId,

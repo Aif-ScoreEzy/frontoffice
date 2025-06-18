@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"front-office/common/model"
 	"front-office/helper"
 )
@@ -25,7 +24,6 @@ type Service interface {
 
 func (svc *service) CreateProCatJob(req *CreateJobRequest) (*model.AifcoreAPIResponse[createJobDataResponse], error) {
 	response, err := svc.repo.CallCreateProCatJobAPI(req)
-	fmt.Println("job resss", response)
 	if err != nil {
 		return nil, err
 	}

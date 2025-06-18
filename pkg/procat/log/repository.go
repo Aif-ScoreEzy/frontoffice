@@ -56,8 +56,6 @@ func (repo *repository) CallCreateProCatJobAPI(req *CreateJobRequest) (*http.Res
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 
-	fmt.Println("job ", httpRequest, resp)
-
 	return resp, nil
 }
 
@@ -83,8 +81,6 @@ func (repo *repository) CallUpdateJobAPI(jobId string, req map[string]interface{
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
-
-	fmt.Println("job ", httpRequest, resp)
 
 	return resp, nil
 }

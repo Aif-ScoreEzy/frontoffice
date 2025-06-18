@@ -54,7 +54,5 @@ func (repo *repository) CallUpdateLogTransAPI(transId string, req map[string]int
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 
-	fmt.Println("update log", httpRequest, resp)
-
 	return resp, nil
 }

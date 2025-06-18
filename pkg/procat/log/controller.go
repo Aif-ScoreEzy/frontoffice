@@ -36,6 +36,8 @@ func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 		productSlug = constant.SlugMultipleLoan90Days
 	case "tax-compliance-status":
 		productSlug = constant.SlugTaxComplianceStatus
+	case "tax-score":
+		productSlug = constant.SlugTaxScore
 	default:
 		return c.Status(fiber.StatusNotFound).JSON(helper.ResponseFailed("Unsupported product slug"))
 	}
@@ -82,6 +84,8 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 		productSlug = constant.SlugMultipleLoan90Days
 	case "tax-compliance-status":
 		productSlug = constant.SlugTaxComplianceStatus
+	case "tax-score":
+		productSlug = constant.SlugTaxScore
 	default:
 		return c.Status(fiber.StatusNotFound).JSON(helper.ResponseFailed("Unsupported product slug"))
 	}
