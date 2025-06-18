@@ -7,6 +7,7 @@ import (
 	"front-office/app/config"
 	"front-office/common/constant"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 )
@@ -159,7 +160,7 @@ func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, reque
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	fmt.Println("phone live status reqqq==> ", httpRequest)
+	log.Println("phone live status reqqq==> ", httpRequest)
 
 	client := http.Client{}
 

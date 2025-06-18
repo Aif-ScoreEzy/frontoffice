@@ -38,6 +38,14 @@ type DataLogTrans struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type getSuccessCountDataResponse struct {
+	SuccessCount uint `json:"success_count"`
+}
+
+type UpdateTransRequest struct {
+	Success *bool `json:"success"`
+}
+
 type AifResponse struct {
 	Success bool               `json:"success"`
 	Data    []LogTransScoreezy `json:"data"`

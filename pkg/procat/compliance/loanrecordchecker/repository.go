@@ -7,6 +7,7 @@ import (
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/internal/httpclient"
+	"log"
 	"net/http"
 )
 
@@ -43,6 +44,8 @@ func (repo *repository) CallLoanRecordCheckerAPI(request *LoanRecordCheckerReque
 	httpRequest.Header.Set("X-API-KEY", apiKey)
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
+
+	log.Println("loan record request ====>", httpRequest)
 
 	response, err := repo.Client.Do(httpRequest)
 	if err != nil {

@@ -97,10 +97,10 @@ func (ctrl *controller) MultipleLoan7Days(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !res.Success {
+	if res.StatusCode > fiber.StatusBadRequest {
 		msg := res.Message
 		if msg == "" {
-			msg = "failed to process multiple loan record checker"
+			msg = "failed to process multiple loan"
 		}
 
 		resp := helper.ResponseFailed(
@@ -110,7 +110,7 @@ func (ctrl *controller) MultipleLoan7Days(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(res)
+	return c.Status(res.StatusCode).JSON(res)
 }
 
 func (ctrl *controller) MultipleLoan30Days(c *fiber.Ctx) error {
@@ -129,10 +129,10 @@ func (ctrl *controller) MultipleLoan30Days(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !res.Success {
+	if res.StatusCode > fiber.StatusBadRequest {
 		msg := res.Message
 		if msg == "" {
-			msg = "failed to process multiple loan record checker"
+			msg = "failed to process multiple loan"
 		}
 
 		resp := helper.ResponseFailed(
@@ -142,7 +142,7 @@ func (ctrl *controller) MultipleLoan30Days(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(res)
+	return c.Status(res.StatusCode).JSON(res)
 }
 
 func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
@@ -161,10 +161,10 @@ func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !res.Success {
+	if res.StatusCode > fiber.StatusBadRequest {
 		msg := res.Message
 		if msg == "" {
-			msg = "failed to process multiple loan record checker"
+			msg = "failed to process multiple loan"
 		}
 
 		resp := helper.ResponseFailed(
@@ -174,5 +174,5 @@ func (ctrl *controller) MultipleLoan90Days(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(res)
+	return c.Status(res.StatusCode).JSON(res)
 }

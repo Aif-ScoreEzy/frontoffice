@@ -35,8 +35,8 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !res.Success {
-		msg := res.Message
+	if res.StatusCode > fiber.StatusBadRequest {
+		msg := res.Data.Status
 		if msg == "" {
 			msg = "failed to process loan record checker"
 		}
@@ -48,17 +48,5 @@ func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 		return c.Status(res.StatusCode).JSON(resp)
 	}
 
-	result := LoanRecordCheckerResponse{
-		Data:            res.Data,
-		PricingStrategy: res.PricingStrategy,
-		TransactionID:   res.TransactionId,
-		Datetime:        res.DateTime,
-	}
-
-	resp := helper.ResponseSuccess(
-		"success",
-		result,
-	)
-
-	return c.Status(res.StatusCode).JSON(resp)
+	return c.Status(res.StatusCode).JSON(res)
 }

@@ -25,10 +25,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallTaxScoreAPI(apiKey string, request *taxScoreRequest) (*http.Response, error)
+	CallTaxScoreAPI(apiKey, jobId string, request *taxScoreRequest) (*http.Response, error)
 }
 
-func (repo *repository) CallTaxScoreAPI(apiKey string, request *taxScoreRequest) (*http.Response, error) {
+func (repo *repository) CallTaxScoreAPI(apiKey, jobId string, request *taxScoreRequest) (*http.Response, error) {
 	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/incometax/tax-score"
 
 	jsonBody, err := json.Marshal(request)
@@ -47,10 +47,14 @@ func (repo *repository) CallTaxScoreAPI(apiKey string, request *taxScoreRequest)
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set(constant.XAPIKey, apiKey)
 
-	resp, err := repo.client.Do(httpRequest)
+	q := httpRequest.URL.Query()
+	q.Add("job_id", jobId)
+	httpRequest.URL.RawQuery = q.Encode()
+
+	httpResponse, err := repo.client.Do(httpRequest)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 
-	return resp, nil
+	return httpResponse, nil
 }
