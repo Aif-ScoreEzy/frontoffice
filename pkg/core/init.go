@@ -2,6 +2,7 @@ package core
 
 import (
 	"front-office/app/config"
+	"front-office/internal/httpclient"
 	"front-office/pkg/core/auth"
 	"front-office/pkg/core/company"
 	"front-office/pkg/core/grading"
@@ -14,11 +15,14 @@ import (
 	"front-office/pkg/procat"
 	"front-office/pkg/procat/phonelivestatus"
 	"front-office/pkg/scoreezy/genretail"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
+	client := httpclient.NewDefaultClient(10 * time.Second)
+
 	userGroup := routeGroup.Group("users")
 	auth.SetupInit(userGroup, cfg)
 	member.SetupInit(userGroup, cfg)
@@ -39,7 +43,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	genretail.SetupInit(genRetailGroup, cfg)
 
 	logGroup := routeGroup.Group("logs")
-	transaction.SetupInit(logGroup, cfg)
+	transaction.SetupInit(logGroup, cfg, client)
 	operation.SetupInit(logGroup, cfg)
 
 	productGroup := routeGroup.Group("products")

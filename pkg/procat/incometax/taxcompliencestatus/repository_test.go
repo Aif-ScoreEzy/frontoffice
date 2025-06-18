@@ -57,7 +57,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 		Npwp: "092542823407000",
 	}
 
-	resp, err := repo.CallTaxComplianceStatusAPI("test-api-key", req)
+	resp, err := repo.CallTaxComplianceStatusAPI("test-api-key", "1", req)
 
 	// Assert
 	assert.NoError(t, err)
