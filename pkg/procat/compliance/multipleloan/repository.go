@@ -12,24 +12,24 @@ import (
 
 func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
 	return &repository{
-		Cfg:    cfg,
-		Client: client,
+		cfg:    cfg,
+		client: client,
 	}
 }
 
 type repository struct {
-	Cfg    *config.Config
-	Client httpclient.HTTPClient
+	cfg    *config.Config
+	client httpclient.HTTPClient
 }
 
 type Repository interface {
-	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
-	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
-	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
 }
 
-func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/7-days"
+func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
+	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/7-days"
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {
@@ -46,7 +46,11 @@ func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiK
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	response, err := repo.Client.Do(httpRequest)
+	q := httpRequest.URL.Query()
+	q.Add("job_id", jobId)
+	httpRequest.URL.RawQuery = q.Encode()
+
+	response, err := repo.client.Do(httpRequest)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
@@ -54,8 +58,8 @@ func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiK
 	return response, nil
 }
 
-func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/30-days"
+func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
+	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/30-days"
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {
@@ -72,7 +76,11 @@ func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, api
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	response, err := repo.Client.Do(httpRequest)
+	q := httpRequest.URL.Query()
+	q.Add("job_id", jobId)
+	httpRequest.URL.RawQuery = q.Encode()
+
+	response, err := repo.client.Do(httpRequest)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
@@ -80,8 +88,8 @@ func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, api
 	return response, nil
 }
 
-func (repo *repository) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/product/compliance/multiple-loan/90-days"
+func (repo *repository) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
+	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/90-days"
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {
@@ -98,7 +106,11 @@ func (repo *repository) CallMultipleLoan90Days(request *multipleLoanRequest, api
 	httpRequest.Header.Set("X-Member-ID", memberId)
 	httpRequest.Header.Set("X-Company-ID", companyId)
 
-	response, err := repo.Client.Do(httpRequest)
+	q := httpRequest.URL.Query()
+	q.Add("job_id", jobId)
+	httpRequest.URL.RawQuery = q.Encode()
+
+	response, err := repo.client.Do(httpRequest)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}

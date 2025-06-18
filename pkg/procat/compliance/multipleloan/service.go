@@ -1,61 +1,46 @@
 package multipleloan
 
 import (
-	"front-office/app/config"
+	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
+	"net/http"
 )
 
-func NewService(cfg *config.Config, repo Repository) Service {
+func NewService(repo Repository) Service {
 	return &service{
-		Cfg:  cfg,
-		Repo: repo,
+		repo: repo,
 	}
 }
 
 type service struct {
-	Cfg  *config.Config
-	Repo Repository
+	repo Repository
 }
 
 type Service interface {
-	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
-	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
-	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	MultipleLoan(apiKey, jobId, productSlug, memberId, companyId string, request *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 }
 
-func (svc *service) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	response, err := svc.Repo.CallMultipleLoan7Days(request, apiKey, memberId, companyId)
-	if err != nil {
-		return nil, err
-	}
+func (svc *service) MultipleLoan(apiKey, jobId, productSlug, memberId, companyId string, request *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	var response *http.Response
+	var err error
 
-	result, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](response)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (svc *service) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	response, err := svc.Repo.CallMultipleLoan30Days(request, apiKey, memberId, companyId)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](response)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (svc *service) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	response, err := svc.Repo.CallMultipleLoan90Days(request, apiKey, memberId, companyId)
-	if err != nil {
-		return nil, err
+	switch productSlug {
+	case constant.SlugMultipleLoan7Days:
+		response, err = svc.repo.CallMultipleLoan7Days(request, apiKey, memberId, jobId, companyId)
+		if err != nil {
+			return nil, err
+		}
+	case constant.SlugMultipleLoan30Days:
+		response, err = svc.repo.CallMultipleLoan30Days(request, apiKey, memberId, jobId, companyId)
+		if err != nil {
+			return nil, err
+		}
+	case constant.SlugMultipleLoan90Days:
+		response, err = svc.repo.CallMultipleLoan90Days(request, apiKey, memberId, jobId, companyId)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	result, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](response)
