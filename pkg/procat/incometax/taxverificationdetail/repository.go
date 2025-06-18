@@ -25,10 +25,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallTaxVerificationAPI(apiKey string, request *taxVerificationRequest) (*http.Response, error)
+	CallTaxVerificationAPI(apiKey, jobId string, request *taxVerificationRequest) (*http.Response, error)
 }
 
-func (repo *repository) CallTaxVerificationAPI(apiKey string, request *taxVerificationRequest) (*http.Response, error) {
+func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, request *taxVerificationRequest) (*http.Response, error) {
 	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/incometax/tax-verification-detail"
 
 	jsonBody, err := json.Marshal(request)
@@ -46,6 +46,10 @@ func (repo *repository) CallTaxVerificationAPI(apiKey string, request *taxVerifi
 
 	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	httpRequest.Header.Set(constant.XAPIKey, apiKey)
+
+	q := httpRequest.URL.Query()
+	q.Add("job_id", jobId)
+	httpRequest.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(httpRequest)
 	if err != nil {
