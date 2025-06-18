@@ -30,7 +30,7 @@ type ProCatAPIResponse[T any] struct {
 	Input           interface{} `json:"input"`
 	Message         string      `json:"message"`
 	StatusCode      int         `json:"-"`
-	PricingStrategy interface{} `json:"pricing_strategy"`
-	TransactionId   interface{} `json:"transaction_id"`
-	Date            interface{} `json:"datetime"`
+	PricingStrategy string      `json:"pricing_strategy"`
+	TransactionId   string      `json:"transaction_id"`
+	Date            string      `json:"datetime"`
 }

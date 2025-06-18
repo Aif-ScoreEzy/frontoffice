@@ -28,4 +28,5 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config) {
 	taxpayerstatus.SetupInit(incomeTaxGroupAPI, cfg, client)
 	taxscore.SetupInit(incomeTaxGroupAPI, cfg, client)
 	taxverificationdetail.SetupInit(incomeTaxGroupAPI, cfg, client)
+	log.SetupInit(incomeTaxGroupAPI, cfg, client)
 }
