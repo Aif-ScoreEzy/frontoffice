@@ -6,21 +6,24 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/internal/httpclient"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{Cfg: cfg}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{cfg, client}
 }
 
 type repository struct {
-	Cfg *config.Config
+	cfg    *config.Config
+	client httpclient.HTTPClient
 }
 
 type Repository interface {
+	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*http.Response, error)
 	CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
 	CallGetJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
 	CallGetAllJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
@@ -30,8 +33,33 @@ type Repository interface {
 	CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error)
 }
 
+func (repo *repository) CallCreateJobAPI(memberId, companyId string, request *createJobRequest) (*http.Response, error) {
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs"
+
+	jsonBodyValue, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	if err != nil {
+		return nil, err
+	}
+
+	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	httpRequest.Header.Set("X-Member-ID", memberId)
+	httpRequest.Header.Set("X-Company-ID", companyId)
+
+	response, err := repo.client.Do(httpRequest)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+
+	return response, nil
+}
+
 func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs"
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs"
 
 	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -56,7 +84,7 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilt
 }
 
 func (repo *repository) CallGetJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/job/%v/details`, repo.Cfg.Env.AifcoreHost, filter.JobId)
+	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details`, repo.cfg.Env.AifcoreHost, filter.JobId)
 
 	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -80,7 +108,7 @@ func (repo *repository) CallGetJobDetailsAPI(filter *PhoneLiveStatusFilter) (*ht
 }
 
 func (repo *repository) CallGetAllJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/job/%v`, repo.Cfg.Env.AifcoreHost, filter.JobId)
+	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, filter.JobId)
 
 	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -98,7 +126,7 @@ func (repo *repository) CallGetAllJobDetailsAPI(filter *PhoneLiveStatusFilter) (
 }
 
 func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/job-details-by-range-date`, repo.Cfg.Env.AifcoreHost)
+	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/job-details-by-range-date`, repo.cfg.Env.AifcoreHost)
 
 	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -121,7 +149,7 @@ func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *PhoneLiveStatusF
 }
 
 func (repo *repository) CallGetJobsSummary(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/jobs-summary`, repo.Cfg.Env.AifcoreHost)
+	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/jobs-summary`, repo.cfg.Env.AifcoreHost)
 
 	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -144,7 +172,7 @@ func (repo *repository) CallGetJobsSummary(filter *PhoneLiveStatusFilter) (*http
 }
 
 func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/phone-live-status/single-search"
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/single-search"
 
 	jsonBodyValue, err := json.Marshal(request)
 	if err != nil {
@@ -168,7 +196,7 @@ func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, reque
 }
 
 func (repo *repository) CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/phone-live-status/bulk-search"
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/bulk-search"
 
 	file, err := fileHeader.Open()
 	if err != nil {
