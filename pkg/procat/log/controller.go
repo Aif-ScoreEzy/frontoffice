@@ -1,6 +1,7 @@
 package log
 
 import (
+	"errors"
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
@@ -23,19 +24,10 @@ type Controller interface {
 
 func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
-	var productSlug string
 
-	switch slug {
-	case "loan-record-checker":
-		productSlug = constant.SlugLoanRecordChecker
-	case "7d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan7Days
-	case "30d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan30Days
-	case "90d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan90Days
-	default:
-		return c.Status(fiber.StatusNotFound).JSON(helper.ResponseFailed("Unsupported product slug"))
+	productSlug, err := mapProductSlug(slug)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ResponseFailed(err.Error()))
 	}
 
 	filter := &logFilter{
@@ -67,19 +59,10 @@ func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
-	var productSlug string
 
-	switch slug {
-	case "loan-record-checker":
-		productSlug = constant.SlugLoanRecordChecker
-	case "7d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan7Days
-	case "30d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan30Days
-	case "90d-multiple-loan":
-		productSlug = constant.SlugMultipleLoan90Days
-	default:
-		return c.Status(fiber.StatusNotFound).JSON(helper.ResponseFailed("Unsupported product slug"))
+	productSlug, err := mapProductSlug(slug)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ResponseFailed(err.Error()))
 	}
 
 	filter := &logFilter{
@@ -104,4 +87,25 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func mapProductSlug(slug string) (string, error) {
+	switch slug {
+	case "loan-record-checker":
+		return constant.SlugLoanRecordChecker, nil
+	case "7d-multiple-loan":
+		return constant.SlugMultipleLoan7Days, nil
+	case "30d-multiple-loan":
+		return constant.SlugMultipleLoan30Days, nil
+	case "90d-multiple-loan":
+		return constant.SlugMultipleLoan90Days, nil
+	case "tax-compliance-status":
+		return constant.SlugTaxComplianceStatus, nil
+	case "tax-score":
+		return constant.SlugTaxScore, nil
+	case "tax-verification-detail":
+		return constant.SlugTaxVerificationDetail, nil
+	default:
+		return "", errors.New("unsupported product slug")
+	}
 }

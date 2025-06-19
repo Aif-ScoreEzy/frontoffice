@@ -16,11 +16,11 @@ type service struct {
 }
 
 type Service interface {
-	CallTaxScore(apiKey string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error)
+	CallTaxScore(apiKey, jobId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error)
 }
 
-func (svc *service) CallTaxScore(apiKey string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error) {
-	response, err := svc.repo.CallTaxScoreAPI(apiKey, request)
+func (svc *service) CallTaxScore(apiKey, jobId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error) {
+	response, err := svc.repo.CallTaxScoreAPI(apiKey, jobId, request)
 	if err != nil {
 		return nil, err
 	}

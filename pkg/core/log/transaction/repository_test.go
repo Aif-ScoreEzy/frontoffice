@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func initMockConfig(mockServerURL string) *config.Config {
@@ -17,6 +18,15 @@ func initMockConfig(mockServerURL string) *config.Config {
 			AifcoreHost: mockServerURL,
 		},
 	}
+}
+
+type MockClient struct {
+	mock.Mock
+}
+
+func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
+	args := m.Called(req)
+	return args.Get(0).(*http.Response), args.Error(1)
 }
 
 const dummyResponseBody = `{
@@ -59,7 +69,8 @@ func TestNewRepository(t *testing.T) {
 	mockConfig := &config.Config{}
 
 	// Act - Call NewRepository
-	repo := NewRepository(mockConfig)
+	mockClient := new(MockClient)
+	repo := NewRepository(mockConfig, mockClient)
 
 	// Assert - Ensure that repo is not nil
 	assert.NotNil(t, repo)
@@ -69,14 +80,14 @@ func TestNewRepository(t *testing.T) {
 	assert.True(t, ok, "Expected *repository, got something else")
 
 	// Assert - Ensure that the DB and Cfg fields are correctly assigned
-	assert.Equal(t, mockConfig, repo.(*repository).Cfg)
+	assert.Equal(t, mockConfig, repo.(*repository).cfg)
 }
 
 func TestFindAllTransactionLogs(t *testing.T) {
 	// Mock server to simulate the external API
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate the request URL and method
-		expectedPath := "/api/core/logging/transaction/list"
+		expectedPath := "/api/core/logging/transaction/scoreezy/list"
 		assert.Equal(t, expectedPath, r.URL.Path)
 		assert.Equal(t, http.MethodGet, r.Method)
 
@@ -89,12 +100,14 @@ func TestFindAllTransactionLogs(t *testing.T) {
 
 	// Initialize mock config with the mock server's URL
 	mockConfig := initMockConfig(mockServer.URL)
+	mockClient := new(MockClient)
 
 	repo := &repository{
-		Cfg: mockConfig,
+		cfg:    mockConfig,
+		client: mockClient,
 	}
 
-	resp, err := repo.FetchLogTransactions()
+	resp, err := repo.CallLogScoreezyAPI()
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -112,7 +125,7 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 	// Mock server to simulate the external API
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate the request URL and method
-		expectedPath := "/api/core/logging/transaction/by"
+		expectedPath := "/api/core/logging/transaction/scoreezy/by"
 		assert.Equal(t, expectedPath, r.URL.Path)
 		assert.Equal(t, http.MethodGet, r.Method)
 
@@ -130,16 +143,17 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 
 	// Initialize mock config with the mock server's URL
 	mockConfig := initMockConfig(mockServer.URL)
+	mockClient := new(MockClient)
 
-	// Create repository with the mock config
 	repo := &repository{
-		Cfg: mockConfig,
+		cfg:    mockConfig,
+		client: mockClient,
 	}
 
 	// Act - Call the method with companyId and date
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.FetchLogTransactionsByDate(companyId, date)
+	resp, err := repo.CallLogScoreezyByDateAPI(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -159,7 +173,7 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 	// Mock server to simulate the external API
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate the request URL and method
-		expectedPath := "/api/core/logging/transaction/range"
+		expectedPath := "/api/core/logging/transaction/scoreezy/range"
 		assert.Equal(t, expectedPath, r.URL.Path)
 		assert.Equal(t, http.MethodGet, r.Method)
 
@@ -178,17 +192,18 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 
 	// Initialize mock config with the mock server's URL
 	mockConfig := initMockConfig(mockServer.URL)
+	mockClient := new(MockClient)
 
-	// Create repository with the mock config
 	repo := &repository{
-		Cfg: mockConfig,
+		cfg:    mockConfig,
+		client: mockClient,
 	}
 
 	// Act - Call the method with companyId and date
 	companyId := "1"
 	startDate := dummyDate
 	endDate := dummyDate
-	resp, err := repo.FetchLogTransactionsByRangeDate(companyId, startDate, endDate)
+	resp, err := repo.CallLogScoreezyByRangeDateAPI(companyId, startDate, endDate)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -207,7 +222,7 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 func TestFindAllTransactionLogsByMonth(t *testing.T) {
 	// Mock server to simulate the external API
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		expectedPath := "/api/core/logging/transaction/month"
+		expectedPath := "/api/core/logging/transaction/scoreezy/month"
 		assert.Equal(t, expectedPath, r.URL.Path)
 		assert.Equal(t, http.MethodGet, r.Method)
 
@@ -223,14 +238,16 @@ func TestFindAllTransactionLogsByMonth(t *testing.T) {
 	defer mockServer.Close()
 
 	mockConfig := initMockConfig(mockServer.URL)
+	mockClient := new(MockClient)
 
 	repo := &repository{
-		Cfg: mockConfig,
+		cfg:    mockConfig,
+		client: mockClient,
 	}
 
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.FetchLogTransactionsByMonth(companyId, date)
+	resp, err := repo.CallLogScoreezyByMonthAPI(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)

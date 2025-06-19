@@ -3,6 +3,7 @@ package helper
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 func ConvertUintToString(arg uint) string {
@@ -16,3 +17,8 @@ func InterfaceToUint(input interface{}) (uint, error) {
 
 	return 0, fmt.Errorf("cannot convert %T to uint", input)
 }
+
+func BoolPtr(b bool) *bool           { return &b }
+func IntPtr(i int) *int              { return &i }
+func StringPtr(s string) *string     { return &s }
+func TimePtr(t time.Time) *time.Time { return &t }

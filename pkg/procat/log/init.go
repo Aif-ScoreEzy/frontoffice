@@ -10,7 +10,7 @@ import (
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repository := NewRepository(cfg, client)
-	service := NewService(cfg, repository)
+	service := NewService(repository)
 	controller := NewController(service)
 
 	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJob)
