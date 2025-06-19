@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"front-office/common/model"
+	"front-office/helper"
 	"io"
 	"log"
 	"mime/multipart"
@@ -14,15 +16,16 @@ import (
 
 func NewService(repo Repository) Service {
 	return &service{
-		Repo: repo,
+		repo,
 	}
 }
 
 type service struct {
-	Repo Repository
+	repo Repository
 }
 
 type Service interface {
+	CreateJob(memberId, companyId string, request *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error)
 	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
 	GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
@@ -33,8 +36,17 @@ type Service interface {
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
+func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error) {
+	response, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[createJobResponseData](response)
+}
+
 func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
-	response, err := svc.Repo.CallGetPhoneLiveStatusJobAPI(filter)
+	response, err := svc.repo.CallGetPhoneLiveStatusJobAPI(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +55,7 @@ func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIRe
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {
-	response, err := svc.Repo.CallGetJobDetailsAPI(filter)
+	response, err := svc.repo.CallGetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +64,7 @@ func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilt
 }
 
 func (svc *service) GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
-	response, err := svc.Repo.CallGetAllJobDetailsAPI(filter)
+	response, err := svc.repo.CallGetAllJobDetailsAPI(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +73,7 @@ func (svc *service) GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) 
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
-	response, err := svc.Repo.CallGetJobDetailsByRangeDateAPI(filter)
+	response, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +82,7 @@ func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatus
 }
 
 func (svc *service) GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error) {
-	response, err := svc.Repo.CallGetJobsSummary(filter)
+	response, err := svc.repo.CallGetJobsSummary(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +121,7 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
-	response, err := svc.Repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
+	response, err := svc.repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
 	log.Println("phone live status resss==> ", response, err)
 
 	if err != nil {
@@ -120,7 +132,7 @@ func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *Phon
 }
 
 func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error {
-	_, err := svc.Repo.CallBulkPhoneLiveStatusAPI(memberId, companyId, fileHeader)
+	_, err := svc.repo.CallBulkPhoneLiveStatusAPI(memberId, companyId, fileHeader)
 	if err != nil {
 		return err
 	}

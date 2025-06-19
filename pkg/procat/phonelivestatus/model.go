@@ -92,3 +92,13 @@ type JobsSummaryResponse struct {
 	Mobile           int64 `json:"mobile"`
 	FixedLine        int64 `json:"fixed_line"`
 }
+
+type createJobRequest struct {
+	MemberId                uint                     `json:"member_id"`
+	CompanyId               uint                     `json:"company_id"`
+	PhoneLiveStatusRequests []PhoneLiveStatusRequest `json:"requests"`
+}
+
+type createJobResponseData struct {
+	JobId uint `json:"job_id"`
+}
