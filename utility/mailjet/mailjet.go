@@ -60,7 +60,7 @@ func SendEmailPasswordReset(email, name, token string) error {
 
 	variables := map[string]interface{}{
 		"name": name,
-		"link": fmt.Sprintf("%s/verification?key=%s", baseURL, token),
+		"link": fmt.Sprintf("%s/users-management/password-reset/%s", baseURL, token),
 	}
 
 	err := createMailjet(email, 5202383, variables)

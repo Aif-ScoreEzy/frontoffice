@@ -66,8 +66,8 @@ func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if taxComplianceRes.StatusCode >= 400 {
-		_, resp := helper.GetError(taxComplianceRes.Message)
+	if taxComplianceRes.StatusCode >= fiber.StatusBadRequest {
+		_, resp := helper.GetError("failed to process tax compliance status")
 
 		return c.Status(taxComplianceRes.StatusCode).JSON(resp)
 	}

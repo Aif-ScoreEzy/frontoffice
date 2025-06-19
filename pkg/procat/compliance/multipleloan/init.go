@@ -3,17 +3,26 @@ package multipleloan
 import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
+	"front-office/pkg/core/log/transaction"
+	"front-office/pkg/core/product"
 	"front-office/pkg/middleware"
+	"front-office/pkg/procat/log"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	repository := NewRepository(cfg, client)
-	service := NewService(cfg, repository)
-	controller := NewController(service)
+	repo := NewRepository(cfg, client)
+	productRepo := product.NewRepository(cfg, client)
+	logRepo := log.NewRepository(cfg, client)
+	transRepo := transaction.NewRepository(cfg, client)
 
-	apiGroup.Post("/7d-multiple-loan/single-request", middleware.Auth(), middleware.IsRequestValid(multipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan7Days)
-	apiGroup.Post("/30d-multiple-loan/single-request", middleware.Auth(), middleware.IsRequestValid(multipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan30Days)
-	apiGroup.Post("/90d-multiple-loan/single-request", middleware.Auth(), middleware.IsRequestValid(multipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan90Days)
+	service := NewService(repo)
+	productService := product.NewService(productRepo)
+	logService := log.NewService(logRepo)
+	transService := transaction.NewService(transRepo)
+
+	controller := NewController(service, productService, logService, transService)
+
+	apiGroup.Post("/:product_slug/single-request", middleware.Auth(), middleware.IsRequestValid(multipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan)
 }

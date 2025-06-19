@@ -1,32 +1,26 @@
 package loanrecordchecker
 
 import (
-	"front-office/app/config"
 	"front-office/common/model"
 	"front-office/helper"
-	"log"
 )
 
-func NewService(cfg *config.Config, repo Repository) Service {
+func NewService(repo Repository) Service {
 	return &service{
-		Cfg:  cfg,
-		Repo: repo,
+		repo: repo,
 	}
 }
 
 type service struct {
-	Cfg  *config.Config
-	Repo Repository
+	repo Repository
 }
 
 type Service interface {
-	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error)
+	LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, jobId, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error) {
-	response, err := svc.Repo.CallLoanRecordCheckerAPI(request, apiKey, memberId, companyId)
-	log.Println("loan record responseee====>", response)
-
+func (svc *service) LoanRecordChecker(request *LoanRecordCheckerRequest, apiKey, jobId, memberId, companyId string) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+	response, err := svc.repo.CallLoanRecordCheckerAPI(request, apiKey, jobId, memberId, companyId)
 	if err != nil {
 		return nil, err
 	}
