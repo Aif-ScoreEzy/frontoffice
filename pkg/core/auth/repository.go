@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/httpclient"
 
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{Cfg: cfg}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{cfg, client}
 }
 
 type repository struct {
-	Cfg *config.Config
+	cfg    *config.Config
+	client httpclient.HTTPClient
 }
 
 type Repository interface {
@@ -24,7 +27,7 @@ type Repository interface {
 	PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error)
 	VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error)
 	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
-	AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error)
+	AuthMemberAifCore(req *userLoginRequest) (*loginResponseData, error)
 }
 
 // func (repo *repository) CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error) {
@@ -75,7 +78,7 @@ type Repository interface {
 // }
 
 func (repo *repository) PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.Cfg.Env.AifcoreHost, memberId, token)
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, memberId, token)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
@@ -86,7 +89,7 @@ func (repo *repository) PasswordReset(memberId uint, token string, req *Password
 }
 
 func (repo *repository) VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.Cfg.Env.AifcoreHost, memberId)
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
@@ -97,7 +100,7 @@ func (repo *repository) VerifyMemberAif(req *PasswordResetRequest, memberId uint
 }
 
 func (repo *repository) ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.Cfg.Env.AifcoreHost, memberId)
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.cfg.Env.AifcoreHost, memberId)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
@@ -107,13 +110,33 @@ func (repo *repository) ChangePasswordAifCore(memberId string, req *ChangePasswo
 	return client.Do(request)
 }
 
-func (repo *repository) AuthMemberAifCore(req *UserLoginRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/middleware/auth-member-login"
+func (repo *repository) AuthMemberAifCore(reqBody *userLoginRequest) (*loginResponseData, error) {
+	url := fmt.Sprintf("%s/api/middleware/auth-member-login", repo.cfg.Env.AifcoreHost)
 
-	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
 
-	client := &http.Client{}
-	return client.Do(request)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	// send http request
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// parse structured response
+	apiResp, err := helper.ParseAifcoreAPIResponse[*loginResponseData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }

@@ -3,34 +3,43 @@ package auth
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
+	"front-office/internal/apperror/mapper"
+	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/role"
 	"io"
 	"strconv"
+
+	"github.com/rs/zerolog/log"
 )
 
 func NewService(
-	repo Repository,
-	repoUser member.Repository,
-	repoRole role.Repository,
 	cfg *config.Config,
+	repo Repository,
+	memberRepo member.Repository,
+	roleRepo role.Repository,
+	operationRepo operation.Repository,
 ) Service {
 	return &service{
-		Repo:     repo,
-		RepoUser: repoUser,
-		RepoRole: repoRole,
-		Cfg:      cfg,
+		cfg,
+		repo,
+		memberRepo,
+		roleRepo,
+		operationRepo,
 	}
 }
 
 type service struct {
-	Repo     Repository
-	RepoUser member.Repository
-	RepoRole role.Repository
-	Cfg      *config.Config
+	cfg           *config.Config
+	repo          Repository
+	memberRepo    member.Repository
+	roleRepo      role.Repository
+	operationRepo operation.Repository
 }
 
 type Service interface {
@@ -38,9 +47,8 @@ type Service interface {
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
 	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
-	LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error)
+	LoginMember(loginReq *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error)
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
-	generateTokens(memberId, companyId, roleId uint, apiKey string) (string, string, error)
 }
 
 // func (svc *service) RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error) {
@@ -117,7 +125,7 @@ func (svc *service) VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*
 		return nil, errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	response, err := svc.Repo.VerifyMemberAif(req, memberId)
+	response, err := svc.repo.VerifyMemberAif(req, memberId)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +154,7 @@ func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordR
 		return errors.New(constant.ConfirmPasswordMismatch)
 	}
 
-	_, err := svc.Repo.PasswordReset(memberId, token, req)
+	_, err := svc.repo.PasswordReset(memberId, token, req)
 	if err != nil {
 		return err
 	}
@@ -155,7 +163,7 @@ func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordR
 }
 
 func (svc *service) AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error) {
-	res, err := svc.RepoUser.AddMember(req)
+	res, err := svc.memberRepo.AddMember(req)
 	if err != nil {
 		return nil, err
 	}
@@ -172,22 +180,48 @@ func (svc *service) AddMember(req *member.RegisterMemberRequest, companyId uint)
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) LoginMember(req *UserLoginRequest) (*aifcoreAuthMemberResponse, error) {
-	res, err := svc.Repo.AuthMemberAifCore(req)
+func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error) {
+	user, err := svc.repo.AuthMemberAifCore(req)
 	if err != nil {
-		return nil, err
+		var apiErr *apperror.ExternalAPIError
+		if errors.As(err, &apiErr) {
+			return "", "", nil, mapper.MapAuthError(apiErr)
+		}
+
+		return "", "", nil, apperror.Internal("auth failed", err)
 	}
 
-	var baseResponse *aifcoreAuthMemberResponse
-	if res != nil {
-		dataBytes, _ := io.ReadAll(res.Body)
-		defer res.Body.Close()
-
-		json.Unmarshal(dataBytes, &baseResponse)
-		baseResponse.StatusCode = res.StatusCode
+	accessToken, err = svc.generateToken(user, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtExpiresMinutes)
+	if err != nil {
+		return "", "", nil, apperror.Internal("generate access token failed", err)
 	}
 
-	return baseResponse, nil
+	refreshToken, err = svc.generateToken(user, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtRefreshTokenExpiresMinutes)
+	if err != nil {
+		return "", "", nil, apperror.Internal("generate refresh token failed", err)
+	}
+
+	_, err = svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		Action:    constant.EventSignIn,
+	})
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to log sign-in event")
+	}
+
+	loginResp = &loginResponse{
+		Id:                 user.MemberId,
+		Name:               user.Name,
+		Email:              user.Email,
+		CompanyId:          user.CompanyId,
+		CompanyName:        user.CompanyName,
+		TierLevel:          user.RoleId,
+		Image:              user.Image,
+		SubscriberProducts: user.SubscriberProducts,
+	}
+
+	return accessToken, refreshToken, loginResp, nil
 }
 
 func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {
@@ -200,7 +234,7 @@ func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) 
 		return nil, errors.New(constant.ConfirmNewPasswordMismatch)
 	}
 
-	response, err := svc.Repo.ChangePasswordAifCore(memberId, req)
+	response, err := svc.repo.ChangePasswordAifCore(memberId, req)
 	if err != nil {
 		return nil, err
 	}
@@ -219,19 +253,11 @@ func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) 
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) generateTokens(memberId, companyId, roleId uint, apiKey string) (string, string, error) {
-	secret := svc.Cfg.Env.JwtSecretKey
-	accessTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtExpiresMinutes)
-	accessToken, err := helper.GenerateToken(secret, accessTokenExpiresAt, memberId, companyId, roleId, apiKey)
+func (svc *service) generateToken(user *loginResponseData, secret, minutesStr string) (string, error) {
+	minutes, err := strconv.Atoi(minutesStr)
 	if err != nil {
-		return "", "", err
+		return "", fmt.Errorf("invalid duration: %w", err)
 	}
 
-	refreshTokenExpiresAt, _ := strconv.Atoi(svc.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	refreshToken, err := helper.GenerateToken(secret, refreshTokenExpiresAt, memberId, companyId, roleId, apiKey)
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
+	return helper.GenerateToken(secret, minutes, user.MemberId, user.CompanyId, user.RoleId, user.ApiKey)
 }

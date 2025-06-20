@@ -5,6 +5,7 @@ import (
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
@@ -367,73 +368,27 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Login(c *fiber.Ctx) error {
-	req := c.Locals("request").(*UserLoginRequest)
+	loginReq := c.Locals("request").(*userLoginRequest)
 
-	res, err := ctrl.Svc.LoginMember(req)
+	accessToken, refreshToken, loginResp, err := ctrl.Svc.LoginMember(loginReq)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if res != nil && !res.Success {
-		_, resp := helper.GetError(res.Message)
-		return c.Status(res.StatusCode).JSON(resp)
+	const accessCookieName = "aif_token"
+	const refreshCookieName = "aif_refresh_token"
+
+	// Set access token cookie
+	if err := ctrl.setTokenCookie(c, accessCookieName, accessToken, ctrl.Cfg.Env.JwtExpiresMinutes); err != nil {
+		return apperror.Internal("failed to set access token cookie", err)
 	}
 
-	accessToken, refreshToken, err := ctrl.Svc.generateTokens(res.Data.MemberId, res.Data.CompanyId, res.Data.RoleId, res.Data.ApiKey)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	// Set refresh token cookie
+	if err := ctrl.setTokenCookie(c, refreshCookieName, refreshToken, ctrl.Cfg.Env.JwtRefreshTokenExpiresMinutes); err != nil {
+		return apperror.Internal("failed to set refresh token cookie", err)
 	}
 
-	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
-	c.Cookie(&fiber.Cookie{
-		Name:     "aif_token",
-		Value:    accessToken,
-		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Lax",
-	})
-
-	refreshTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtRefreshTokenExpiresMinutes)
-	c.Cookie(&fiber.Cookie{
-		Name:     "aif_refresh_token",
-		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Duration(refreshTokenExpirationMinutes) * time.Minute),
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Lax",
-	})
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  res.Data.MemberId,
-		CompanyId: res.Data.CompanyId,
-		Action:    constant.EventSignIn,
-	}
-
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
-		log.Println("Failed to log operation for user login")
-	}
-
-	data := &UserLoginResponse{
-		Id:                 res.Data.MemberId,
-		Name:               res.Data.Name,
-		Email:              res.Data.Email,
-		CompanyId:          res.Data.CompanyId,
-		CompanyName:        res.Data.CompanyName,
-		TierLevel:          res.Data.RoleId,
-		Image:              res.Data.Image,
-		SubscriberProducts: res.Data.SubscriberProducts,
-	}
-
-	responseSuccess := helper.ResponseSuccess(
-		"succeed to login",
-		data,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(responseSuccess)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess("succeed to login", loginResp))
 }
 
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
@@ -543,4 +498,20 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (ctrl *controller) setTokenCookie(c *fiber.Ctx, name, value, durationStr string) error {
+	minutes, err := strconv.Atoi(durationStr)
+	if err != nil {
+		return err
+	}
+	c.Cookie(&fiber.Cookie{
+		Name:     name,
+		Value:    value,
+		Expires:  time.Now().Add(time.Duration(minutes) * time.Minute),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+	})
+	return nil
 }

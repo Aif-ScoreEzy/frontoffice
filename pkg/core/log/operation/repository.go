@@ -3,38 +3,40 @@ package operation
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/httpclient"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{
-		Cfg: cfg,
-	}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{cfg, client}
 }
 
 type repository struct {
-	Cfg *config.Config
+	cfg    *config.Config
+	client httpclient.HTTPClient
 }
 
 type Repository interface {
-	FetchLogOperations(filter *LogOperationFilter) (*http.Response, error)
+	FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error)
 	FetchByRange(filter *LogRangeFilter) (*http.Response, error)
 	AddLogOperation(req *AddLogRequest) (*http.Response, error)
 }
 
-func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/operation/list/" + filter.CompanyId
+func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error) {
+	url := fmt.Sprintf("%s/api/middleware/auth-member-login", repo.cfg.Env.AifcoreHost)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	q := request.URL.Query()
+	q := req.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Size)
 	q.Add("name", filter.Name)
@@ -42,15 +44,24 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*http.Re
 	q.Add("event", filter.Event)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*LogOperation](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 func (repo *repository) FetchByRange(filter *LogRangeFilter) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/operation/range"
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/operation/range"
 
 	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
 	if err != nil {
@@ -73,7 +84,7 @@ func (repo *repository) FetchByRange(filter *LogRangeFilter) (*http.Response, er
 }
 
 func (repo *repository) AddLogOperation(req *AddLogRequest) (*http.Response, error) {
-	apiUrl := repo.Cfg.Env.AifcoreHost + "/api/core/logging/operation"
+	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/operation"
 
 	jsonBodyValue, err := json.Marshal(req)
 	if err != nil {

@@ -2,6 +2,7 @@ package member
 
 import (
 	"front-office/app/config"
+	"front-office/internal/httpclient"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/pkg/middleware"
@@ -9,10 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupInit(userAPI fiber.Router, cfg *config.Config) {
+func SetupInit(userAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repo := NewRepository(cfg)
 	roleRepo := role.NewRepository(cfg)
-	repoLogOperation := operation.NewRepository(cfg)
+	repoLogOperation := operation.NewRepository(cfg, client)
 
 	serviceRole := role.NewService(roleRepo)
 	service := NewService(repo, serviceRole)

@@ -2,6 +2,7 @@ package operation
 
 import (
 	"encoding/json"
+	"front-office/internal/apperror/mapper"
 	"io"
 	"net/http"
 )
@@ -15,23 +16,18 @@ type service struct {
 }
 
 type Service interface {
-	GetLogOperations(filter *LogOperationFilter) (*AifResponse, error)
+	GetLogOperations(filter *LogOperationFilter) (log *LogOperation, err error)
 	GetByRange(filter *LogRangeFilter) (*AifResponse, error)
 	AddLogOperation(req *AddLogRequest) (*AifResponse, error)
 }
 
-func (svc *service) GetLogOperations(filter *LogOperationFilter) (*AifResponse, error) {
-	response, err := svc.Repo.FetchLogOperations(filter)
+func (svc *service) GetLogOperations(filter *LogOperationFilter) (*LogOperation, error) {
+	log, err := svc.Repo.FetchLogOperations(filter)
 	if err != nil {
-		return nil, err
+		return nil, mapper.MapRepoError(err, "failed to fetch log operations")
 	}
 
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return log, nil
 }
 
 func (svc *service) GetByRange(filter *LogRangeFilter) (*AifResponse, error) {
