@@ -2,15 +2,22 @@ package phonelivestatus
 
 import (
 	"front-office/app/config"
+	"front-office/internal/httpclient"
+	"front-office/pkg/core/member"
+	"front-office/pkg/core/role"
 	"front-office/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupInit(apiGroup fiber.Router, cfg *config.Config) {
-	repository := NewRepository(cfg)
+func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
+	repository := NewRepository(cfg, client)
+	memberRepository := member.NewRepository(cfg)
+	roleRepository := role.NewRepository(cfg)
 	service := NewService(repository)
-	controller := NewController(service)
+	roleService := role.NewService(roleRepository)
+	memberService := member.NewService(memberRepository, roleService)
+	controller := NewController(service, memberService)
 
 	phoneLiveStatusGroup := apiGroup.Group("phone-live-status")
 	phoneLiveStatusGroup.Get("/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobs)
