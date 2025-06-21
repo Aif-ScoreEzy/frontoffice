@@ -51,6 +51,7 @@ type service struct {
 type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
 	LoginMember(loginReq *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error)
+	RefreshAccessToken(memberId, companyId, tierLevel uint, apiKey string) (string, error)
 	Logout(memberId, companyId uint) error
 	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
@@ -293,6 +294,22 @@ func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToke
 	}
 
 	return accessToken, refreshToken, loginResp, nil
+}
+
+func (svc *service) RefreshAccessToken(memberId, companyId, roleId uint, apiKey string) (string, error) {
+	tokenPayload := &tokenPayload{
+		MemberId:  memberId,
+		CompanyId: companyId,
+		RoleId:    roleId,
+		ApiKey:    apiKey,
+	}
+
+	accessToken, err := svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtExpiresMinutes)
+	if err != nil {
+		return "", apperror.Internal("generate access token failed", err)
+	}
+
+	return accessToken, nil
 }
 
 func (svc *service) Logout(memberId, companyId uint) error {

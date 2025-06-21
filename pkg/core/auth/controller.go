@@ -117,6 +117,7 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 	if err != nil {
 		return apperror.Unauthorized("invalid company session")
 	}
+
 	// Clear access & refresh token cookies
 	clearAuthCookie(c, "aif_token")
 	clearAuthCookie(c, "aif_refresh_token")
@@ -228,34 +229,36 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
-	userId, _ := helper.InterfaceToUint(c.Locals("userId"))
-	companyId, _ := helper.InterfaceToUint(c.Locals("companyId"))
-	tierLevel, _ := helper.InterfaceToUint(c.Locals("tierLevel"))
-	apiKey, _ := c.Locals("apiKey").(string)
-
-	secret := ctrl.cfg.Env.JwtSecretKey
-	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.cfg.Env.JwtExpiresMinutes)
-	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userId, companyId, uint(tierLevel), apiKey)
+	memberId, err := helper.InterfaceToUint(c.Locals("userId"))
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return apperror.Unauthorized("invalid user session")
 	}
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "aif_token",
-		Value:    newAccessToken,
-		Expires:  time.Now().Add(time.Duration(accessTokenExpirationMinutes) * time.Minute),
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Lax",
-	})
+	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	if err != nil {
+		return apperror.Unauthorized("invalid company session")
+	}
 
-	resp := helper.ResponseSuccess(
+	roleId, err := helper.InterfaceToUint(c.Locals("tierLevel"))
+	if err != nil {
+		return apperror.Unauthorized("invalid tier level session")
+	}
+
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+
+	accessToken, err := ctrl.svc.RefreshAccessToken(memberId, companyId, roleId, apiKey)
+	if err != nil {
+		return err
+	}
+
+	if err := setTokenCookie(c, "aif_token", accessToken, ctrl.cfg.Env.JwtExpiresMinutes); err != nil {
+		return apperror.Internal("failed to set access token cookie", err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"access token refreshed",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) Login(c *fiber.Ctx) error {
