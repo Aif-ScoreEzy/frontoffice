@@ -51,6 +51,7 @@ type service struct {
 type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
 	LoginMember(loginReq *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error)
+	Logout(memberId, companyId uint) error
 	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMember(token string, req *PasswordResetRequest) error
@@ -292,6 +293,18 @@ func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToke
 	}
 
 	return accessToken, refreshToken, loginResp, nil
+}
+
+func (svc *service) Logout(memberId, companyId uint) error {
+	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  memberId,
+		CompanyId: companyId,
+		Action:    constant.EventSignOut,
+	}); err != nil {
+		log.Warn().Err(err).Msg("failed to log sign-out event")
+	}
+
+	return nil
 }
 
 func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error) {

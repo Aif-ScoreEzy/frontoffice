@@ -11,11 +11,11 @@ import (
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/passwordresettoken"
 	"front-office/utility/mailjet"
-	"log"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
 )
 
 func NewController(
@@ -27,22 +27,22 @@ func NewController(
 	cfg *config.Config,
 ) Controller {
 	return &controller{
-		Svc:                   service,
-		SvcUser:               svcUser,
-		SvcActivationToken:    svcActivationToken,
-		SvcPasswordResetToken: svcPasswordResetToken,
-		SvcLogOperation:       svcLogOperation,
-		Cfg:                   cfg,
+		svc:                   service,
+		svcUser:               svcUser,
+		svcActivationToken:    svcActivationToken,
+		svcPasswordResetToken: svcPasswordResetToken,
+		svcLogOperation:       svcLogOperation,
+		cfg:                   cfg,
 	}
 }
 
 type controller struct {
-	Svc                   Service
-	SvcUser               member.Service
-	SvcActivationToken    activationtoken.Service
-	SvcPasswordResetToken passwordresettoken.Service
-	SvcLogOperation       operation.Service
-	Cfg                   *config.Config
+	svc                   Service
+	svcUser               member.Service
+	svcActivationToken    activationtoken.Service
+	svcPasswordResetToken passwordresettoken.Service
+	svcLogOperation       operation.Service
+	cfg                   *config.Config
 }
 
 type Controller interface {
@@ -76,7 +76,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 	req.CompanyId = companyId
 	req.RoleId = uint(memberRoleId)
 
-	if err := ctrl.Svc.AddMember(currentUserId, req); err != nil {
+	if err := ctrl.svc.AddMember(currentUserId, req); err != nil {
 		return err
 	}
 
@@ -97,7 +97,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 		return apperror.BadRequest("missing activation token")
 	}
 
-	if err := ctrl.Svc.VerifyMember(token, req); err != nil {
+	if err := ctrl.svc.VerifyMember(token, req); err != nil {
 		return err
 	}
 
@@ -108,50 +108,34 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Logout(c *fiber.Ctx) error {
-	memberId, _ := helper.InterfaceToUint(c.Locals("userId"))
-	companyId, _ := helper.InterfaceToUint(c.Locals("companyId"))
-
-	c.Cookie(&fiber.Cookie{
-		Name:     "aif_token",
-		Value:    "",              // Empty value
-		Expires:  time.Unix(0, 0), // Expired time (epoch)
-		HTTPOnly: true,            // HTTPOnly for security
-		Secure:   true,
-		SameSite: "Lax", // Adjust as needed
-	})
-
-	c.Cookie(&fiber.Cookie{
-		Name:     "aif_refresh_token",
-		Value:    "",              // Empty value
-		Expires:  time.Unix(0, 0), // Expired time (epoch)
-		HTTPOnly: true,            // HTTPOnly for security
-		Secure:   true,
-		SameSite: "Lax", // Adjust as needed
-	})
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  memberId,
-		CompanyId: companyId,
-		Action:    constant.EventSignOut,
-	}
-
-	err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	memberId, err := helper.InterfaceToUint(c.Locals("userId"))
 	if err != nil {
-		log.Println("Failed to log operation for user logout")
+		return apperror.Unauthorized("invalid user session")
 	}
 
-	resp := helper.ResponseSuccess(
+	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	if err != nil {
+		return apperror.Unauthorized("invalid company session")
+	}
+	// Clear access & refresh token cookies
+	clearAuthCookie(c, "aif_token")
+	clearAuthCookie(c, "aif_refresh_token")
+
+	err = ctrl.svc.Logout(memberId, companyId)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to log logout event")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to logout",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")
 
-	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
@@ -166,7 +150,7 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		return err
 	}
 
-	token, err := ctrl.SvcActivationToken.CreateActivationToken(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
+	token, err := ctrl.svcActivationToken.CreateActivationToken(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
 	if err != nil {
 		return err
 	}
@@ -182,7 +166,7 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 			MailStatus: &pending,
 		}
 
-		err = ctrl.SvcUser.UpdateMemberById(memberId, req)
+		err = ctrl.svcUser.UpdateMemberById(memberId, req)
 		if err != nil {
 			return err
 		}
@@ -200,7 +184,7 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 
-	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
 		Id: memberId,
 	})
 	if err != nil {
@@ -208,7 +192,7 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	result, err := ctrl.Svc.ChangePassword(memberId, req)
+	result, err := ctrl.svc.ChangePassword(memberId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -230,9 +214,9 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		Action:    constant.EventChangePassword,
 	}
 
-	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	err = ctrl.svcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		log.Println("Failed to log operation for change password")
+		log.Warn().Err(err).Msg("Failed to log operation for change password")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -249,8 +233,8 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 	tierLevel, _ := helper.InterfaceToUint(c.Locals("tierLevel"))
 	apiKey, _ := c.Locals("apiKey").(string)
 
-	secret := ctrl.Cfg.Env.JwtSecretKey
-	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.Cfg.Env.JwtExpiresMinutes)
+	secret := ctrl.cfg.Env.JwtSecretKey
+	accessTokenExpirationMinutes, _ := strconv.Atoi(ctrl.cfg.Env.JwtExpiresMinutes)
 	newAccessToken, err := helper.GenerateToken(secret, accessTokenExpirationMinutes, userId, companyId, uint(tierLevel), apiKey)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -280,7 +264,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	accessToken, refreshToken, loginResp, err := ctrl.Svc.LoginMember(reqBody)
+	accessToken, refreshToken, loginResp, err := ctrl.svc.LoginMember(reqBody)
 	if err != nil {
 		return err
 	}
@@ -289,12 +273,12 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 	const refreshCookieName = "aif_refresh_token"
 
 	// Set access token cookie
-	if err := ctrl.setTokenCookie(c, accessCookieName, accessToken, ctrl.Cfg.Env.JwtExpiresMinutes); err != nil {
+	if err := setTokenCookie(c, accessCookieName, accessToken, ctrl.cfg.Env.JwtExpiresMinutes); err != nil {
 		return apperror.Internal("failed to set access token cookie", err)
 	}
 
 	// Set refresh token cookie
-	if err := ctrl.setTokenCookie(c, refreshCookieName, refreshToken, ctrl.Cfg.Env.JwtRefreshTokenExpiresMinutes); err != nil {
+	if err := setTokenCookie(c, refreshCookieName, refreshToken, ctrl.cfg.Env.JwtRefreshTokenExpiresMinutes); err != nil {
 		return apperror.Internal("failed to set refresh token cookie", err)
 	}
 
@@ -304,7 +288,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RequestPasswordResetRequest)
 
-	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
 		Email: req.Email,
 	})
 	if err != nil {
@@ -322,7 +306,7 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
+	token, err := ctrl.svcPasswordResetToken.CreatePasswordResetTokenAifCore(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -340,9 +324,9 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		Action:    constant.EventRequestPasswordReset,
 	}
 
-	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	err = ctrl.svcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		log.Println("Failed to log operation for request password reset")
+		log.Warn().Err(err).Msg("Failed to log operation for request password reset")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -357,7 +341,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 	req := c.Locals("request").(*PasswordResetRequest)
 	token := c.Params("token")
 
-	result, err := ctrl.SvcPasswordResetToken.FindPasswordResetTokenByTokenSvc(token)
+	result, err := ctrl.svcPasswordResetToken.FindPasswordResetTokenByTokenSvc(token)
 	if err != nil || result == nil || result.Data == nil {
 		statusCode, resp := helper.GetError(constant.InvalidPasswordResetLink)
 		return c.Status(statusCode).JSON(resp)
@@ -366,7 +350,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 	memberId := result.Data.Member.MemberId
 	companyId := result.Data.Member.CompanyId
 
-	jwtResetPasswordExpiresMinutesStr := ctrl.Cfg.Env.JwtResetPasswordExpiresMinutes
+	jwtResetPasswordExpiresMinutesStr := ctrl.cfg.Env.JwtResetPasswordExpiresMinutes
 	minutesToExpired, err := strconv.Atoi(jwtResetPasswordExpiresMinutesStr)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -375,7 +359,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 
 	elapsedMinutes := time.Since(result.Data.CreatedAt).Minutes()
 	if elapsedMinutes > float64(minutesToExpired) {
-		_, err := ctrl.SvcPasswordResetToken.DeletePasswordResetToken(result.Data.Id)
+		_, err := ctrl.svcPasswordResetToken.DeletePasswordResetToken(result.Data.Id)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -385,7 +369,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = ctrl.Svc.PasswordResetSvc(memberId, token, req)
+	err = ctrl.svc.PasswordResetSvc(memberId, token, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -397,9 +381,9 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		Action:    constant.EventPasswordReset,
 	}
 
-	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	err = ctrl.svcLogOperation.AddLogOperation(addLogRequest)
 	if err != nil {
-		log.Println("Failed to log operation for password reset")
+		log.Warn().Err(err).Msg("Failed to log operation for password reset")
 	}
 
 	resp := helper.ResponseSuccess(
@@ -410,7 +394,7 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func (ctrl *controller) setTokenCookie(c *fiber.Ctx, name, value, durationStr string) error {
+func setTokenCookie(c *fiber.Ctx, name, value, durationStr string) error {
 	minutes, err := strconv.Atoi(durationStr)
 	if err != nil {
 		return err
@@ -426,4 +410,15 @@ func (ctrl *controller) setTokenCookie(c *fiber.Ctx, name, value, durationStr st
 	})
 
 	return nil
+}
+
+func clearAuthCookie(c *fiber.Ctx, name string) {
+	c.Cookie(&fiber.Cookie{
+		Name:     name,
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax", // Atau "Strict" jika lebih aman
+	})
 }
