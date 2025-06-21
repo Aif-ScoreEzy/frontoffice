@@ -9,11 +9,14 @@ import (
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/internal/apperror/mapper"
+	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/role"
+	"front-office/utility/mailjet"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -24,6 +27,7 @@ func NewService(
 	memberRepo member.Repository,
 	roleRepo role.Repository,
 	operationRepo operation.Repository,
+	activationRepo activationtoken.Repository,
 ) Service {
 	return &service{
 		cfg,
@@ -31,22 +35,24 @@ func NewService(
 		memberRepo,
 		roleRepo,
 		operationRepo,
+		activationRepo,
 	}
 }
 
 type service struct {
-	cfg           *config.Config
-	repo          Repository
-	memberRepo    member.Repository
-	roleRepo      role.Repository
-	operationRepo operation.Repository
+	cfg            *config.Config
+	repo           Repository
+	memberRepo     member.Repository
+	roleRepo       role.Repository
+	operationRepo  operation.Repository
+	activationRepo activationtoken.Repository
 }
 
 type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
-	AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error)
+	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
 	LoginMember(loginReq *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error)
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
@@ -162,22 +168,56 @@ func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordR
 	return nil
 }
 
-func (svc *service) AddMember(req *member.RegisterMemberRequest, companyId uint) (*member.RegisterMemberResponse, error) {
-	res, err := svc.memberRepo.AddMember(req)
+func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequest) error {
+	memberResp, err := svc.memberRepo.CallAddMemberAPI(req)
 	if err != nil {
-		return nil, err
+		return mapper.MapRepoError(err, "failed to register member")
 	}
 
-	var baseResponseSuccess *member.RegisterMemberResponse
-	if res != nil {
-		dataBytes, _ := io.ReadAll(res.Body)
-		defer res.Body.Close()
-
-		json.Unmarshal(dataBytes, &baseResponseSuccess)
-		baseResponseSuccess.StatusCode = res.StatusCode
+	tokenPayload := &tokenPayload{
+		MemberId:  memberResp.MemberId,
+		CompanyId: req.CompanyId,
+		RoleId:    req.RoleId,
+	}
+	activationToken, err := svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return apperror.Internal("generate activation token failed", err)
 	}
 
-	return baseResponseSuccess, nil
+	memberIdStr := helper.ConvertUintToString(memberResp.MemberId)
+
+	err = svc.activationRepo.CallCreateActivationTokenAPI(&activationtoken.CreateActivationTokenRequest{
+		Token: activationToken,
+	}, memberIdStr)
+	if err != nil {
+		return mapper.MapRepoError(err, "failed to create activation")
+	}
+
+	err = mailjet.SendEmailActivation(req.Email, activationToken)
+	if err != nil {
+		updateFields := map[string]interface{}{
+			"mail_status": mailStatusResend,
+			"updated_at":  time.Now(),
+		}
+
+		err := svc.memberRepo.CallUpdateMemberAPI(memberIdStr, updateFields)
+		if err != nil {
+			return mapper.MapRepoError(err, "failed to update member after email failure")
+		}
+
+		return apperror.Internal("failed to send activation email", err)
+	}
+
+	err = svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  currentUserId,
+		CompanyId: req.CompanyId,
+		Action:    constant.EventRegisterMember,
+	})
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to log register member event")
+	}
+
+	return nil
 }
 
 func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error) {
@@ -191,22 +231,27 @@ func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToke
 		return "", "", nil, apperror.Internal("auth failed", err)
 	}
 
-	accessToken, err = svc.generateToken(user, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtExpiresMinutes)
+	tokenPayload := &tokenPayload{
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
+		ApiKey:    user.ApiKey,
+	}
+	accessToken, err = svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtExpiresMinutes)
 	if err != nil {
 		return "", "", nil, apperror.Internal("generate access token failed", err)
 	}
 
-	refreshToken, err = svc.generateToken(user, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtRefreshTokenExpiresMinutes)
+	refreshToken, err = svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtRefreshTokenExpiresMinutes)
 	if err != nil {
 		return "", "", nil, apperror.Internal("generate refresh token failed", err)
 	}
 
-	_, err = svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
 		MemberId:  user.MemberId,
 		CompanyId: user.CompanyId,
 		Action:    constant.EventSignIn,
-	})
-	if err != nil {
+	}); err != nil {
 		log.Warn().Err(err).Msg("failed to log sign-in event")
 	}
 
@@ -253,11 +298,11 @@ func (svc *service) ChangePassword(memberId string, req *ChangePasswordRequest) 
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) generateToken(user *loginResponseData, secret, minutesStr string) (string, error) {
+func (svc *service) generateToken(payload *tokenPayload, secret, minutesStr string) (string, error) {
 	minutes, err := strconv.Atoi(minutesStr)
 	if err != nil {
 		return "", fmt.Errorf("invalid duration: %w", err)
 	}
 
-	return helper.GenerateToken(secret, minutes, user.MemberId, user.CompanyId, user.RoleId, user.ApiKey)
+	return helper.GenerateToken(secret, minutes, payload.MemberId, payload.CompanyId, payload.RoleId, payload.ApiKey)
 }

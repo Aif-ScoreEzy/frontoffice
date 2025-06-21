@@ -189,10 +189,9 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		oldEmail = result.Data.Email
 	}
 
-	result, err := ctrl.Svc.UpdateProfile(userId, oldEmail, req)
-	if err != nil || result == nil || !result.Success {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	err := ctrl.Svc.UpdateProfile(userId, oldEmail, req)
+	if err != nil {
+		return err
 	}
 
 	updatedMember, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
@@ -209,8 +208,8 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		Action:    constant.EventUpdateProfile,
 	}
 
-	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for update profile")
 	}
 
@@ -243,10 +242,9 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.UploadProfileImage(userId, &filename)
+	err = ctrl.Svc.UploadProfileImage(userId, &filename)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	addLogRequest := &operation.AddLogRequest{
@@ -255,8 +253,8 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		Action:    constant.EventUpdateProfile,
 	}
 
-	resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for upload profile photo")
 	}
 
@@ -302,10 +300,9 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.Svc.UpdateMemberById(memberId, req)
+	err = ctrl.Svc.UpdateMemberById(memberId, req)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	currentTime := time.Now()
@@ -340,8 +337,8 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 			Action:    event,
 		}
 
-		resAddLog, err := ctrl.LogOperationSvc.AddLogOperation(logRequest)
-		if err != nil || !resAddLog.Success {
+		err := ctrl.LogOperationSvc.AddLogOperation(logRequest)
+		if err != nil {
 			log.Println("Failed to log operation for update member data by admin")
 		}
 	}

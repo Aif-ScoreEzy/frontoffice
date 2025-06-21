@@ -22,18 +22,18 @@ type service struct {
 }
 
 type Service interface {
-	CreateActivationToken(userId, companyId uint, roleId uint) (string, *AifResponse, error)
+	CreateActivationToken(userId, companyId uint, roleId uint) (string, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
 	FindActivationTokenByToken(token string) (*AifResponse, error)
 }
 
-func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, *AifResponse, error) {
+func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 
 	req := &CreateActivationTokenRequest{
@@ -41,22 +41,12 @@ func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (strin
 	}
 
 	userIdStr := helper.ConvertUintToString(userId)
-	response, err := svc.Repo.CreateActivationTokenAifCore(req, userIdStr)
+	err = svc.Repo.CallCreateActivationTokenAPI(req, userIdStr)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return "", nil, err
-		}
-	}
-
-	return token, baseResponse, nil
+	return token, nil
 }
 
 func (svc *service) ValidateActivationToken(authHeader string) (string, uint, error) {

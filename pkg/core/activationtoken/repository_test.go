@@ -69,7 +69,7 @@ func TestFindOneActivationTokenBytoken(t *testing.T) {
 
 	// Create repository with the mock config
 	repo := &repository{
-		Cfg: mockConfig,
+		cfg: mockConfig,
 	}
 
 	// Act - Call the method with the provided token

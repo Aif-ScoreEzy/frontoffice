@@ -42,6 +42,13 @@ type loginResponseData struct {
 	SubscriberProducts interface{} `json:"subscriber_products"`
 }
 
+type tokenPayload struct {
+	MemberId  uint   `json:"member_id"`
+	CompanyId uint   `json:"company_id"`
+	RoleId    uint   `json:"role_id"`
+	ApiKey    string `json:"api_key"`
+}
+
 type LoginResponse struct {
 	Message string      `json:"message"`
 	Success bool        `json:"success"`

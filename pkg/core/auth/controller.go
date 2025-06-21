@@ -62,77 +62,25 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 
 	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return apperror.Unauthorized("invalid user session")
 	}
 
 	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return apperror.Unauthorized("invalid company session")
 	}
 
-	memberRoleId := 2
 	req.CompanyId = companyId
 	req.RoleId = uint(memberRoleId)
-	resAddMember, err := ctrl.Svc.AddMember(req, companyId)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+
+	if err := ctrl.Svc.AddMember(currentUserId, req); err != nil {
+		return err
 	}
 
-	if resAddMember != nil && resAddMember.StatusCode != 200 {
-		_, resp := helper.GetError(resAddMember.Message)
-		return c.Status(resAddMember.StatusCode).JSON(resp)
-	}
-
-	token, result, err := ctrl.SvcActivationToken.CreateActivationToken(resAddMember.Data.MemberId, companyId, uint(memberRoleId))
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if !result.Success {
-		statusCode, resp := helper.GetError(fiber.ErrInternalServerError.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = mailjet.SendEmailActivation(req.Email, token)
-	if err != nil {
-		resend := "resend"
-		req := &member.UpdateUserRequest{
-			MailStatus: &resend,
-		}
-
-		memberId := fmt.Sprintf("%d", result.Data.MemberId)
-		_, err := ctrl.SvcUser.UpdateMemberById(memberId, req)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		statusCode, resp := helper.GetError(constant.SendEmailFailed)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  currentUserId,
-		CompanyId: companyId,
-		Action:    constant.EventRegisterMember,
-	}
-
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
-		log.Println("Failed to log operation for register member")
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusCreated).JSON(helper.ResponseSuccess(
 		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
 		nil,
-	)
-
-	return c.Status(fiber.StatusCreated).JSON(resp)
+	))
 }
 
 func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
@@ -171,7 +119,7 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 			MailStatus: &resend,
 		}
 
-		_, err = ctrl.SvcUser.UpdateMemberById(memberId, req)
+		err = ctrl.SvcUser.UpdateMemberById(memberId, req)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -223,8 +171,8 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 		Action:    constant.EventSignOut,
 	}
 
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for user logout")
 	}
 
@@ -243,24 +191,20 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		Email: email,
 	})
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	if userExists.Data.MemberId == 0 {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	if userExists.Data.IsVerified {
-		statusCode, resp := helper.GetError(constant.AlreadyVerified)
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	token, result, err := ctrl.SvcActivationToken.CreateActivationToken(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
-	if err != nil || !result.Success {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	token, err := ctrl.SvcActivationToken.CreateActivationToken(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	if err != nil {
+		return err
 	}
 
 	memberId := fmt.Sprintf("%d", userExists.Data.MemberId)
@@ -274,10 +218,9 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 			MailStatus: &pending,
 		}
 
-		_, err = ctrl.SvcUser.UpdateMemberById(memberId, req)
+		err = ctrl.SvcUser.UpdateMemberById(memberId, req)
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 	}
 
@@ -323,8 +266,8 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		Action:    constant.EventChangePassword,
 	}
 
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for change password")
 	}
 
@@ -430,8 +373,8 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		Action:    constant.EventRequestPasswordReset,
 	}
 
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for request password reset")
 	}
 
@@ -487,8 +430,8 @@ func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
 		Action:    constant.EventPasswordReset,
 	}
 
-	resAddLog, err := ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil || !resAddLog.Success {
+	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	if err != nil {
 		log.Println("Failed to log operation for password reset")
 	}
 

@@ -13,7 +13,7 @@ func SetupInit(logAPI fiber.Router, cfg *config.Config, client httpclient.HTTPCl
 	roleRepository := role.NewRepository(cfg)
 	roleService := role.NewService(roleRepository)
 
-	memberRepository := member.NewRepository(cfg)
+	memberRepository := member.NewRepository(cfg, client)
 	memberService := member.NewService(memberRepository, roleService)
 
 	repository := NewRepository(cfg, client)

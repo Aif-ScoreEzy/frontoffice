@@ -23,7 +23,7 @@ type repository struct {
 type Repository interface {
 	FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error)
 	FetchByRange(filter *LogRangeFilter) (*http.Response, error)
-	AddLogOperation(req *AddLogRequest) (*http.Response, error)
+	AddLogOperation(req *AddLogRequest) error
 }
 
 func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error) {
@@ -83,22 +83,31 @@ func (repo *repository) FetchByRange(filter *LogRangeFilter) (*http.Response, er
 	return client.Do(request)
 }
 
-func (repo *repository) AddLogOperation(req *AddLogRequest) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/operation"
+func (repo *repository) AddLogOperation(reqBody *AddLogRequest) error {
+	url := fmt.Sprintf("%s/api/core/logging/operation", repo.cfg.Env.AifcoreHost)
 
-	jsonBodyValue, err := json.Marshal(req)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	request, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

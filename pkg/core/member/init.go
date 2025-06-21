@@ -11,7 +11,7 @@ import (
 )
 
 func SetupInit(userAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	repo := NewRepository(cfg)
+	repo := NewRepository(cfg, client)
 	roleRepo := role.NewRepository(cfg)
 	repoLogOperation := operation.NewRepository(cfg, client)
 

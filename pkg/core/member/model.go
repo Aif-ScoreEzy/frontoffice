@@ -46,14 +46,14 @@ type RegisterMemberRequest struct {
 	Key       string `json:"key"`
 }
 
-type dataRegisterMemberResponse struct {
+type registerResponseData struct {
 	MemberId uint `json:"member_id"`
 }
 
 type RegisterMemberResponse struct {
-	Data       *dataRegisterMemberResponse `json:"data"`
-	Message    string                      `json:"message"`
-	StatusCode int                         `json:"-"`
+	Data       *registerResponseData `json:"data"`
+	Message    string                `json:"message"`
+	StatusCode int                   `json:"-"`
 }
 
 type UpdateUserRequest struct {

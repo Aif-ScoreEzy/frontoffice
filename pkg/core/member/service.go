@@ -26,9 +26,9 @@ type service struct {
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
 	GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error)
-	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error)
-	UploadProfileImage(id string, filename *string) (*AifResponse, error)
-	UpdateMemberById(id string, req *UpdateUserRequest) (*AifResponse, error)
+	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) error
+	UploadProfileImage(id string, filename *string) error
+	UpdateMemberById(id string, req *UpdateUserRequest) error
 	DeleteMemberById(id string) (*AifResponse, error)
 }
 
@@ -50,7 +50,7 @@ func (s *service) GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleD
 	return s.parseMultipleResponse(response)
 }
 
-func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) (*AifResponse, error) {
+func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) error {
 	updateUser := map[string]interface{}{}
 
 	if req.Name != nil {
@@ -63,15 +63,10 @@ func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) 
 
 	updateUser["updated_at"] = time.Now()
 
-	response, err := s.Repo.UpdateOneById(id, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.parseSingleResponse(response)
+	return s.Repo.CallUpdateMemberAPI(id, updateUser)
 }
 
-func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse, error) {
+func (s *service) UploadProfileImage(id string, filename *string) error {
 	updateUser := map[string]interface{}{}
 
 	if filename != nil {
@@ -80,15 +75,10 @@ func (s *service) UploadProfileImage(id string, filename *string) (*AifResponse,
 
 	updateUser["updated_at"] = time.Now()
 
-	response, err := s.Repo.UpdateOneById(id, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.parseSingleResponse(response)
+	return s.Repo.CallUpdateMemberAPI(id, updateUser)
 }
 
-func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) (*AifResponse, error) {
+func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 	updateUser := map[string]interface{}{}
 	currentTime := time.Now()
 
@@ -102,7 +92,7 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) (*AifRespo
 		})
 
 		if result.Data.MemberId != 0 {
-			return nil, errors.New(constant.EmailAlreadyExists)
+			return errors.New(constant.EmailAlreadyExists)
 		}
 
 		updateUser["email"] = *req.Email
@@ -111,11 +101,11 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) (*AifRespo
 	if req.RoleId != nil {
 		role, err := s.RoleSvc.GetRoleById(*req.RoleId)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if role.Data.RoleId == 0 {
-			return nil, errors.New(constant.DataNotFound)
+			return errors.New(constant.DataNotFound)
 		}
 
 		updateUser["role_id"] = *req.RoleId
@@ -127,12 +117,7 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) (*AifRespo
 
 	updateUser["updated_at"] = currentTime
 
-	response, err := s.Repo.UpdateOneById(id, updateUser)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.parseSingleResponse(response)
+	return s.Repo.CallUpdateMemberAPI(id, updateUser)
 }
 
 func (s *service) DeleteMemberById(id string) (*AifResponse, error) {
