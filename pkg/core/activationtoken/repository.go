@@ -22,7 +22,7 @@ type repository struct {
 
 type Repository interface {
 	CallGetActivationTokenAPI(token string) (*MstActivationToken, error)
-	CallCreateActivationTokenAPI(req *CreateActivationTokenRequest, memberId string) error
+	CallCreateActivationTokenAPI(memberId string, req *CreateActivationTokenRequest) error
 }
 
 func (repo *repository) CallGetActivationTokenAPI(token string) (*MstActivationToken, error) {
@@ -49,7 +49,7 @@ func (repo *repository) CallGetActivationTokenAPI(token string) (*MstActivationT
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallCreateActivationTokenAPI(reqBody *CreateActivationTokenRequest, memberId string) error {
+func (repo *repository) CallCreateActivationTokenAPI(memberId string, reqBody *CreateActivationTokenRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
 
 	bodyBytes, err := json.Marshal(reqBody)

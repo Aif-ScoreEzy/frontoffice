@@ -135,50 +135,18 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 
 func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")
+	if email == "" {
+		return apperror.BadRequest("missing email")
+	}
 
-	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
-		Email: email,
-	})
-	if err != nil {
+	if err := ctrl.svc.SendEmailActivation(email); err != nil {
 		return err
 	}
 
-	if memberData.MemberId == 0 {
-		return err
-	}
-
-	if memberData.IsVerified {
-		return err
-	}
-
-	token, err := ctrl.svcActivationToken.CreateActivationToken(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
-	if err != nil {
-		return err
-	}
-
-	memberId := fmt.Sprintf("%d", memberData.MemberId)
-	err = mailjet.SendEmailActivation(email, token)
-	if err != nil {
-		statusCode, resp := helper.GetError(constant.SendEmailFailed)
-		return c.Status(statusCode).JSON(resp)
-	} else {
-		pending := "pending"
-		req := &member.UpdateUserRequest{
-			MailStatus: &pending,
-		}
-
-		err = ctrl.svcUser.UpdateMemberById(memberId, req)
-		if err != nil {
-			return err
-		}
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		fmt.Sprintf("we've sent an email to %s with a link to activate the account", email),
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {

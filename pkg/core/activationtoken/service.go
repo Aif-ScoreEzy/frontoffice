@@ -21,16 +21,16 @@ type service struct {
 }
 
 type Service interface {
-	CreateActivationToken(userId, companyId uint, roleId uint) (string, error)
+	CreateActivationToken(memberId, companyId uint, roleId uint) (string, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
 	GetActivationToken(token string) (*MstActivationToken, error)
 }
 
-func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, error) {
+func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
-	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
+	token, err := helper.GenerateToken(secret, minutesToExpired, memberId, companyId, roleId, "")
 	if err != nil {
 		return "", err
 	}
@@ -39,8 +39,8 @@ func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (strin
 		Token: token,
 	}
 
-	userIdStr := helper.ConvertUintToString(userId)
-	err = svc.Repo.CallCreateActivationTokenAPI(req, userIdStr)
+	memberIdStr := helper.ConvertUintToString(memberId)
+	err = svc.Repo.CallCreateActivationTokenAPI(memberIdStr, req)
 	if err != nil {
 		return "", err
 	}

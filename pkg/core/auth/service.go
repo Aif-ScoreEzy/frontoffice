@@ -54,6 +54,7 @@ type Service interface {
 	RefreshAccessToken(memberId, companyId, tierLevel uint, apiKey string) (string, error)
 	Logout(memberId, companyId uint) error
 	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
+	SendEmailActivation(email string) error
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMember(token string, req *PasswordResetRequest) error
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
@@ -213,9 +214,9 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 
 	memberIdStr := helper.ConvertUintToString(memberResp.MemberId)
 
-	err = svc.activationRepo.CallCreateActivationTokenAPI(&activationtoken.CreateActivationTokenRequest{
+	err = svc.activationRepo.CallCreateActivationTokenAPI(memberIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: activationToken,
-	}, memberIdStr)
+	})
 	if err != nil {
 		return mapper.MapRepoError(err, "failed to create activation")
 	}
@@ -242,6 +243,52 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 	})
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to log register member event")
+	}
+
+	return nil
+}
+
+func (svc *service) SendEmailActivation(email string) error {
+	memberData, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+		Email: email,
+	})
+	if err != nil {
+		return mapper.MapRepoError(err, "failed to fetch member")
+	}
+
+	if memberData.IsVerified {
+		return apperror.Conflict(constant.AlreadyVerified)
+	}
+
+	tokenPayload := &tokenPayload{
+		MemberId:  memberData.MemberId,
+		CompanyId: memberData.CompanyId,
+		RoleId:    memberData.RoleId,
+	}
+	token, err := svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return apperror.Internal("generate activation token failed", err)
+	}
+
+	memberIdStr := helper.ConvertUintToString(memberData.MemberId)
+
+	if err := svc.activationRepo.CallCreateActivationTokenAPI(memberIdStr, &activationtoken.CreateActivationTokenRequest{
+		Token: token,
+	}); err != nil {
+		return mapper.MapRepoError(err, "failed to create activation")
+	}
+
+	if err := mailjet.SendEmailActivation(email, token); err != nil {
+		return apperror.Internal("failed to send activation email", err)
+	}
+
+	updateFields := map[string]interface{}{
+		"mail_status": mailStatusPending,
+		"updated_at":  time.Now(),
+	}
+
+	if err := svc.memberRepo.CallUpdateMemberAPI(memberIdStr, updateFields); err != nil {
+		return mapper.MapRepoError(err, "failed to update member")
 	}
 
 	return nil
