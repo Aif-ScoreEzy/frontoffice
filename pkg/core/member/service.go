@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
+	"front-office/internal/apperror/mapper"
 	"front-office/pkg/core/role"
 	"io"
 	"net/http"
@@ -24,21 +25,21 @@ type service struct {
 }
 
 type Service interface {
-	GetMemberBy(query *FindUserQuery) (*AifResponse, error)
+	GetMemberBy(query *FindUserQuery) (*MstMember, error)
 	GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) error
 	UploadProfileImage(id string, filename *string) error
 	UpdateMemberById(id string, req *UpdateUserRequest) error
-	DeleteMemberById(id string) (*AifResponse, error)
+	DeleteMemberById(id string) error
 }
 
-func (s *service) GetMemberBy(query *FindUserQuery) (*AifResponse, error) {
-	response, err := s.Repo.GetMemberBy(query)
+func (s *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
+	member, err := s.Repo.CallGetMemberAPI(query)
 	if err != nil {
-		return nil, err
+		return nil, mapper.MapRepoError(err, "failed to get member")
 	}
 
-	return s.parseSingleResponse(response)
+	return member, nil
 }
 
 func (s *service) GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error) {
@@ -87,11 +88,14 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 	}
 
 	if req.Email != nil {
-		result, _ := s.GetMemberBy(&FindUserQuery{
+		member, err := s.GetMemberBy(&FindUserQuery{
 			Email: *req.Email,
 		})
+		if err != nil {
+			return mapper.MapRepoError(err, "failed to get member")
+		}
 
-		if result.Data.MemberId != 0 {
+		if member.MemberId != 0 {
 			return errors.New(constant.EmailAlreadyExists)
 		}
 
@@ -120,13 +124,13 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 	return s.Repo.CallUpdateMemberAPI(id, updateUser)
 }
 
-func (s *service) DeleteMemberById(id string) (*AifResponse, error) {
-	response, err := s.Repo.DeleteMemberById(id)
+func (s *service) DeleteMemberById(id string) error {
+	err := s.Repo.CallDeleteMemberAPI(id)
 	if err != nil {
-		return nil, err
+		return mapper.MapRepoError(err, "failed to delete member")
 	}
 
-	return s.parseSingleResponse(response)
+	return nil
 }
 
 func parseResponse(response *http.Response, result interface{}) error {

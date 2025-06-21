@@ -2,7 +2,6 @@ package transaction
 
 import (
 	"fmt"
-	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/member"
 
@@ -18,22 +17,16 @@ func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
 
 	var transactions []DataLogTrans
 	for _, data := range resLogTrans.Data {
-		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
 			Id: fmt.Sprintf("%d", data.MemberID),
 		})
 
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 
 		transaction := DataLogTrans{
-			Name:      resMember.Data.Name,
+			Name:      memberData.Name,
 			Grade:     data.Grade,
 			CreatedAt: data.CreatedAt,
 		}
@@ -61,22 +54,15 @@ func (ctrl *controller) GetLogScoreezyByDate(c *fiber.Ctx) error {
 
 	var transactions []DataLogTrans
 	for _, data := range resLogTrans.Data {
-		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
 			Id: fmt.Sprintf("%d", data.MemberID),
 		})
-
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 
 		transaction := DataLogTrans{
-			Name:      resMember.Data.Name,
+			Name:      memberData.Name,
 			Grade:     data.Grade,
 			CreatedAt: data.CreatedAt,
 		}
@@ -106,22 +92,15 @@ func (ctrl *controller) GetLogScoreezyByRangeDate(c *fiber.Ctx) error {
 
 	var transactions []DataLogTrans
 	for _, data := range resLogTrans.Data {
-		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
 			Id: fmt.Sprintf("%d", data.MemberID),
 		})
-
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 
 		transaction := DataLogTrans{
-			Name:      resMember.Data.Name,
+			Name:      memberData.Name,
 			Grade:     data.Grade,
 			CreatedAt: data.CreatedAt,
 		}
@@ -149,22 +128,15 @@ func (ctrl *controller) GetLogScoreezyByMonth(c *fiber.Ctx) error {
 
 	var transactions []DataLogTrans
 	for _, data := range resLogTrans.Data {
-		resMember, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
+		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
 			Id: fmt.Sprintf("%d", data.MemberID),
 		})
-
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		if resMember == nil || !resMember.Success || resMember.Data.MemberId == 0 {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 
 		transaction := DataLogTrans{
-			Name:      resMember.Data.Name,
+			Name:      memberData.Name,
 			Grade:     data.Grade,
 			CreatedAt: data.CreatedAt,
 		}

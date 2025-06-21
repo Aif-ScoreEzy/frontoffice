@@ -24,8 +24,8 @@ type repository struct {
 type Repository interface {
 	// CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	// CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
+	CallVerifyMemberAPI(memberId uint, req *PasswordResetRequest) error
 	PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error)
-	VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error)
 	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
 	AuthMemberAifCore(req *userLoginRequest) (*loginResponseData, error)
 }
@@ -77,19 +77,37 @@ type Repository interface {
 // 	return user, nil
 // }
 
-func (repo *repository) PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, memberId, token)
+func (repo *repository) CallVerifyMemberAPI(memberId uint, reqBody *PasswordResetRequest) error {
+	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
 
-	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
 
-	client := &http.Client{}
-	return client.Do(request)
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (repo *repository) VerifyMemberAif(req *PasswordResetRequest, memberId uint) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
+func (repo *repository) PasswordReset(memberId uint, token string, req *PasswordResetRequest) (*http.Response, error) {
+	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, memberId, token)
 
 	jsonBodyValue, _ := json.Marshal(req)
 	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))

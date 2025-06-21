@@ -21,18 +21,32 @@ type repository struct {
 }
 
 type Repository interface {
-	FindOneActivationTokenBytoken(token string) (*http.Response, error)
+	CallGetActivationTokenAPI(token string) (*MstActivationToken, error)
 	CallCreateActivationTokenAPI(req *CreateActivationTokenRequest, memberId string) error
 }
 
-func (repo *repository) FindOneActivationTokenBytoken(token string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/activation-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
+func (repo *repository) CallGetActivationTokenAPI(token string) (*MstActivationToken, error) {
+	url := fmt.Sprintf(`%v/api/core/member/activation-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	client := &http.Client{}
-	return client.Do(request)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*MstActivationToken](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 func (repo *repository) CallCreateActivationTokenAPI(reqBody *CreateActivationTokenRequest, memberId string) error {

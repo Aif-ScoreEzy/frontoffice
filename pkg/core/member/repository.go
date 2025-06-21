@@ -23,10 +23,10 @@ type repository struct {
 
 type Repository interface {
 	CallAddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
-	GetMemberBy(query *FindUserQuery) (*http.Response, error)
+	CallGetMemberAPI(query *FindUserQuery) (*MstMember, error)
 	GetMemberList(filter *MemberFilter) (*http.Response, error)
 	CallUpdateMemberAPI(id string, req map[string]interface{}) error
-	DeleteMemberById(id string) (*http.Response, error)
+	CallDeleteMemberAPI(id string) error
 }
 
 func (repo *repository) CallAddMemberAPI(reqBody *RegisterMemberRequest) (*registerResponseData, error) {
@@ -62,27 +62,36 @@ func (repo *repository) CallAddMemberAPI(reqBody *RegisterMemberRequest) (*regis
 	return apiResp.Data, nil
 }
 
-func (repo *repository) GetMemberBy(query *FindUserQuery) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/by`, repo.cfg.Env.AifcoreHost)
+func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, error) {
+	url := fmt.Sprintf(`%v/api/core/member/by`, repo.cfg.Env.AifcoreHost)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	q := request.URL.Query()
+	q := req.URL.Query()
 	q.Add("id", query.Id)
 	q.Add("company_id", query.CompanyId)
 	q.Add("email", query.Email)
 	q.Add("username", query.Username)
 	q.Add("key", query.Key)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*MstMember](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 func (repo *repository) GetMemberList(filter *MemberFilter) (*http.Response, error) {
@@ -139,14 +148,26 @@ func (repo *repository) CallUpdateMemberAPI(id string, reqBody map[string]interf
 	return nil
 }
 
-func (repo *repository) DeleteMemberById(id string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/deletemember/%v`, repo.cfg.Env.AifcoreHost, id)
-	request, err := http.NewRequest(http.MethodDelete, apiUrl, nil)
+func (repo *repository) CallDeleteMemberAPI(id string) error {
+	url := fmt.Sprintf(`%v/api/core/member/deletemember/%v`, repo.cfg.Env.AifcoreHost, id)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	client := &http.Client{}
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	return client.Do(request)
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -45,7 +45,11 @@ func (svc *service) GetByRange(filter *LogRangeFilter) (*AifResponse, error) {
 }
 
 func (svc *service) AddLogOperation(req *AddLogRequest) error {
-	return svc.Repo.AddLogOperation(req)
+	if err := svc.Repo.AddLogOperation(req); err != nil {
+		return mapper.MapRepoError(err, "failed to create log")
+	}
+
+	return nil
 }
 
 func parseResponse(response *http.Response) (*AifResponse, error) {

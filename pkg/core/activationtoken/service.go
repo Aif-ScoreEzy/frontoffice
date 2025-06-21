@@ -1,14 +1,13 @@
 package activationtoken
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"strconv"
 
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror/mapper"
 	"strings"
 )
 
@@ -24,7 +23,7 @@ type service struct {
 type Service interface {
 	CreateActivationToken(userId, companyId uint, roleId uint) (string, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
-	FindActivationTokenByToken(token string) (*AifResponse, error)
+	GetActivationToken(token string) (*MstActivationToken, error)
 }
 
 func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, error) {
@@ -72,21 +71,11 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 	return token, userId, nil
 }
 
-func (svc *service) FindActivationTokenByToken(token string) (*AifResponse, error) {
-	response, err := svc.Repo.FindOneActivationTokenBytoken(token)
+func (svc *service) GetActivationToken(token string) (*MstActivationToken, error) {
+	activationToken, err := svc.Repo.CallGetActivationTokenAPI(token)
 	if err != nil {
-		return nil, err
+		return nil, mapper.MapRepoError(err, "failed to get activation token")
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return nil, err
-		}
-	}
-
-	return baseResponse, nil
+	return activationToken, nil
 }

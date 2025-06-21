@@ -50,10 +50,10 @@ type service struct {
 
 type Service interface {
 	// RegisterAdminSvc(req *RegisterAdminRequest) (*user.User, string, error)
-	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
-	VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error)
-	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
 	LoginMember(loginReq *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error)
+	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
+	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
+	VerifyMember(token string, req *PasswordResetRequest) error
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
 
@@ -121,33 +121,58 @@ type Service interface {
 // 	return user, token, nil
 // }
 
-func (svc *service) VerifyMemberAif(memberId uint, req *PasswordResetRequest) (*helper.BaseResponseSuccess, error) {
-	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
-	if !isPasswordStrength {
-		return nil, errors.New(constant.InvalidPassword)
+func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error {
+	activationData, err := svc.activationRepo.CallGetActivationTokenAPI(token)
+	if err != nil {
+		return mapper.MapRepoError(err, "failed to retrieve activation token")
+	}
+
+	memberId := fmt.Sprintf("%d", activationData.MemberId)
+
+	memberData, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+		Id: memberId,
+	})
+	if err != nil {
+		return mapper.MapRepoError(err, "failed to fetch member")
+	}
+
+	if memberData.IsVerified && memberData.Active {
+		return apperror.BadRequest(constant.AlreadyVerified)
+	}
+
+	minutesToExpired, err := strconv.Atoi(svc.cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return apperror.Internal("invalid activation expiry config", err)
+	}
+
+	elapsedMinutes := time.Since(activationData.CreatedAt).Minutes()
+	if elapsedMinutes > float64(minutesToExpired) {
+		updateFields := map[string]interface{}{
+			"mail_status": mailStatusResend,
+			"updated_at":  time.Now(),
+		}
+
+		err := svc.memberRepo.CallUpdateMemberAPI(memberId, updateFields)
+		if err != nil {
+			return mapper.MapRepoError(err, "failed to update member after token expired")
+		}
+
+		return apperror.Forbidden(constant.ActivationTokenExpired)
+	}
+
+	if !helper.ValidatePasswordStrength(req.Password) {
+		return apperror.BadRequest(constant.InvalidPassword)
 	}
 
 	if req.Password != req.ConfirmPassword {
-		return nil, errors.New(constant.ConfirmPasswordMismatch)
+		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	response, err := svc.repo.VerifyMemberAif(req, memberId)
-	if err != nil {
-		return nil, err
+	if err := svc.repo.CallVerifyMemberAPI(activationData.MemberId, req); err != nil {
+		return mapper.MapRepoError(err, "failed to verify member")
 	}
 
-	var baseResponseSuccess *helper.BaseResponseSuccess
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
-			return nil, err
-		}
-		baseResponseSuccess.StatusCode = response.StatusCode
-	}
-
-	return baseResponseSuccess, nil
+	return nil
 }
 
 func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error {

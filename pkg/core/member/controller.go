@@ -46,25 +46,18 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 	username := c.Query("username")
 	key := c.Query("key")
 
-	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Email:    email,
 		Username: username,
 		Key:      key,
 	})
-
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if result == nil || !result.Success || result.Data.MemberId == 0 {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	resp := helper.ResponseSuccess(
 		"succeed to get a user",
-		result.Data,
+		member,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -73,22 +66,16 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 func (ctrl *controller) GetById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Id: id,
 	})
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if result == nil || !result.Success || result.Data.MemberId == 0 {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	resp := helper.ResponseSuccess(
 		"succeed to get a user",
-		result.Data,
+		member,
 	)
 
 	return c.Status(fiber.StatusOK).JSON(resp)
@@ -172,21 +159,15 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 			return c.Status(statusCode).JSON(resp)
 		}
 
-		result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 			Email: *req.Email,
 		})
 
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+			return err
 		}
 
-		if result != nil && result.Data.MemberId != 0 {
-			statusCode, resp := helper.GetError(constant.EmailAlreadyExists)
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		oldEmail = result.Data.Email
+		oldEmail = member.Email
 	}
 
 	err := ctrl.Svc.UpdateProfile(userId, oldEmail, req)
@@ -198,13 +179,12 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		Id: userId,
 	})
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  updatedMember.Data.MemberId,
-		CompanyId: updatedMember.Data.CompanyId,
+		MemberId:  updatedMember.MemberId,
+		CompanyId: updatedMember.CompanyId,
 		Action:    constant.EventUpdateProfile,
 	}
 
@@ -214,12 +194,12 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	dataResponse := &UserUpdateResponse{
-		Id:        updatedMember.Data.MemberId,
-		Name:      updatedMember.Data.Name,
-		Email:     updatedMember.Data.Email,
-		Active:    updatedMember.Data.Active,
-		CompanyId: updatedMember.Data.CompanyId,
-		RoleId:    updatedMember.Data.RoleId,
+		Id:        updatedMember.MemberId,
+		Name:      updatedMember.Name,
+		Email:     updatedMember.Email,
+		Active:    updatedMember.Active,
+		CompanyId: updatedMember.CompanyId,
+		RoleId:    updatedMember.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -234,12 +214,11 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
-	res, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	err = ctrl.Svc.UploadProfileImage(userId, &filename)
@@ -248,8 +227,8 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  res.Data.MemberId,
-		CompanyId: res.Data.CompanyId,
+		MemberId:  member.MemberId,
+		CompanyId: member.CompanyId,
 		Action:    constant.EventUpdateProfile,
 	}
 
@@ -259,12 +238,12 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	}
 
 	dataResponse := &UserUpdateResponse{
-		Id:        res.Data.MemberId,
-		Name:      res.Data.Name,
-		Email:     res.Data.Email,
-		Active:    res.Data.Active,
-		CompanyId: res.Data.CompanyId,
-		RoleId:    res.Data.RoleId,
+		Id:        member.MemberId,
+		Name:      member.Name,
+		Email:     member.Email,
+		Active:    member.Active,
+		CompanyId: member.CompanyId,
+		RoleId:    member.RoleId,
 	}
 
 	resp := helper.ResponseSuccess(
@@ -295,7 +274,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if member.Data.MemberId == 0 {
+	if member.MemberId == 0 {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
@@ -308,8 +287,8 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	currentTime := time.Now()
 	formattedTime := helper.FormatWIB(currentTime)
 
-	if req.Email != nil && member.Data.Email != *req.Email {
-		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(member.Data.Name, member.Data.Email, *req.Email, formattedTime)
+	if req.Email != nil && member.Email != *req.Email {
+		err := mailjet.SendConfirmationEmailUserEmailChangeSuccess(member.Name, member.Email, *req.Email, formattedTime)
 		if err != nil {
 			statusCode, resp := helper.GetError(err.Error())
 			return c.Status(statusCode).JSON(resp)
@@ -333,7 +312,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	for _, event := range logEvents {
 		logRequest := &operation.AddLogRequest{
 			MemberId:  currentUserId,
-			CompanyId: member.Data.CompanyId,
+			CompanyId: member.CompanyId,
 			Action:    event,
 		}
 
@@ -353,29 +332,19 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 
 func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
-	companyId, err := strconv.Atoi(fmt.Sprintf("%v", c.Locals("companyId")))
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+
+	_, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+		Id:        id,
+		CompanyId: companyId,
+	})
 	if err != nil {
 		return err
 	}
 
-	result, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-		Id: id,
-	})
-
+	err = ctrl.Svc.DeleteMemberById(id)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if result == nil || !result.Success || result.Data.MemberId == 0 || result.Data.CompanyId != uint(companyId) {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	result, err = ctrl.Svc.DeleteMemberById(id)
-	if err != nil || result == nil || !result.Success {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	resp := helper.ResponseSuccess(

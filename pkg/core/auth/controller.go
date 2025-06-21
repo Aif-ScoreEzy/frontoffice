@@ -58,7 +58,10 @@ type Controller interface {
 }
 
 func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
-	req := c.Locals("request").(*member.RegisterMemberRequest)
+	req, ok := c.Locals("request").(*member.RegisterMemberRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
+	}
 
 	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
 	if err != nil {
@@ -84,63 +87,24 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
-	req := c.Locals("request").(*PasswordResetRequest)
+	req, ok := c.Locals("request").(*PasswordResetRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
+	}
+
 	token := c.Params("token")
-
-	result, err := ctrl.SvcActivationToken.FindActivationTokenByToken(token)
-	if err != nil || result == nil || !result.Success {
-		statusCode, resp := helper.GetError(constant.InvalidActivationLink)
-		return c.Status(statusCode).JSON(resp)
+	if token == "" {
+		return apperror.BadRequest("missing activation token")
 	}
 
-	memberId := fmt.Sprintf("%d", result.Data.MemberId)
-
-	userExists, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
-		Id: memberId,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	} else if userExists.Data.IsVerified && userExists.Data.Active {
-		statusCode, resp := helper.GetError(constant.AlreadyVerified)
-		return c.Status(statusCode).JSON(resp)
+	if err := ctrl.Svc.VerifyMember(token, req); err != nil {
+		return err
 	}
 
-	minutesToExpired, err := strconv.Atoi(ctrl.Cfg.Env.JwtActivationExpiresMinutes)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	elapsedMinutes := time.Since(result.Data.CreatedAt).Minutes()
-	if elapsedMinutes > float64(minutesToExpired) {
-		resend := "resend"
-		req := &member.UpdateUserRequest{
-			MailStatus: &resend,
-		}
-
-		err = ctrl.SvcUser.UpdateMemberById(memberId, req)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		statusCode, resp := helper.GetError(constant.ActivationTokenExpired)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	_, err = ctrl.Svc.VerifyMemberAif(userExists.Data.MemberId, req)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"your account has been verified",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) Logout(c *fiber.Ctx) error {
@@ -187,27 +151,27 @@ func (ctrl *controller) Logout(c *fiber.Ctx) error {
 func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 	email := c.Params("email")
 
-	userExists, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
 		return err
 	}
 
-	if userExists.Data.MemberId == 0 {
+	if memberData.MemberId == 0 {
 		return err
 	}
 
-	if userExists.Data.IsVerified {
+	if memberData.IsVerified {
 		return err
 	}
 
-	token, err := ctrl.SvcActivationToken.CreateActivationToken(userExists.Data.MemberId, userExists.Data.CompanyId, userExists.Data.RoleId)
+	token, err := ctrl.SvcActivationToken.CreateActivationToken(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
 	if err != nil {
 		return err
 	}
 
-	memberId := fmt.Sprintf("%d", userExists.Data.MemberId)
+	memberId := fmt.Sprintf("%d", memberData.MemberId)
 	err = mailjet.SendEmailActivation(email, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(constant.SendEmailFailed)
@@ -236,7 +200,7 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 	req := c.Locals("request").(*ChangePasswordRequest)
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 
-	member, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
 		Id: memberId,
 	})
 	if err != nil {
@@ -255,14 +219,14 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(member.Data.Name, member.Data.Email)
+	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(memberData.Name, memberData.Email)
 	if err != nil {
 		return err
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  member.Data.MemberId,
-		CompanyId: member.Data.CompanyId,
+		MemberId:  memberData.MemberId,
+		CompanyId: memberData.CompanyId,
 		Action:    constant.EventChangePassword,
 	}
 
@@ -311,9 +275,12 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Login(c *fiber.Ctx) error {
-	loginReq := c.Locals("request").(*userLoginRequest)
+	reqBody, ok := c.Locals("request").(*userLoginRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
+	}
 
-	accessToken, refreshToken, loginResp, err := ctrl.Svc.LoginMember(loginReq)
+	accessToken, refreshToken, loginResp, err := ctrl.Svc.LoginMember(reqBody)
 	if err != nil {
 		return err
 	}
@@ -337,7 +304,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 	req := c.Locals("request").(*RequestPasswordResetRequest)
 
-	member, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
+	memberData, err := ctrl.SvcUser.GetMemberBy(&member.FindUserQuery{
 		Email: req.Email,
 	})
 	if err != nil {
@@ -345,31 +312,31 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if member.Data.MemberId == 0 {
+	if memberData.MemberId == 0 {
 		statusCode, resp := helper.GetError(constant.UserNotFoundForgotEmail)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if !member.Data.IsVerified {
+	if !memberData.IsVerified {
 		statusCode, resp := helper.GetError(constant.UnverifiedUser)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(member.Data.MemberId, member.Data.CompanyId, member.Data.RoleId)
+	token, err := ctrl.SvcPasswordResetToken.CreatePasswordResetTokenAifCore(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = mailjet.SendEmailPasswordReset(req.Email, member.Data.Name, token)
+	err = mailjet.SendEmailPasswordReset(req.Email, memberData.Name, token)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
 	addLogRequest := &operation.AddLogRequest{
-		MemberId:  member.Data.MemberId,
-		CompanyId: member.Data.CompanyId,
+		MemberId:  memberData.MemberId,
+		CompanyId: memberData.CompanyId,
 		Action:    constant.EventRequestPasswordReset,
 	}
 
@@ -448,6 +415,7 @@ func (ctrl *controller) setTokenCookie(c *fiber.Ctx, name, value, durationStr st
 	if err != nil {
 		return err
 	}
+
 	c.Cookie(&fiber.Cookie{
 		Name:     name,
 		Value:    value,
@@ -456,5 +424,6 @@ func (ctrl *controller) setTokenCookie(c *fiber.Ctx, name, value, durationStr st
 		Secure:   true,
 		SameSite: "Lax",
 	})
+
 	return nil
 }
