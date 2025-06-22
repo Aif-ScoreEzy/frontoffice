@@ -47,18 +47,18 @@ type controller struct {
 
 type Controller interface {
 	RegisterMember(c *fiber.Ctx) error
+	Login(c *fiber.Ctx) error
 	VerifyUser(c *fiber.Ctx) error
 	Logout(c *fiber.Ctx) error
 	SendEmailActivation(c *fiber.Ctx) error
-	RequestPasswordReset(c *fiber.Ctx) error
 	RefreshAccessToken(c *fiber.Ctx) error
-	Login(c *fiber.Ctx) error
+	RequestPasswordReset(c *fiber.Ctx) error
 	PasswordReset(c *fiber.Ctx) error
 	ChangePassword(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
-	req, ok := c.Locals("request").(*member.RegisterMemberRequest)
+	reqBody, ok := c.Locals("request").(*member.RegisterMemberRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
@@ -73,15 +73,15 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 		return apperror.Unauthorized("invalid company session")
 	}
 
-	req.CompanyId = companyId
-	req.RoleId = uint(memberRoleId)
+	reqBody.CompanyId = companyId
+	reqBody.RoleId = uint(memberRoleId)
 
-	if err := ctrl.svc.AddMember(currentUserId, req); err != nil {
+	if err := ctrl.svc.AddMember(currentUserId, reqBody); err != nil {
 		return err
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(helper.ResponseSuccess(
-		fmt.Sprintf("we've sent an email to %s with a link to activate the account", req.Email),
+		fmt.Sprintf("we've sent an email to %s with a link to activate the account", reqBody.Email),
 		nil,
 	))
 }
@@ -139,7 +139,7 @@ func (ctrl *controller) SendEmailActivation(c *fiber.Ctx) error {
 		return apperror.BadRequest("missing email")
 	}
 
-	if err := ctrl.svc.SendEmailActivation(email); err != nil {
+	if err := ctrl.svc.RequestActivation(email); err != nil {
 		return err
 	}
 
@@ -257,55 +257,19 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
-	req := c.Locals("request").(*RequestPasswordResetRequest)
-
-	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
-		Email: req.Email,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	reqBody, ok := c.Locals("request").(*RequestPasswordResetRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	if memberData.MemberId == 0 {
-		statusCode, resp := helper.GetError(constant.UserNotFoundForgotEmail)
-		return c.Status(statusCode).JSON(resp)
+	if err := ctrl.svc.RequestPasswordReset(reqBody.Email); err != nil {
+		return err
 	}
 
-	if !memberData.IsVerified {
-		statusCode, resp := helper.GetError(constant.UnverifiedUser)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	token, err := ctrl.svcPasswordResetToken.CreatePasswordResetTokenAifCore(memberData.MemberId, memberData.CompanyId, memberData.RoleId)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = mailjet.SendEmailPasswordReset(req.Email, memberData.Name, token)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  memberData.MemberId,
-		CompanyId: memberData.CompanyId,
-		Action:    constant.EventRequestPasswordReset,
-	}
-
-	err = ctrl.svcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to log operation for request password reset")
-	}
-
-	resp := helper.ResponseSuccess(
-		fmt.Sprintf("we've sent an email to %s with a link to reset your password", req.Email),
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		fmt.Sprintf("we've sent an email to %s with a link to reset your password", reqBody.Email),
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {

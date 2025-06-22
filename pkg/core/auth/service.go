@@ -12,6 +12,7 @@ import (
 	"front-office/pkg/core/activationtoken"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
+	"front-office/pkg/core/passwordresettoken"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
 	"io"
@@ -28,6 +29,7 @@ func NewService(
 	roleRepo role.Repository,
 	operationRepo operation.Repository,
 	activationRepo activationtoken.Repository,
+	passwordResetRepo passwordresettoken.Repository,
 ) Service {
 	return &service{
 		cfg,
@@ -36,16 +38,18 @@ func NewService(
 		roleRepo,
 		operationRepo,
 		activationRepo,
+		passwordResetRepo,
 	}
 }
 
 type service struct {
-	cfg            *config.Config
-	repo           Repository
-	memberRepo     member.Repository
-	roleRepo       role.Repository
-	operationRepo  operation.Repository
-	activationRepo activationtoken.Repository
+	cfg               *config.Config
+	repo              Repository
+	memberRepo        member.Repository
+	roleRepo          role.Repository
+	operationRepo     operation.Repository
+	activationRepo    activationtoken.Repository
+	passwordResetRepo passwordresettoken.Repository
 }
 
 type Service interface {
@@ -54,7 +58,8 @@ type Service interface {
 	RefreshAccessToken(memberId, companyId, tierLevel uint, apiKey string) (string, error)
 	Logout(memberId, companyId uint) error
 	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
-	SendEmailActivation(email string) error
+	RequestActivation(email string) error
+	RequestPasswordReset(email string) error
 	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
 	VerifyMember(token string, req *PasswordResetRequest) error
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
@@ -132,14 +137,14 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 
 	memberId := fmt.Sprintf("%d", activationData.MemberId)
 
-	memberData, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
 		Id: memberId,
 	})
 	if err != nil {
 		return mapper.MapRepoError(err, "failed to fetch member")
 	}
 
-	if memberData.IsVerified && memberData.Active {
+	if user.IsVerified && user.Active {
 		return apperror.BadRequest(constant.AlreadyVerified)
 	}
 
@@ -197,13 +202,13 @@ func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordR
 }
 
 func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequest) error {
-	memberResp, err := svc.memberRepo.CallAddMemberAPI(req)
+	user, err := svc.memberRepo.CallAddMemberAPI(req)
 	if err != nil {
 		return mapper.MapRepoError(err, "failed to register member")
 	}
 
 	tokenPayload := &tokenPayload{
-		MemberId:  memberResp.MemberId,
+		MemberId:  user.MemberId,
 		CompanyId: req.CompanyId,
 		RoleId:    req.RoleId,
 	}
@@ -212,9 +217,9 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 		return apperror.Internal("generate activation token failed", err)
 	}
 
-	memberIdStr := helper.ConvertUintToString(memberResp.MemberId)
+	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	err = svc.activationRepo.CallCreateActivationTokenAPI(memberIdStr, &activationtoken.CreateActivationTokenRequest{
+	err = svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: activationToken,
 	})
 	if err != nil {
@@ -228,7 +233,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 			"updated_at":  time.Now(),
 		}
 
-		err := svc.memberRepo.CallUpdateMemberAPI(memberIdStr, updateFields)
+		err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields)
 		if err != nil {
 			return mapper.MapRepoError(err, "failed to update member after email failure")
 		}
@@ -248,31 +253,31 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 	return nil
 }
 
-func (svc *service) SendEmailActivation(email string) error {
-	memberData, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+func (svc *service) RequestActivation(email string) error {
+	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
 		return mapper.MapRepoError(err, "failed to fetch member")
 	}
 
-	if memberData.IsVerified {
+	if user.IsVerified {
 		return apperror.Conflict(constant.AlreadyVerified)
 	}
 
 	tokenPayload := &tokenPayload{
-		MemberId:  memberData.MemberId,
-		CompanyId: memberData.CompanyId,
-		RoleId:    memberData.RoleId,
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
 	}
 	token, err := svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtActivationExpiresMinutes)
 	if err != nil {
 		return apperror.Internal("generate activation token failed", err)
 	}
 
-	memberIdStr := helper.ConvertUintToString(memberData.MemberId)
+	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.activationRepo.CallCreateActivationTokenAPI(memberIdStr, &activationtoken.CreateActivationTokenRequest{
+	if err := svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: token,
 	}); err != nil {
 		return mapper.MapRepoError(err, "failed to create activation")
@@ -287,8 +292,57 @@ func (svc *service) SendEmailActivation(email string) error {
 		"updated_at":  time.Now(),
 	}
 
-	if err := svc.memberRepo.CallUpdateMemberAPI(memberIdStr, updateFields); err != nil {
+	if err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields); err != nil {
 		return mapper.MapRepoError(err, "failed to update member")
+	}
+
+	return nil
+}
+
+func (svc *service) RequestPasswordReset(email string) error {
+	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+		Email: email,
+	})
+	if err != nil {
+		return mapper.MapRepoError(err, "failed to fetch member")
+	}
+
+	if user.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFoundForgotEmail)
+	}
+
+	if !user.IsVerified {
+		return apperror.Unauthorized(constant.UnverifiedUser)
+	}
+
+	tokenPayload := &tokenPayload{
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
+	}
+	token, err := svc.generateToken(tokenPayload, svc.cfg.Env.JwtSecretKey, svc.cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return apperror.Internal("generate password reset token failed", err)
+	}
+
+	userIdStr := helper.ConvertUintToString(user.MemberId)
+
+	if err := svc.passwordResetRepo.CallCreatePasswordResetToken(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
+		Token: token,
+	}); err != nil {
+		return mapper.MapRepoError(err, "failed to create password reset token")
+	}
+
+	if err := mailjet.SendEmailPasswordReset(email, user.Name, token); err != nil {
+		return apperror.Internal("failed to send password reset email email", err)
+	}
+
+	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		Action:    constant.EventRequestPasswordReset,
+	}); err != nil {
+		log.Warn().Err(err).Msg("failed to log request password reset event")
 	}
 
 	return nil

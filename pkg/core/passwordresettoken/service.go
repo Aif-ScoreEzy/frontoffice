@@ -19,7 +19,7 @@ type service struct {
 
 type Service interface {
 	FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error)
-	CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error)
+	CreatePasswordResetToken(userId, companyId, roleId uint) (string, error)
 	DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error)
 }
 
@@ -43,7 +43,7 @@ func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*FindTokenRe
 	return baseResponseSuccess, nil
 }
 
-func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId uint) (string, error) {
+func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
 	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 
@@ -57,7 +57,7 @@ func (svc *service) CreatePasswordResetTokenAifCore(userId, companyId, roleId ui
 	}
 
 	userIdStr := helper.ConvertUintToString(userId)
-	_, err = svc.Repo.CreatePasswordResetTokenAifCore(req, userIdStr)
+	err = svc.Repo.CallCreatePasswordResetToken(userIdStr, req)
 	if err != nil {
 		return "", err
 	}
