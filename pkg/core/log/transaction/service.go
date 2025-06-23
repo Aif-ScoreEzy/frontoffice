@@ -1,9 +1,5 @@
 package transaction
 
-import (
-	"front-office/common/model"
-)
-
 func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
@@ -20,6 +16,6 @@ type Service interface {
 	GetLogScoreezyByMonth(companyId, month string) (*AifResponse, int, error)
 
 	// product catalog
-	GetLogTransSuccessCount(jobId string) (*model.AifcoreAPIResponse[*getSuccessCountDataResponse], error)
-	UpdateLogProCat(transId string, req *UpdateTransRequest) (*model.AifcoreAPIResponse[any], error)
+	GetLogTransSuccessCount(jobId string) (*getSuccessCountDataResponse, error)
+	UpdateLogProCat(transId string, req *UpdateTransRequest) error
 }

@@ -72,10 +72,9 @@ func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
 		return c.Status(taxComplianceRes.StatusCode).JSON(resp)
 	}
 
-	_, err = ctrl.transactionSvc.UpdateLogProCat(taxComplianceRes.TransactionId, &transaction.UpdateTransRequest{
+	if err := ctrl.transactionSvc.UpdateLogProCat(taxComplianceRes.TransactionId, &transaction.UpdateTransRequest{
 		Success: helper.BoolPtr(true),
-	})
-	if err != nil {
+	}); err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
 		return c.Status(statusCode).JSON(resp)
@@ -89,7 +88,7 @@ func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
 	}
 
 	_, err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
-		SuccessCount: &logTransRes.Data.SuccessCount,
+		SuccessCount: &logTransRes.SuccessCount,
 		Status:       helper.StringPtr(constant.JobStatusDone),
 		EndAt:        helper.TimePtr(time.Now()),
 	})

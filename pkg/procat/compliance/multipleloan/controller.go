@@ -81,13 +81,10 @@ func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
 		return c.Status(multipleLoanRes.StatusCode).JSON(resp)
 	}
 
-	_, err = ctrl.transactionSvc.UpdateLogProCat(multipleLoanRes.TransactionId, &transaction.UpdateTransRequest{
+	if err := ctrl.transactionSvc.UpdateLogProCat(multipleLoanRes.TransactionId, &transaction.UpdateTransRequest{
 		Success: helper.BoolPtr(true),
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+	}); err != nil {
+		return err
 	}
 
 	logTransRes, err := ctrl.transactionSvc.GetLogTransSuccessCount(jobIdStr)
@@ -98,7 +95,7 @@ func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
 	}
 
 	_, err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
-		SuccessCount: &logTransRes.Data.SuccessCount,
+		SuccessCount: &logTransRes.SuccessCount,
 		Status:       helper.StringPtr(constant.JobStatusDone),
 		EndAt:        helper.TimePtr(time.Now()),
 	})
