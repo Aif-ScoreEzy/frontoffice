@@ -335,7 +335,6 @@ func (svc *service) RequestPasswordReset(email string) error {
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to fetch member")
 	}
-
 	if user.MemberId == 0 {
 		return apperror.NotFound(constant.UserNotFoundForgotEmail)
 	}
