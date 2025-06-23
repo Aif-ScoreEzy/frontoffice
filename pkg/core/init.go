@@ -28,7 +28,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	member.SetupInit(userGroup, cfg, client)
 
 	roleGroup := routeGroup.Group("roles")
-	role.SetupInit(roleGroup, cfg)
+	role.SetupInit(roleGroup, cfg, client)
 
 	permissionGroup := routeGroup.Group("permissions")
 	permission.SetupInit(permissionGroup)

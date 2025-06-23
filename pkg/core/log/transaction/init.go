@@ -10,7 +10,7 @@ import (
 )
 
 func SetupInit(logAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	roleRepository := role.NewRepository(cfg)
+	roleRepository := role.NewRepository(cfg, client)
 	roleService := role.NewService(roleRepository)
 
 	memberRepository := member.NewRepository(cfg, client)

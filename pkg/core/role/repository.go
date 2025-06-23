@@ -4,54 +4,73 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/httpclient"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config) Repository {
-	return &repository{
-		Cfg: cfg,
-	}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+	return &repository{cfg, client}
 }
 
 type repository struct {
-	Cfg *config.Config
+	cfg    *config.Config
+	client httpclient.HTTPClient
 }
 
 type Repository interface {
-	FindAll(filter RoleFilter) (*http.Response, error)
-	FindOneById(id string) (*http.Response, error)
+	CallGetRolesAPI(filter RoleFilter) ([]*MstRole, error)
+	CallGetRoleAPI(id string) (*MstRole, error)
 }
 
-func (repo *repository) FindOneById(id string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/role/%v`, repo.Cfg.Env.AifcoreHost, id)
+func (repo *repository) CallGetRoleAPI(id string) (*MstRole, error) {
+	url := fmt.Sprintf(`%v/api/core/role/%v`, repo.cfg.Env.AifcoreHost, id)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*MstRole](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-
-	client := &http.Client{}
-
-	return client.Do(request)
+	return apiResp.Data, nil
 }
 
-func (repo *repository) FindAll(filter RoleFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/role`, repo.Cfg.Env.AifcoreHost)
+func (repo *repository) CallGetRolesAPI(filter RoleFilter) ([]*MstRole, error) {
+	url := fmt.Sprintf(`%v/api/core/role`, repo.cfg.Env.AifcoreHost)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	q := request.URL.Query()
+	q := req.URL.Query()
 	q.Add("name", filter.Name)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*MstRole](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }

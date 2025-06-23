@@ -103,13 +103,9 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 	}
 
 	if req.RoleId != nil {
-		role, err := s.RoleSvc.GetRoleById(*req.RoleId)
+		_, err := s.RoleSvc.GetRoleById(*req.RoleId)
 		if err != nil {
-			return err
-		}
-
-		if role.Data.RoleId == 0 {
-			return errors.New(constant.DataNotFound)
+			return apperror.MapRepoError(err, "failed to fetch role")
 		}
 
 		updateUser["role_id"] = *req.RoleId

@@ -93,21 +93,19 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 	var roleID string
 	if roleName != "" {
-		result, err := ctrl.RoleSvc.GetAllRoles(role.RoleFilter{
+		roles, err := ctrl.RoleSvc.GetRoles(role.RoleFilter{
 			Name: roleName,
 		})
-
-		if err != nil || result == nil || !result.Success {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+		if err != nil {
+			return err
 		}
 
-		if len(result.Data) == 0 {
-			statusCode, resp := helper.GetError(constant.DataNotFound)
-			return c.Status(statusCode).JSON(resp)
-		}
+		// if len(roles) == 0 {
+		// 	statusCode, resp := helper.GetError(constant.DataNotFound)
+		// 	return c.Status(statusCode).JSON(resp)
+		// }
 
-		roleID = fmt.Sprintf("%v", result.Data[0].RoleId)
+		roleID = fmt.Sprintf("%v", roles[0].RoleId)
 	}
 
 	filter := MemberFilter{
