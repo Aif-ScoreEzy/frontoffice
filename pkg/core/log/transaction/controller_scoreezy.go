@@ -1,153 +1,79 @@
 package transaction
 
 import (
-	"fmt"
 	"front-office/helper"
-	"front-office/pkg/core/member"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
-	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogScoreezy()
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
+	logs, err := ctrl.svc.GetScoreezyLogs()
+	if err != nil {
+		return err
 	}
 
-	var transactions []DataLogTrans
-	for _, data := range resLogTrans.Data {
-		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
-			Id: fmt.Sprintf("%d", data.MemberID),
-		})
-
-		if err != nil {
-			return err
-		}
-
-		transaction := DataLogTrans{
-			Name:      memberData.Name,
-			Grade:     data.Grade,
-			CreatedAt: data.CreatedAt,
-		}
-
-		transactions = append(transactions, transaction)
-	}
-
-	responseBody := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to get list of log transaction",
-		transactions,
-	)
-
-	return c.Status(statusCode).JSON(responseBody)
+		logs,
+	))
 }
 
 func (ctrl *controller) GetLogScoreezyByDate(c *fiber.Ctx) error {
 	date := c.Query("date")
 	companyId := c.Query("company_id")
 
-	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogScoreezyByDate(companyId, date)
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
+	if date == "" {
+		return apperror.BadRequest("date are required")
 	}
 
-	var transactions []DataLogTrans
-	for _, data := range resLogTrans.Data {
-		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
-			Id: fmt.Sprintf("%d", data.MemberID),
-		})
-		if err != nil {
-			return err
-		}
-
-		transaction := DataLogTrans{
-			Name:      memberData.Name,
-			Grade:     data.Grade,
-			CreatedAt: data.CreatedAt,
-		}
-
-		transactions = append(transactions, transaction)
+	logs, err := ctrl.svc.GetScoreezyLogsByDate(companyId, date)
+	if err != nil {
+		return err
 	}
 
-	responseBody := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to get list of log transaction",
-		transactions,
-	)
-
-	return c.Status(statusCode).JSON(responseBody)
+		logs,
+	))
 }
 
 func (ctrl *controller) GetLogScoreezyByRangeDate(c *fiber.Ctx) error {
+	page := c.Query("page", "1")
 	startDate := c.Query("start_date")
 	endDate := c.Query("end_date")
 	companyId := c.Query("company_id")
-	page := c.Query("page", "1")
 
-	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogScoreezyByRangeDate(startDate, endDate, companyId, page)
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
+	if startDate == "" || endDate == "" {
+		return apperror.BadRequest("start_date and end_date  are required")
 	}
 
-	var transactions []DataLogTrans
-	for _, data := range resLogTrans.Data {
-		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
-			Id: fmt.Sprintf("%d", data.MemberID),
-		})
-		if err != nil {
-			return err
-		}
-
-		transaction := DataLogTrans{
-			Name:      memberData.Name,
-			Grade:     data.Grade,
-			CreatedAt: data.CreatedAt,
-		}
-
-		transactions = append(transactions, transaction)
+	logs, err := ctrl.svc.GetScoreezyLogsByRangeDate(startDate, endDate, companyId, page)
+	if err != nil {
+		return err
 	}
 
-	responseBody := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to get list of log transaction",
-		transactions,
-	)
-
-	return c.Status(statusCode).JSON(responseBody)
+		logs,
+	))
 }
 
 func (ctrl *controller) GetLogScoreezyByMonth(c *fiber.Ctx) error {
 	companyId := c.Query("company_id")
 	month := c.Query("month")
 
-	resLogTrans, statusCode, errRequest := ctrl.Svc.GetLogScoreezyByMonth(companyId, month)
-	if errRequest != nil {
-		_, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
+	if month == "" {
+		return apperror.BadRequest("month are required")
 	}
 
-	var transactions []DataLogTrans
-	for _, data := range resLogTrans.Data {
-		memberData, err := ctrl.MemberSvc.GetMemberBy(&member.FindUserQuery{
-			Id: fmt.Sprintf("%d", data.MemberID),
-		})
-		if err != nil {
-			return err
-		}
-
-		transaction := DataLogTrans{
-			Name:      memberData.Name,
-			Grade:     data.Grade,
-			CreatedAt: data.CreatedAt,
-		}
-
-		transactions = append(transactions, transaction)
+	logs, err := ctrl.svc.GetScoreezyLogsByMonth(companyId, month)
+	if err != nil {
+		return err
 	}
 
-	responseBody := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to get list of log transaction",
-		transactions,
-	)
-
-	return c.Status(statusCode).JSON(responseBody)
+		logs,
+	))
 }
