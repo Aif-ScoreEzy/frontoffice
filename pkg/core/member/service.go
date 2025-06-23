@@ -34,7 +34,7 @@ type Service interface {
 	UpdateProfile(userId string, currentUserRoleId uint, req *UpdateProfileRequest) (*userUpdateResponse, error)
 	UploadProfileImage(id string, filename *string) (*userUpdateResponse, error)
 	UpdateMemberById(currentUserId, currentUserRoleId uint, companyId, memberId string, req *UpdateUserRequest) error
-	DeleteMemberById(id string) error
+	DeleteMemberById(memberId, companyId string) error
 }
 
 func (svc *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
@@ -179,9 +179,7 @@ func (svc *service) UploadProfileImage(userId string, filename *string) (*userUp
 }
 
 func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, companyId, memberId string, req *UpdateUserRequest) error {
-	fmt.Println("reqq", memberId, companyId)
 	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
-	fmt.Println("ppp", member, err)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to fetch member")
 	}
@@ -268,9 +266,16 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 	return nil
 }
 
-func (s *service) DeleteMemberById(id string) error {
-	err := s.repo.CallDeleteMemberAPI(id)
+func (svc *service) DeleteMemberById(memberId, companyId string) error {
+	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
 	if err != nil {
+		return apperror.MapRepoError(err, "failed to fetch member")
+	}
+	if member.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFound)
+	}
+
+	if err := svc.repo.CallDeleteMemberAPI(memberId); err != nil {
 		return apperror.MapRepoError(err, "failed to delete member")
 	}
 

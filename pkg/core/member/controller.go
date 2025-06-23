@@ -55,6 +55,9 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetById(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		return apperror.BadRequest("missing user id")
+	}
 
 	member, err := ctrl.svc.GetMemberBy(&FindUserQuery{
 		Id: id,
@@ -136,6 +139,10 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateUserRequest)
 
 	memberId := c.Params("id")
+	if memberId == "" {
+		return apperror.BadRequest("missing user id")
+	}
+
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
@@ -161,25 +168,18 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 
 func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		return apperror.BadRequest("missing user id")
+	}
+
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	_, err := ctrl.svc.GetMemberBy(&FindUserQuery{
-		Id:        id,
-		CompanyId: companyId,
-	})
-	if err != nil {
+	if err := ctrl.svc.DeleteMemberById(id, companyId); err != nil {
 		return err
 	}
 
-	err = ctrl.svc.DeleteMemberById(id)
-	if err != nil {
-		return err
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to delete member",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
