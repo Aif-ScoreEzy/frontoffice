@@ -16,7 +16,7 @@ func SetupInit(userAPI fiber.Router, cfg *config.Config, client httpclient.HTTPC
 	repoLogOperation := operation.NewRepository(cfg, client)
 
 	serviceRole := role.NewService(roleRepo)
-	service := NewService(repo, serviceRole)
+	service := NewService(repo, roleRepo)
 	serviceLogOperation := operation.NewService(repoLogOperation)
 
 	controller := NewController(service, serviceRole, serviceLogOperation)

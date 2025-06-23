@@ -94,6 +94,7 @@ type MemberFilter struct {
 	Page      string
 	Limit     string
 	Keyword   string
+	RoleName  string
 	RoleID    string
 	Status    string
 	StartDate string

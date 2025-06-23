@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"mime/multipart"
@@ -24,7 +25,7 @@ type repository struct {
 type Repository interface {
 	CallAddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
 	CallGetMemberAPI(query *FindUserQuery) (*MstMember, error)
-	GetMemberList(filter *MemberFilter) (*http.Response, error)
+	CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	CallUpdateMemberAPI(id string, req map[string]interface{}) error
 	CallDeleteMemberAPI(id string) error
 }
@@ -94,17 +95,17 @@ func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, erro
 	return apiResp.Data, nil
 }
 
-func (repo *repository) GetMemberList(filter *MemberFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.cfg.Env.AifcoreHost, filter.CompanyID)
+func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
+	url := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.cfg.Env.AifcoreHost, filter.CompanyID)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	q := request.URL.Query()
+	q := req.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Limit)
 	q.Add("keyword", filter.Keyword)
@@ -112,11 +113,20 @@ func (repo *repository) GetMemberList(filter *MemberFilter) (*http.Response, err
 	q.Add("role_id", filter.RoleID)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*MstMember](resp)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return apiResp.Data, apiResp.Meta, nil
 }
 
 func (repo *repository) CallUpdateMemberAPI(id string, reqBody map[string]interface{}) error {

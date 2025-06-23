@@ -25,6 +25,7 @@ func (s *service) GetRoles(filter RoleFilter) ([]*MstRole, error) {
 
 	if len(roles) == 0 {
 		return nil, apperror.NotFound("role not found")
+
 	}
 
 	return roles, nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/role"
 	"io"
@@ -12,21 +13,21 @@ import (
 	"time"
 )
 
-func NewService(repo Repository, roleSvc role.Service) Service {
+func NewService(repo Repository, roleRepo role.Repository) Service {
 	return &service{
-		Repo:    repo,
-		RoleSvc: roleSvc,
+		repo,
+		roleRepo,
 	}
 }
 
 type service struct {
-	Repo    Repository
-	RoleSvc role.Service
+	repo     Repository
+	roleRepo role.Repository
 }
 
 type Service interface {
 	GetMemberBy(query *FindUserQuery) (*MstMember, error)
-	GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error)
+	GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) error
 	UploadProfileImage(id string, filename *string) error
 	UpdateMemberById(id string, req *UpdateUserRequest) error
@@ -34,7 +35,7 @@ type Service interface {
 }
 
 func (s *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
-	member, err := s.Repo.CallGetMemberAPI(query)
+	member, err := s.repo.CallGetMemberAPI(query)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get member")
 	}
@@ -42,13 +43,28 @@ func (s *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
 	return member, nil
 }
 
-func (s *service) GetMemberList(filter *MemberFilter) (*AifResponseWithMultipleData, error) {
-	response, err := s.Repo.GetMemberList(filter)
-	if err != nil {
-		return nil, err
+func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
+	if filter.RoleName != "" {
+		roles, err := svc.roleRepo.CallGetRolesAPI(role.RoleFilter{
+			Name: filter.RoleName,
+		})
+		if err != nil {
+			return nil, nil, apperror.MapRepoError(err, "failed to fetch role")
+		}
+
+		if len(roles) == 0 {
+			return nil, nil, apperror.NotFound("role not found")
+		}
+
+		filter.RoleID = fmt.Sprintf("%v", roles[0].RoleId)
 	}
 
-	return s.parseMultipleResponse(response)
+	users, meta, err := svc.repo.CallGetMemberListAPI(filter)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return users, meta, nil
 }
 
 func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) error {
@@ -64,7 +80,7 @@ func (s *service) UpdateProfile(id, oldEmail string, req *UpdateProfileRequest) 
 
 	updateUser["updated_at"] = time.Now()
 
-	return s.Repo.CallUpdateMemberAPI(id, updateUser)
+	return s.repo.CallUpdateMemberAPI(id, updateUser)
 }
 
 func (s *service) UploadProfileImage(id string, filename *string) error {
@@ -76,7 +92,7 @@ func (s *service) UploadProfileImage(id string, filename *string) error {
 
 	updateUser["updated_at"] = time.Now()
 
-	return s.Repo.CallUpdateMemberAPI(id, updateUser)
+	return s.repo.CallUpdateMemberAPI(id, updateUser)
 }
 
 func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
@@ -103,7 +119,7 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 	}
 
 	if req.RoleId != nil {
-		_, err := s.RoleSvc.GetRoleById(*req.RoleId)
+		_, err := s.roleRepo.CallGetRoleAPI(*req.RoleId)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to fetch role")
 		}
@@ -117,11 +133,11 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 
 	updateUser["updated_at"] = currentTime
 
-	return s.Repo.CallUpdateMemberAPI(id, updateUser)
+	return s.repo.CallUpdateMemberAPI(id, updateUser)
 }
 
 func (s *service) DeleteMemberById(id string) error {
-	err := s.Repo.CallDeleteMemberAPI(id)
+	err := s.repo.CallDeleteMemberAPI(id)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to delete member")
 	}
