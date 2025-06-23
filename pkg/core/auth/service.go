@@ -60,7 +60,7 @@ type Service interface {
 	AddMember(currentUserId uint, req *member.RegisterMemberRequest) error
 	RequestActivation(email string) error
 	RequestPasswordReset(email string) error
-	PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error
+	PasswordReset(token string, req *PasswordResetRequest) error
 	VerifyMember(token string, req *PasswordResetRequest) error
 	ChangePassword(memberId string, req *ChangePasswordRequest) (*helper.BaseResponseSuccess, error)
 }
@@ -183,19 +183,47 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 	return nil
 }
 
-func (svc *service) PasswordResetSvc(memberId uint, token string, req *PasswordResetRequest) error {
-	isPasswordStrength := helper.ValidatePasswordStrength(req.Password)
-	if !isPasswordStrength {
-		return errors.New(constant.InvalidPassword)
+func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error {
+	data, err := svc.passwordResetRepo.CallGetPasswordResetTokenAPI(token)
+	if err != nil {
+		return apperror.Forbidden(constant.InvalidPasswordResetLink)
+	}
+
+	idStr := strconv.Itoa(int(data.Id))
+
+	minutesToExpired, err := strconv.Atoi(svc.cfg.Env.JwtResetPasswordExpiresMinutes)
+	if err != nil {
+		return apperror.Internal("invalid password reset expiry config", err)
+	}
+
+	elapsedMinutes := time.Since(data.CreatedAt).Minutes()
+	if elapsedMinutes > float64(minutesToExpired) {
+		if err := svc.passwordResetRepo.CallDeletePasswordResetTokenAPI(idStr); err != nil {
+			return mapper.MapRepoError(err, "failed to delete password reset token")
+		}
+
+		return apperror.Forbidden(constant.InvalidPasswordResetLink)
+	}
+
+	if !helper.ValidatePasswordStrength(req.Password) {
+		return apperror.BadRequest(constant.InvalidPassword)
 	}
 
 	if req.Password != req.ConfirmPassword {
-		return errors.New(constant.ConfirmPasswordMismatch)
+		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	_, err := svc.repo.PasswordReset(memberId, token, req)
+	err = svc.repo.PasswordReset(data.MemberId, token, req)
 	if err != nil {
-		return err
+		return mapper.MapRepoError(err, "failed to password reset")
+	}
+
+	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  data.MemberId,
+		CompanyId: data.Member.CompanyId,
+		Action:    constant.EventPasswordReset,
+	}); err != nil {
+		log.Warn().Err(err).Msg("failed to log password reset event")
 	}
 
 	return nil
@@ -259,6 +287,10 @@ func (svc *service) RequestActivation(email string) error {
 	})
 	if err != nil {
 		return mapper.MapRepoError(err, "failed to fetch member")
+	}
+
+	if user.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFound)
 	}
 
 	if user.IsVerified {
@@ -327,7 +359,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.passwordResetRepo.CallCreatePasswordResetToken(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
+	if err := svc.passwordResetRepo.CallCreatePasswordResetTokenAPI(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
 		Token: token,
 	}); err != nil {
 		return mapper.MapRepoError(err, "failed to create password reset token")

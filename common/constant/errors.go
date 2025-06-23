@@ -2,16 +2,15 @@ package constant
 
 const (
 	// general
-	DataAlreadyExist        = "data already exists"
-	DataNotFound            = "data not found"
-	UserNotFoundForgotEmail = "if your account exists, we've sent password reset instructions to your email"
-	FileSizeIsTooLarge      = "file size should not exceed 200 KB"
-	InvalidDateFormat       = "invalid date format"
-	InvalidRequestFormat    = "invalid request format"
-	RecordNotFound          = "record not found"
-	OnlyUploadCSVfile       = "only CSV files allowed"
-	TemplateNotFound        = "template not found"
-	UpstreamError           = "upstream error"
+	DataAlreadyExist     = "data already exists"
+	DataNotFound         = "data not found"
+	FileSizeIsTooLarge   = "file size should not exceed 200 KB"
+	InvalidDateFormat    = "invalid date format"
+	InvalidRequestFormat = "invalid request format"
+	RecordNotFound       = "record not found"
+	OnlyUploadCSVfile    = "only CSV files allowed"
+	TemplateNotFound     = "template not found"
+	UpstreamError        = "upstream error"
 
 	// auth
 	AlreadyVerified            = "the account has already verified"
@@ -25,6 +24,8 @@ const (
 	IncorrectPassword          = "password is incorrect"
 	RequestProhibited          = "request is prohibited"
 	UnverifiedUser             = "please check your email, you need to verify your email address before you can reset your password"
+	UserNotFoundForgotEmail    = "if your account exists, we've sent password reset instructions to your email"
+	UserNotFound               = "user not found"
 	TokenExpired               = "Token is expired"
 	BcryptPasswordMismatch     = "crypto/bcrypt: hashedPassword is not the hash of the given password"
 	WrongCurrentPassword       = "current password is wrong"

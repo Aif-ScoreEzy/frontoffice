@@ -7,6 +7,7 @@ import (
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"front-office/internal/apperror/mapper"
 	"strings"
 )
@@ -28,11 +29,14 @@ type Service interface {
 
 func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
-	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+	minutesToExpired, err := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return "", apperror.Internal("invalid activation expiry config", err)
+	}
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, memberId, companyId, roleId, "")
 	if err != nil {
-		return "", err
+		return "", apperror.Internal("generate activation token failed", err)
 	}
 
 	req := &CreateActivationTokenRequest{

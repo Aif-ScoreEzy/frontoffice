@@ -1,10 +1,10 @@
 package passwordresettoken
 
 import (
-	"encoding/json"
 	"front-office/app/config"
 	"front-office/helper"
-	"io"
+	"front-office/internal/apperror"
+	"front-office/internal/apperror/mapper"
 	"strconv"
 )
 
@@ -18,38 +18,30 @@ type service struct {
 }
 
 type Service interface {
-	FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error)
+	GetPasswordResetToken(token string) (*MstPasswordResetToken, error)
 	CreatePasswordResetToken(userId, companyId, roleId uint) (string, error)
-	DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error)
+	DeletePasswordResetToken(id uint) error
 }
 
-func (svc *service) FindPasswordResetTokenByTokenSvc(token string) (*FindTokenResponse, error) {
-	response, err := svc.Repo.FindOnePasswordResetTokenByToken(token)
+func (svc *service) GetPasswordResetToken(token string) (*MstPasswordResetToken, error) {
+	data, err := svc.Repo.CallGetPasswordResetTokenAPI(token)
 	if err != nil {
-		return nil, err
+		return nil, mapper.MapRepoError(err, "failed to get password reset token")
 	}
 
-	var baseResponseSuccess *FindTokenResponse
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
-			return nil, err
-		}
-		baseResponseSuccess.StatusCode = response.StatusCode
-	}
-
-	return baseResponseSuccess, nil
+	return data, nil
 }
 
 func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
-	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+	minutesToExpired, err := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+	if err != nil {
+		return "", apperror.Internal("invalid password reset expiry config", err)
+	}
 
 	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
 	if err != nil {
-		return "", err
+		return "", apperror.Internal("generate password reset token failed", err)
 	}
 
 	req := &CreatePasswordResetTokenRequest{
@@ -57,31 +49,20 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 	}
 
 	userIdStr := helper.ConvertUintToString(userId)
-	err = svc.Repo.CallCreatePasswordResetToken(userIdStr, req)
+	err = svc.Repo.CallCreatePasswordResetTokenAPI(userIdStr, req)
 	if err != nil {
-		return "", err
+		return "", mapper.MapRepoError(err, "failed to create password reset token")
 	}
 
 	return token, nil
 }
 
-func (svc *service) DeletePasswordResetToken(id uint) (*helper.BaseResponseSuccess, error) {
+func (svc *service) DeletePasswordResetToken(id uint) error {
 	idStr := strconv.Itoa(int(id))
-	response, err := svc.Repo.DeletePasswordResetToken(idStr)
+	err := svc.Repo.CallDeletePasswordResetTokenAPI(idStr)
 	if err != nil {
-		return nil, err
+		return mapper.MapRepoError(err, "failed to delete password reset token")
 	}
 
-	var baseResponseSuccess *helper.BaseResponseSuccess
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponseSuccess); err != nil {
-			return nil, err
-		}
-		baseResponseSuccess.StatusCode = response.StatusCode
-	}
-
-	return baseResponseSuccess, nil
+	return nil
 }

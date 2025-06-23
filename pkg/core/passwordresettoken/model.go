@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type PasswordResetToken struct {
+type MstPasswordResetToken struct {
 	Id         uint             `gorm:"primarykey" json:"id"`
 	Token      string           `gorm:"not null" json:"token"`
 	Activation bool             `gorm:"not null;default:false" json:"activation"`
@@ -23,8 +23,8 @@ type CreatePasswordResetTokenRequest struct {
 }
 
 type FindTokenResponse struct {
-	Message    string              `json:"message"`
-	Success    bool                `json:"success"`
-	Data       *PasswordResetToken `json:"data"`
-	StatusCode int                 `json:"-"`
+	Message    string                 `json:"message"`
+	Success    bool                   `json:"success"`
+	Data       *MstPasswordResetToken `json:"data"`
+	StatusCode int                    `json:"-"`
 }

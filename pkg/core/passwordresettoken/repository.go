@@ -21,23 +21,36 @@ type repository struct {
 }
 
 type Repository interface {
-	CallCreatePasswordResetToken(userId string, reqBody *CreatePasswordResetTokenRequest) error
-	FindOnePasswordResetTokenByToken(token string) (*http.Response, error)
-	DeletePasswordResetToken(id string) (*http.Response, error)
+	CallCreatePasswordResetTokenAPI(userId string, reqBody *CreatePasswordResetTokenRequest) error
+	CallGetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error)
+	CallDeletePasswordResetTokenAPI(id string) error
 }
 
-func (repo *repository) FindOnePasswordResetTokenByToken(token string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
+func (repo *repository) CallGetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error) {
+	url := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	client := &http.Client{}
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	return client.Do(request)
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*MstPasswordResetToken](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
-func (repo *repository) CallCreatePasswordResetToken(userId string, reqBody *CreatePasswordResetTokenRequest) error {
+func (repo *repository) CallCreatePasswordResetTokenAPI(userId string, reqBody *CreatePasswordResetTokenRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens`, repo.cfg.Env.AifcoreHost, userId)
 
 	bodyBytes, err := json.Marshal(reqBody)
@@ -66,12 +79,26 @@ func (repo *repository) CallCreatePasswordResetToken(userId string, reqBody *Cre
 	return nil
 }
 
-func (repo *repository) DeletePasswordResetToken(id string) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, id)
+func (repo *repository) CallDeletePasswordResetTokenAPI(id string) error {
+	url := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, id)
 
-	request, _ := http.NewRequest(http.MethodDelete, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	client := &http.Client{}
-	return client.Do(request)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
