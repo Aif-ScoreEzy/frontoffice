@@ -24,9 +24,9 @@ type repository struct {
 type Repository interface {
 	// CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	// CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
-	CallVerifyMemberAPI(memberId uint, req *PasswordResetRequest) error
-	PasswordReset(memberId uint, token string, req *PasswordResetRequest) error
-	ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error)
+	CallVerifyMemberAPI(userId uint, req *PasswordResetRequest) error
+	CallChangePasswordAPI(userId string, req *ChangePasswordRequest) error
+	CallPasswordResetAPI(userId uint, token string, req *PasswordResetRequest) error
 	AuthMemberAifCore(req *userLoginRequest) (*loginResponseData, error)
 }
 
@@ -77,8 +77,8 @@ type Repository interface {
 // 	return user, nil
 // }
 
-func (repo *repository) CallVerifyMemberAPI(memberId uint, reqBody *PasswordResetRequest) error {
-	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
+func (repo *repository) CallVerifyMemberAPI(userId uint, reqBody *PasswordResetRequest) error {
+	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, userId)
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
@@ -106,8 +106,8 @@ func (repo *repository) CallVerifyMemberAPI(memberId uint, reqBody *PasswordRese
 	return nil
 }
 
-func (repo *repository) PasswordReset(memberId uint, token string, reqBody *PasswordResetRequest) error {
-	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, memberId, token)
+func (repo *repository) CallPasswordResetAPI(userId uint, token string, reqBody *PasswordResetRequest) error {
+	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, userId, token)
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
@@ -135,15 +135,33 @@ func (repo *repository) PasswordReset(memberId uint, token string, reqBody *Pass
 	return nil
 }
 
-func (repo *repository) ChangePasswordAifCore(memberId string, req *ChangePasswordRequest) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.cfg.Env.AifcoreHost, memberId)
+func (repo *repository) CallChangePasswordAPI(userId string, reqBody *ChangePasswordRequest) error {
+	url := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.cfg.Env.AifcoreHost, userId)
 
-	jsonBodyValue, _ := json.Marshal(req)
-	request, _ := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
 
-	client := &http.Client{}
-	return client.Do(request)
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (repo *repository) AuthMemberAifCore(reqBody *userLoginRequest) (*loginResponseData, error) {

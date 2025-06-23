@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
-	"front-office/internal/apperror/mapper"
+	"front-office/internal/apperror"
 	"front-office/pkg/core/role"
 	"io"
 	"net/http"
@@ -36,7 +36,7 @@ type Service interface {
 func (s *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
 	member, err := s.Repo.CallGetMemberAPI(query)
 	if err != nil {
-		return nil, mapper.MapRepoError(err, "failed to get member")
+		return nil, apperror.MapRepoError(err, "failed to get member")
 	}
 
 	return member, nil
@@ -92,7 +92,7 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 			Email: *req.Email,
 		})
 		if err != nil {
-			return mapper.MapRepoError(err, "failed to get member")
+			return apperror.MapRepoError(err, "failed to get member")
 		}
 
 		if member.MemberId != 0 {
@@ -127,7 +127,7 @@ func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {
 func (s *service) DeleteMemberById(id string) error {
 	err := s.Repo.CallDeleteMemberAPI(id)
 	if err != nil {
-		return mapper.MapRepoError(err, "failed to delete member")
+		return apperror.MapRepoError(err, "failed to delete member")
 	}
 
 	return nil

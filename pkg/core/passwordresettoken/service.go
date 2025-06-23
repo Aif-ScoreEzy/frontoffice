@@ -4,7 +4,6 @@ import (
 	"front-office/app/config"
 	"front-office/helper"
 	"front-office/internal/apperror"
-	"front-office/internal/apperror/mapper"
 	"strconv"
 )
 
@@ -26,7 +25,7 @@ type Service interface {
 func (svc *service) GetPasswordResetToken(token string) (*MstPasswordResetToken, error) {
 	data, err := svc.Repo.CallGetPasswordResetTokenAPI(token)
 	if err != nil {
-		return nil, mapper.MapRepoError(err, "failed to get password reset token")
+		return nil, apperror.MapRepoError(err, "failed to get password reset token")
 	}
 
 	return data, nil
@@ -51,7 +50,7 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 	userIdStr := helper.ConvertUintToString(userId)
 	err = svc.Repo.CallCreatePasswordResetTokenAPI(userIdStr, req)
 	if err != nil {
-		return "", mapper.MapRepoError(err, "failed to create password reset token")
+		return "", apperror.MapRepoError(err, "failed to create password reset token")
 	}
 
 	return token, nil
@@ -61,7 +60,7 @@ func (svc *service) DeletePasswordResetToken(id uint) error {
 	idStr := strconv.Itoa(int(id))
 	err := svc.Repo.CallDeletePasswordResetTokenAPI(idStr)
 	if err != nil {
-		return mapper.MapRepoError(err, "failed to delete password reset token")
+		return apperror.MapRepoError(err, "failed to delete password reset token")
 	}
 
 	return nil

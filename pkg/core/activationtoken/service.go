@@ -8,7 +8,6 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/apperror"
-	"front-office/internal/apperror/mapper"
 	"strings"
 )
 
@@ -78,7 +77,7 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 func (svc *service) GetActivationToken(token string) (*MstActivationToken, error) {
 	activationToken, err := svc.Repo.CallGetActivationTokenAPI(token)
 	if err != nil {
-		return nil, mapper.MapRepoError(err, "failed to get activation token")
+		return nil, apperror.MapRepoError(err, "failed to get activation token")
 	}
 
 	return activationToken, nil

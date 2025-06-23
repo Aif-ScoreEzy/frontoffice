@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"front-office/common/model"
 	"front-office/helper"
-	"front-office/internal/apperror/mapper"
+	"front-office/internal/apperror"
 	"io"
 	"log"
 	"mime/multipart"
@@ -43,7 +43,7 @@ type Service interface {
 func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error) {
 	res, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
 	if err != nil {
-		return nil, mapper.MapRepoError(err, "create job failed")
+		return nil, apperror.MapRepoError(err, "create job failed")
 	}
 
 	return &res.Data, err

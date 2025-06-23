@@ -2,7 +2,7 @@ package operation
 
 import (
 	"encoding/json"
-	"front-office/internal/apperror/mapper"
+	"front-office/internal/apperror"
 	"io"
 	"net/http"
 )
@@ -24,7 +24,7 @@ type Service interface {
 func (svc *service) GetLogOperations(filter *LogOperationFilter) (*LogOperation, error) {
 	log, err := svc.Repo.FetchLogOperations(filter)
 	if err != nil {
-		return nil, mapper.MapRepoError(err, "failed to fetch log operations")
+		return nil, apperror.MapRepoError(err, "failed to fetch log operations")
 	}
 
 	return log, nil
@@ -46,7 +46,7 @@ func (svc *service) GetByRange(filter *LogRangeFilter) (*AifResponse, error) {
 
 func (svc *service) AddLogOperation(req *AddLogRequest) error {
 	if err := svc.Repo.AddLogOperation(req); err != nil {
-		return mapper.MapRepoError(err, "failed to create log")
+		return apperror.MapRepoError(err, "failed to create log")
 	}
 
 	return nil

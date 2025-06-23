@@ -10,7 +10,6 @@ import (
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/passwordresettoken"
-	"front-office/utility/mailjet"
 	"strconv"
 	"time"
 
@@ -150,50 +149,21 @@ func (ctrl *controller) RequestActivation(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
-	req := c.Locals("request").(*ChangePasswordRequest)
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-
-	memberData, err := ctrl.svcUser.GetMemberBy(&member.FindUserQuery{
-		Id: memberId,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	reqBody, ok := c.Locals("request").(*ChangePasswordRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	result, err := ctrl.svc.ChangePassword(memberId, req)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
 
-	if !result.Success {
-		statusCode, resp := helper.GetError(result.Message)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = mailjet.SendConfirmationEmailPasswordChangeSuccess(memberData.Name, memberData.Email)
-	if err != nil {
+	if err := ctrl.svc.ChangePassword(userId, reqBody); err != nil {
 		return err
 	}
 
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  memberData.MemberId,
-		CompanyId: memberData.CompanyId,
-		Action:    constant.EventChangePassword,
-	}
-
-	err = ctrl.svcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to log operation for change password")
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to change password",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
