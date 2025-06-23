@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/role"
 	"front-office/utility/mailjet"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -111,72 +111,22 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 	req := c.Locals("request").(*UpdateProfileRequest)
+
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
-	roleId := fmt.Sprintf("%v", c.Locals("roleId"))
-
-	var oldEmail string
-	if req.Email != nil {
-		roleIdInt, err := strconv.Atoi(roleId)
-		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		roleIdMember := 2
-		if roleIdInt == roleIdMember {
-			statusCode, resp := helper.GetError(constant.RequestProhibited)
-			return c.Status(statusCode).JSON(resp)
-		}
-
-		member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-			Email: *req.Email,
-		})
-
-		if err != nil {
-			return err
-		}
-
-		oldEmail = member.Email
+	roleId, err := helper.InterfaceToUint(c.Locals("roleId"))
+	if err != nil {
+		return apperror.Unauthorized("invalid role id session")
 	}
 
-	err := ctrl.Svc.UpdateProfile(userId, oldEmail, req)
+	updateResp, err := ctrl.Svc.UpdateProfile(userId, roleId, req)
 	if err != nil {
 		return err
 	}
 
-	updatedMember, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-		Id: userId,
-	})
-	if err != nil {
-		return err
-	}
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  updatedMember.MemberId,
-		CompanyId: updatedMember.CompanyId,
-		Action:    constant.EventUpdateProfile,
-	}
-
-	err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for update profile")
-	}
-
-	dataResponse := &UserUpdateResponse{
-		Id:        updatedMember.MemberId,
-		Name:      updatedMember.Name,
-		Email:     updatedMember.Email,
-		Active:    updatedMember.Active,
-		CompanyId: updatedMember.CompanyId,
-		RoleId:    updatedMember.RoleId,
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"succeed to update profile",
-		dataResponse,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+		updateResp,
+	))
 }
 
 func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
@@ -206,7 +156,7 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 		log.Println("Failed to log operation for upload profile photo")
 	}
 
-	dataResponse := &UserUpdateResponse{
+	dataResponse := &userUpdateResponse{
 		Id:        member.MemberId,
 		Name:      member.Name,
 		Email:     member.Email,

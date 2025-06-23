@@ -64,7 +64,7 @@ type UpdateUserRequest struct {
 	Active     *bool   `json:"active"`
 }
 
-type UserUpdateResponse struct {
+type userUpdateResponse struct {
 	Id        uint   `json:"id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
@@ -142,3 +142,7 @@ type Meta struct {
 	Size       any `json:"size,omitempty"`
 	Message    any `json:"message,omitempty"`
 }
+
+const (
+	memberRoleID = 2
+)
