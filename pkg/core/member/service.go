@@ -33,7 +33,7 @@ type Service interface {
 	GetMemberBy(query *FindUserQuery) (*MstMember, error)
 	GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	UpdateProfile(userrId string, roleId uint, req *UpdateProfileRequest) (*userUpdateResponse, error)
-	UploadProfileImage(id string, filename *string) error
+	UploadProfileImage(id string, filename *string) (*userUpdateResponse, error)
 	UpdateMemberById(id string, req *UpdateUserRequest) error
 	DeleteMemberById(id string) error
 }
@@ -137,16 +137,43 @@ func (svc *service) UpdateProfile(userId string, roleId uint, req *UpdateProfile
 	}, nil
 }
 
-func (s *service) UploadProfileImage(id string, filename *string) error {
-	updateUser := map[string]interface{}{}
-
-	if filename != nil {
-		updateUser["image"] = *filename
+func (svc *service) UploadProfileImage(userId string, filename *string) (*userUpdateResponse, error) {
+	user, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: userId})
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to fetch member")
+	}
+	if user.MemberId == 0 {
+		return nil, apperror.NotFound(constant.UserNotFound)
 	}
 
-	updateUser["updated_at"] = time.Now()
+	updateFields := make(map[string]interface{})
 
-	return s.repo.CallUpdateMemberAPI(id, updateUser)
+	if filename != nil {
+		updateFields["image"] = *filename
+	}
+
+	updateFields["updated_at"] = time.Now()
+
+	if err := svc.repo.CallUpdateMemberAPI(userId, updateFields); err != nil {
+		return nil, apperror.MapRepoError(err, "failed to update member")
+	}
+
+	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
+		MemberId:  user.MemberId,
+		CompanyId: user.CompanyId,
+		Action:    constant.EventUpdateProfile,
+	}); err != nil {
+		log.Warn().Err(err).Msg("failed to log upload profile photo event")
+	}
+
+	return &userUpdateResponse{
+		Id:        user.MemberId,
+		Name:      user.Name,
+		Email:     user.Email,
+		Active:    user.Active,
+		CompanyId: user.CompanyId,
+		RoleId:    user.RoleId,
+	}, nil
 }
 
 func (s *service) UpdateMemberById(id string, req *UpdateUserRequest) error {

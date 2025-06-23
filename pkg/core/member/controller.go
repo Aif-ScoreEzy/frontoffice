@@ -19,16 +19,16 @@ func NewController(
 	roleService role.Service,
 	logOperationService operation.Service) Controller {
 	return &controller{
-		Svc:             service,
-		RoleSvc:         roleService,
-		LogOperationSvc: logOperationService,
+		svc:             service,
+		roleSvc:         roleService,
+		logOperationSvc: logOperationService,
 	}
 }
 
 type controller struct {
-	Svc             Service
-	RoleSvc         role.Service
-	LogOperationSvc operation.Service
+	svc             Service
+	roleSvc         role.Service
+	logOperationSvc operation.Service
 }
 
 type Controller interface {
@@ -46,7 +46,7 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 	username := c.Query("username")
 	key := c.Query("key")
 
-	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.svc.GetMemberBy(&FindUserQuery{
 		Email:    email,
 		Username: username,
 		Key:      key,
@@ -66,7 +66,7 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 func (ctrl *controller) GetById(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.svc.GetMemberBy(&FindUserQuery{
 		Id: id,
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		EndDate:   c.Query("endDate", ""),
 	}
 
-	users, meta, err := ctrl.Svc.GetMemberList(filter)
+	users, meta, err := ctrl.svc.GetMemberList(filter)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 		return apperror.Unauthorized("invalid role id session")
 	}
 
-	updateResp, err := ctrl.Svc.UpdateProfile(userId, roleId, req)
+	updateResp, err := ctrl.svc.UpdateProfile(userId, roleId, req)
 	if err != nil {
 		return err
 	}
@@ -133,44 +133,15 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
 	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
-	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
-		Id: userId,
-	})
+	resp, err := ctrl.svc.UploadProfileImage(userId, &filename)
 	if err != nil {
 		return err
 	}
 
-	err = ctrl.Svc.UploadProfileImage(userId, &filename)
-	if err != nil {
-		return err
-	}
-
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  member.MemberId,
-		CompanyId: member.CompanyId,
-		Action:    constant.EventUpdateProfile,
-	}
-
-	err = ctrl.LogOperationSvc.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for upload profile photo")
-	}
-
-	dataResponse := &userUpdateResponse{
-		Id:        member.MemberId,
-		Name:      member.Name,
-		Email:     member.Email,
-		Active:    member.Active,
-		CompanyId: member.CompanyId,
-		RoleId:    member.RoleId,
-	}
-
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"success to upload profile image",
-		dataResponse,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+		resp,
+	))
 }
 
 func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
@@ -184,7 +155,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	member, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	member, err := ctrl.svc.GetMemberBy(&FindUserQuery{
 		Id:        memberId,
 		CompanyId: companyId,
 	})
@@ -198,7 +169,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	err = ctrl.Svc.UpdateMemberById(memberId, req)
+	err = ctrl.svc.UpdateMemberById(memberId, req)
 	if err != nil {
 		return err
 	}
@@ -235,7 +206,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 			Action:    event,
 		}
 
-		err := ctrl.LogOperationSvc.AddLogOperation(logRequest)
+		err := ctrl.logOperationSvc.AddLogOperation(logRequest)
 		if err != nil {
 			log.Println("Failed to log operation for update member data by admin")
 		}
@@ -253,7 +224,7 @@ func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	_, err := ctrl.Svc.GetMemberBy(&FindUserQuery{
+	_, err := ctrl.svc.GetMemberBy(&FindUserQuery{
 		Id:        id,
 		CompanyId: companyId,
 	})
@@ -261,7 +232,7 @@ func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = ctrl.Svc.DeleteMemberById(id)
+	err = ctrl.svc.DeleteMemberById(id)
 	if err != nil {
 		return err
 	}
