@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(service Service) Controller {
-	return &controller{Svc: service}
+	return &controller{svc: service}
 }
 
 type controller struct {
-	Svc Service
+	svc Service
 }
 
 type Controller interface {
@@ -26,14 +27,71 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	page := c.Query("page", "1")
 	size := c.Query("size", "10")
-	role := c.Query("role")
-	event := c.Query("event")
-	name := c.Query("name", "")
+	role := strings.ToLower(c.Query("role"))
+	eventQuery := c.Query("event")
+	name := strings.ToLower(c.Query("name", ""))
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	mappedEvent, valid := mapEventKeyword(eventQuery)
+	if eventQuery != "" && !valid {
+		return apperror.BadRequest("invalid event type")
+	}
+
+	filter := &LogOperationFilter{
+		CompanyId: companyId,
+		Page:      page,
+		Size:      size,
+		Role:      role,
+		Event:     mappedEvent,
+		Name:      name,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	logs, err := ctrl.svc.GetLogsOperation(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get list of log operation",
+		logs,
+	))
+}
+
+func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
+	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	page := c.Query("page", "1")
+	size := c.Query("size", "10")
 	startDate := c.Query("start_date")
 	endDate := c.Query(("end_date"))
 
-	// validation for query input
-	var eventMap = map[string]string{
+	if startDate == "" || endDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
+	}
+
+	filter := &LogRangeFilter{
+		Page:      page,
+		Size:      size,
+		CompanyId: companyId,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	logs, err := ctrl.svc.GetLogsByRange(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get list of log operation",
+		logs,
+	))
+}
+
+func mapEventKeyword(input string) (string, bool) {
+	eventMap := map[string]string{
 		"sign_in":                     constant.EventSignIn,
 		"sign_out":                    constant.EventSignOut,
 		"change_password":             constant.EventChangePassword,
@@ -51,68 +109,7 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		"submit_payment_confirmation": constant.EventSubmitPaymentConfirmation,
 	}
 
-	normalizedEventQuery := strings.ToLower(strings.ReplaceAll(event, " ", "_"))
-	mappedEvent, ok := eventMap[normalizedEventQuery]
-	if event != "" && !ok {
-		statusCode, res := helper.GetError("invalid event type")
-
-		return c.Status(statusCode).JSON(res)
-	}
-
-	event = mappedEvent
-
-	filter := &LogOperationFilter{
-		CompanyId: companyId,
-		Page:      page,
-		Size:      size,
-		Role:      strings.ToLower(role),
-		Event:     event,
-		Name:      strings.ToLower(name),
-		StartDate: startDate,
-		EndDate:   endDate,
-	}
-
-	result, err := ctrl.Svc.GetLogOperations(filter)
-	if err != nil {
-		statusCode, res := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(res)
-	}
-
-	responseBody := helper.ResponseSuccess(
-		"succeed to get list of log operation",
-		result,
-	)
-
-	return c.Status(responseBody.StatusCode).JSON(responseBody)
-}
-
-func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
-	page := c.Query("page", "1")
-	size := c.Query("size", "10")
-	startDate := c.Query("start_date")
-	endDate := c.Query(("end_date"))
-
-	filter := &LogRangeFilter{
-		Page:      page,
-		Size:      size,
-		CompanyId: companyId,
-		StartDate: startDate,
-		EndDate:   endDate,
-	}
-
-	result, err := ctrl.Svc.GetByRange(filter)
-	if err != nil {
-		statusCode, res := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(res)
-	}
-
-	responseBody := helper.ResponseSuccess(
-		"succeed to get list of log operation",
-		result,
-	)
-
-	return c.Status(responseBody.StatusCode).JSON(responseBody)
+	normalized := strings.ToLower(strings.ReplaceAll(input, " ", "_"))
+	event, ok := eventMap[normalized]
+	return event, ok
 }

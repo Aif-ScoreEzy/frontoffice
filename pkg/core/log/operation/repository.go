@@ -21,15 +21,15 @@ type repository struct {
 }
 
 type Repository interface {
-	FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error)
-	FetchByRange(filter *LogRangeFilter) (*http.Response, error)
+	CallGetLogsOperationAPI(filter *LogOperationFilter) ([]*LogOperation, error)
+	CallGetLogsByRangeAPI(filter *LogRangeFilter) ([]*LogOperation, error)
 	AddLogOperation(req *AddLogRequest) error
 }
 
-func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*LogOperation, error) {
-	url := fmt.Sprintf("%s/api/middleware/auth-member-login", repo.cfg.Env.AifcoreHost)
+func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) ([]*LogOperation, error) {
+	url := fmt.Sprintf("%s/api/core/logging/operation/list/%s", repo.cfg.Env.AifcoreHost, filter.CompanyId)
 
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -52,7 +52,7 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*LogOper
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[*LogOperation](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogOperation](resp)
 	if err != nil {
 		return nil, err
 	}
@@ -60,27 +60,36 @@ func (repo *repository) FetchLogOperations(filter *LogOperationFilter) (*LogOper
 	return apiResp.Data, nil
 }
 
-func (repo *repository) FetchByRange(filter *LogRangeFilter) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/operation/range"
+func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) ([]*LogOperation, error) {
+	url := fmt.Sprintf("%s/api/core/logging/operation/range", repo.cfg.Env.AifcoreHost)
 
-	request, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	q := request.URL.Query()
+	q := req.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Size)
 	q.Add("company_id", filter.CompanyId)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogOperation](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 func (repo *repository) AddLogOperation(reqBody *AddLogRequest) error {
