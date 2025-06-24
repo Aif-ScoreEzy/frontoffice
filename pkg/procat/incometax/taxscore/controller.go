@@ -21,12 +21,12 @@ type Controller interface {
 }
 
 func (ctrl *controller) TaxScore(c *fiber.Ctx) error {
-	req := c.Locals("request").(*taxScoreRequest)
+	reqBody := c.Locals("request").(*taxScoreRequest)
 	apiKey, _ := c.Locals("apiKey").(string)
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	result, err := ctrl.svc.CallTaxScore(apiKey, memberId, companyId, req)
+	result, err := ctrl.svc.CallTaxScore(apiKey, memberId, companyId, reqBody)
 	if err != nil {
 		return err
 	}

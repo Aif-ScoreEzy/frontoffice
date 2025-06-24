@@ -39,7 +39,7 @@ type Service interface {
 }
 
 func (svc *service) CallTaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error) {
-	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugTaxComplianceStatus)
+	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugTaxScore)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
 	}
