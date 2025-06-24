@@ -17,7 +17,7 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	logRepo := log.NewRepository(cfg, client)
 	transRepo := transaction.NewRepository(cfg, client)
 
-	service := NewService(repo)
+	service := NewService(repo, productRepo, logRepo, transRepo)
 	productService := product.NewService(productRepo)
 	logService := log.NewService(logRepo)
 	transService := transaction.NewService(transRepo)

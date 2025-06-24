@@ -3,6 +3,7 @@ package log
 import (
 	"front-office/common/model"
 	"front-office/helper"
+	"front-office/internal/apperror"
 )
 
 func NewService(repo Repository) Service {
@@ -16,22 +17,22 @@ type service struct {
 }
 
 type Service interface {
-	CreateProCatJob(req *CreateJobRequest) (*model.AifcoreAPIResponse[createJobDataResponse], error)
-	UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.AifcoreAPIResponse[any], error)
+	CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error)
+	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 }
 
-func (svc *service) CreateProCatJob(req *CreateJobRequest) (*model.AifcoreAPIResponse[createJobDataResponse], error) {
-	response, err := svc.repo.CallCreateProCatJobAPI(req)
+func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error) {
+	result, err := svc.repo.CallCreateProCatJobAPI(req)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to create job")
 	}
 
-	return helper.ParseAifcoreAPIResponse[createJobDataResponse](response)
+	return result, nil
 }
 
-func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 	data := map[string]interface{}{}
 
 	if req.SuccessCount != nil {
@@ -46,12 +47,12 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.Ai
 		data["end_at"] = *req.EndAt
 	}
 
-	response, err := svc.repo.CallUpdateJobAPI(jobId, data)
+	err := svc.repo.CallUpdateJobAPI(jobId, data)
 	if err != nil {
-		return nil, err
+		return apperror.MapRepoError(err, "failed to update job")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return nil
 }
 
 func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {

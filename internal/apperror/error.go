@@ -72,6 +72,10 @@ func GatewayTimeout(msg string) *AppError {
 	return newAppError(http.StatusGatewayTimeout, msg, nil)
 }
 
+func Unknown(msg string) *AppError {
+	return newAppError(512, msg, nil)
+}
+
 func AsAppError(err error, target **AppError) bool {
 	return errors.As(err, target)
 }

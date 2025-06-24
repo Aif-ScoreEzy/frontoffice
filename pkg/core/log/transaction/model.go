@@ -11,7 +11,7 @@ type LogTransScoreezy struct {
 	LogTrxId             uint             `json:"log_trx_id" gorm:"primaryKey;autoIncrement"`
 	TrxId                string           `json:"trx_id"`
 	MemberId             uint             `json:"user_id"`
-	Member               member.MstMember `json:"member"`
+	Member               member.MstMember `json:"user"`
 	CompanyId            uint             `json:"company_id"`
 	IpClient             string           `json:"ip_client"`
 	ProductId            uint             `json:"product_id"`

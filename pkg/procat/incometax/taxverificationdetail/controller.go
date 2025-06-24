@@ -47,7 +47,7 @@ func (ctrl *controller) TaxVerificationDetail(c *fiber.Ctx) error {
 	}
 
 	jobRes, err := ctrl.logSvc.CreateProCatJob(&log.CreateJobRequest{
-		ProductId: productRes.Data.ProductId,
+		ProductId: productRes.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
 		Total:     1,
@@ -58,7 +58,7 @@ func (ctrl *controller) TaxVerificationDetail(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	jobIdStr := strconv.FormatUint(uint64(jobRes.Data.JobId), 10)
+	jobIdStr := strconv.FormatUint(uint64(jobRes.JobId), 10)
 	taxVerificationRes, err := ctrl.svc.CallTaxVerification(apiKey, jobIdStr, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
@@ -87,15 +87,13 @@ func (ctrl *controller) TaxVerificationDetail(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	_, err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
+	err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
 		SuccessCount: &logTransRes.SuccessCount,
 		Status:       helper.StringPtr(constant.JobStatusDone),
 		EndAt:        helper.TimePtr(time.Now()),
 	})
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	return c.Status(taxVerificationRes.StatusCode).JSON(taxVerificationRes)

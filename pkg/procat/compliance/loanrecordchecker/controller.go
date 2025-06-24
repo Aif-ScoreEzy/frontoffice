@@ -1,13 +1,10 @@
 package loanrecordchecker
 
 import (
-	"front-office/common/constant"
-	"front-office/helper"
+	"fmt"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
 	"front-office/pkg/procat/log"
-	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -34,69 +31,14 @@ type Controller interface {
 
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
 	req := c.Locals("request").(*LoanRecordCheckerRequest)
-	apiKey, _ := c.Locals("apiKey").(string)
-	memberId, _ := c.Locals("userId").(uint)
-	companyId, _ := c.Locals("companyId").(uint)
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
+	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
-	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
-
-	productRes, err := ctrl.productSvc.GetProductBySlug(constant.SlugLoanRecordChecker)
+	result, err := ctrl.svc.LoanRecordChecker(apiKey, memberIdStr, companyIdStr, req)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	jobRes, err := ctrl.logSvc.CreateProCatJob(&log.CreateJobRequest{
-		ProductId: productRes.Data.ProductId,
-		MemberId:  memberIdStr,
-		CompanyId: companyIdStr,
-		Total:     1,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	jobIdStr := strconv.FormatUint(uint64(jobRes.Data.JobId), 10)
-	loanRecordRes, err := ctrl.svc.LoanRecordChecker(req, apiKey, jobIdStr, memberIdStr, companyIdStr)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if loanRecordRes.StatusCode > fiber.StatusBadRequest {
-		_, resp := helper.GetError(loanRecordRes.Data.Status)
-
-		return c.Status(loanRecordRes.StatusCode).JSON(resp)
-	}
-
-	if err := ctrl.transactionSvc.UpdateLogProCat(loanRecordRes.TransactionId, &transaction.UpdateTransRequest{
-		Success: helper.BoolPtr(true),
-	}); err != nil {
 		return err
 	}
 
-	logTransRes, err := ctrl.transactionSvc.GetLogTransSuccessCount(jobIdStr)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	_, err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
-		SuccessCount: &logTransRes.SuccessCount,
-		Status:       helper.StringPtr(constant.JobStatusDone),
-		EndAt:        helper.TimePtr(time.Now()),
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	return c.Status(loanRecordRes.StatusCode).JSON(loanRecordRes)
+	return c.Status(result.StatusCode).JSON(result)
 }

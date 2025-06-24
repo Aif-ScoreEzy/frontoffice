@@ -30,6 +30,8 @@ func MapExternalAPIError(err *ExternalAPIError) error {
 		return ServiceUnavailable("external service unavailable")
 	case 504:
 		return GatewayTimeout("external service timeout")
+	case 512:
+		return Unknown(err.Message)
 	default:
 		return BadGateway("unexpected external service error")
 	}
@@ -51,6 +53,14 @@ func MapAuthError(err *ExternalAPIError) error {
 		}
 
 		return Unauthorized(constant.InvalidEmailOrPassword)
+	}
+
+	return MapExternalAPIError(err)
+}
+
+func MapLoanError(err *ExternalAPIError) error {
+	if err.StatusCode == 512 {
+		return Unknown("The data partner service is currently unavailable.")
 	}
 
 	return MapExternalAPIError(err)
