@@ -1,19 +1,24 @@
 package log
 
 import (
+	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/apperror"
+	"front-office/pkg/core/log/transaction"
+	"time"
 )
 
-func NewService(repo Repository) Service {
+func NewService(repo Repository, transactionRepo transaction.Repository) Service {
 	return &service{
-		repo: repo,
+		repo,
+		transactionRepo,
 	}
 }
 
 type service struct {
-	repo Repository
+	repo            Repository
+	transactionRepo transaction.Repository
 }
 
 type Service interface {
@@ -21,6 +26,7 @@ type Service interface {
 	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	FinalizeLoanJob(jobIdStr string, transactionId string) error
 }
 
 func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error) {
@@ -71,4 +77,27 @@ func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResp
 	}
 
 	return helper.ParseAifcoreAPIResponse[any](response)
+}
+
+func (svc *service) FinalizeLoanJob(jobIdStr string, transactionId string) error {
+	if err := svc.transactionRepo.CallUpdateLogTransAPI(transactionId, map[string]interface{}{
+		"success": helper.BoolPtr(true),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update transaction log")
+	}
+
+	count, err := svc.transactionRepo.CallLogTransSuccessCountAPI(jobIdStr)
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to get success count")
+	}
+
+	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
+		"success_count": helper.IntPtr(int(count.SuccessCount)),
+		"status":        helper.StringPtr(constant.JobStatusDone),
+		"end_at":        helper.TimePtr(time.Now()),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update job status")
+	}
+
+	return nil
 }

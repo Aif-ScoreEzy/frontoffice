@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
+	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
 )
@@ -23,97 +25,115 @@ type repository struct {
 }
 
 type Repository interface {
-	CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
-	CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
-	CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
+	CallMultipleLoan7Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	CallMultipleLoan30Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	CallMultipleLoan90Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 }
 
-func (repo *repository) CallMultipleLoan7Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/7-days"
+func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	url := fmt.Sprintf("%s/product/compliance/multiple-loan/7-days", repo.cfg.Env.ProductCatalogHost)
 
-	jsonBody, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-API-KEY", apiKey)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-API-KEY", apiKey)
+	req.Header.Set("X-Member-ID", memberId)
+	req.Header.Set("X-Company-ID", companyId)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("job_id", jobId)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	response, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
+	apiResp, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, err
 }
 
-func (repo *repository) CallMultipleLoan30Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/30-days"
+func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	url := fmt.Sprintf("%s/product/compliance/multiple-loan/30-days", repo.cfg.Env.ProductCatalogHost)
 
-	jsonBody, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-API-Key", apiKey)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-API-KEY", apiKey)
+	req.Header.Set("X-Member-ID", memberId)
+	req.Header.Set("X-Company-ID", companyId)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("job_id", jobId)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	response, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
+	apiResp, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, err
 }
 
-func (repo *repository) CallMultipleLoan90Days(request *multipleLoanRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/multiple-loan/90-days"
+func (repo *repository) CallMultipleLoan90Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	url := fmt.Sprintf("%s/product/compliance/multiple-loan/90-days", repo.cfg.Env.ProductCatalogHost)
 
-	jsonBody, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-API-Key", apiKey)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-API-KEY", apiKey)
+	req.Header.Set("X-Member-ID", memberId)
+	req.Header.Set("X-Company-ID", companyId)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("job_id", jobId)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	response, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
+	apiResp, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, err
 }

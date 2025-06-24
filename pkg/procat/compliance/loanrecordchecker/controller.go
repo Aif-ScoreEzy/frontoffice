@@ -2,27 +2,18 @@ package loanrecordchecker
 
 import (
 	"fmt"
-	"front-office/pkg/core/log/transaction"
-	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
 	svc Service,
-	productSvc product.Service,
-	logSvc log.Service,
-	transactionSvc transaction.Service,
 ) Controller {
-	return &controller{svc, productSvc, logSvc, transactionSvc}
+	return &controller{svc}
 }
 
 type controller struct {
-	svc            Service
-	productSvc     product.Service
-	logSvc         log.Service
-	transactionSvc transaction.Service
+	svc Service
 }
 
 type Controller interface {
@@ -30,12 +21,12 @@ type Controller interface {
 }
 
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
-	req := c.Locals("request").(*LoanRecordCheckerRequest)
+	reqBody := c.Locals("request").(*loanRecordCheckerRequest)
 	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
 	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
 	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	result, err := ctrl.svc.LoanRecordChecker(apiKey, memberIdStr, companyIdStr, req)
+	result, err := ctrl.svc.LoanRecordChecker(apiKey, memberIdStr, companyIdStr, reqBody)
 	if err != nil {
 		return err
 	}

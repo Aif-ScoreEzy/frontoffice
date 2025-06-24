@@ -25,10 +25,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, request *LoanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
+	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, request *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, reqBody *LoanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	url := fmt.Sprintf("%s/product/compliance/loan-record-checker", repo.cfg.Env.ProductCatalogHost)
 
 	bodyBytes, err := json.Marshal(reqBody)

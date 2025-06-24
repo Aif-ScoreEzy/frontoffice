@@ -3,6 +3,7 @@ package log
 import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
+	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +11,8 @@ import (
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repository := NewRepository(cfg, client)
-	service := NewService(repository)
+	transactionRepo := transaction.NewRepository(cfg, client)
+	service := NewService(repository, transactionRepo)
 	controller := NewController(service)
 
 	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJob)

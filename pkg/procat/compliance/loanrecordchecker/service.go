@@ -17,12 +17,14 @@ func NewService(
 	productRepo product.Repository,
 	logRepo log.Repository,
 	transactionRepo transaction.Repository,
+	logService log.Service,
 ) Service {
 	return &service{
 		repo,
 		productRepo,
 		logRepo,
 		transactionRepo,
+		logService,
 	}
 }
 
@@ -31,13 +33,14 @@ type service struct {
 	productRepo     product.Repository
 	logRepo         log.Repository
 	transactionRepo transaction.Repository
+	logService      log.Service
 }
 
 type Service interface {
-	LoanRecordChecker(apiKey, memberId, companyId string, reqBody *LoanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
+	LoanRecordChecker(apiKey, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBody *LoanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugLoanRecordChecker)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
@@ -59,6 +62,14 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 
 	result, err := svc.repo.CallLoanRecordCheckerAPI(apiKey, jobIdStr, memberId, companyId, reqBody)
 	if err != nil {
+		if err := svc.logRepo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
+			"success_count": helper.IntPtr(0),
+			"status":        helper.StringPtr(constant.JobStatusFailed),
+			"end_at":        helper.TimePtr(time.Now()),
+		}); err != nil {
+			return nil, apperror.MapRepoError(err, "failed to update job status")
+		}
+
 		var apiErr *apperror.ExternalAPIError
 		if errors.As(err, &apiErr) {
 			return nil, apperror.MapLoanError(apiErr)
@@ -67,25 +78,8 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 		return nil, apperror.Internal("failed to process loan record checker", err)
 	}
 
-	// mark success on transaction log
-	if err := svc.transactionRepo.CallUpdateLogTransAPI(result.TransactionId, map[string]interface{}{
-		"success": helper.BoolPtr(true),
-	}); err != nil {
-		return nil, apperror.MapRepoError(err, "failed to update log")
-	}
-
-	// get count of success
-	count, err := svc.transactionRepo.CallLogTransSuccessCountAPI(jobIdStr)
-	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to get success count")
-	}
-
-	if err := svc.logRepo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
-		"success_count": helper.IntPtr(int(count.SuccessCount)),
-		"status":        helper.StringPtr(constant.JobStatusDone),
-		"end_at":        helper.TimePtr(time.Now()),
-	}); err != nil {
-		return nil, apperror.MapRepoError(err, "failed to update job")
+	if err := svc.logService.FinalizeLoanJob(jobIdStr, result.TransactionId); err != nil {
+		return nil, err
 	}
 
 	return result, nil

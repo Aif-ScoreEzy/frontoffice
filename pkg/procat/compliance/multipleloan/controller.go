@@ -2,31 +2,21 @@ package multipleloan
 
 import (
 	"errors"
+	"fmt"
 	"front-office/common/constant"
-	"front-office/helper"
-	"front-office/pkg/core/log/transaction"
-	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
-	"strconv"
-	"time"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
 	svc Service,
-	productSvc product.Service,
-	logSvc log.Service,
-	transactionSvc transaction.Service,
 ) Controller {
-	return &controller{svc, productSvc, logSvc, transactionSvc}
+	return &controller{svc}
 }
 
 type controller struct {
-	svc            Service
-	productSvc     product.Service
-	logSvc         log.Service
-	transactionSvc transaction.Service
+	svc Service
 }
 
 type Controller interface {
@@ -35,70 +25,17 @@ type Controller interface {
 
 func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
 	req := c.Locals("request").(*multipleLoanRequest)
-	apiKey, _ := c.Locals("apiKey").(string)
-	memberId, _ := c.Locals("userId").(uint)
-	companyId, _ := c.Locals("companyId").(uint)
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
+	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
 	slug := c.Params("product_slug")
-
-	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
-	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
 
 	productSlug, err := mapProductSlug(slug)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(helper.ResponseFailed(err.Error()))
+		return apperror.BadRequest("unsupported product slug")
 	}
 
-	productRes, err := ctrl.productSvc.GetProductBySlug(productSlug)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	jobRes, err := ctrl.logSvc.CreateProCatJob(&log.CreateJobRequest{
-		ProductId: productRes.ProductId,
-		MemberId:  memberIdStr,
-		CompanyId: companyIdStr,
-		Total:     1,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	jobIdStr := strconv.FormatUint(uint64(jobRes.JobId), 10)
-
-	multipleLoanRes, err := ctrl.svc.MultipleLoan(apiKey, jobIdStr, productSlug, memberIdStr, companyIdStr, req)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-	if multipleLoanRes.StatusCode >= fiber.StatusBadRequest {
-		_, resp := helper.GetError(multipleLoanRes.Message)
-
-		return c.Status(multipleLoanRes.StatusCode).JSON(resp)
-	}
-
-	if err := ctrl.transactionSvc.UpdateLogProCat(multipleLoanRes.TransactionId, &transaction.UpdateTransRequest{
-		Success: helper.BoolPtr(true),
-	}); err != nil {
-		return err
-	}
-
-	logTransRes, err := ctrl.transactionSvc.GetLogTransSuccessCount(jobIdStr)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
-		SuccessCount: &logTransRes.SuccessCount,
-		Status:       helper.StringPtr(constant.JobStatusDone),
-		EndAt:        helper.TimePtr(time.Now()),
-	})
+	multipleLoanRes, err := ctrl.svc.MultipleLoan(apiKey, productSlug, memberIdStr, companyIdStr, req)
 	if err != nil {
 		return err
 	}
