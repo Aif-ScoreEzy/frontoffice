@@ -26,7 +26,8 @@ type Service interface {
 	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
-	FinalizeLoanJob(jobIdStr string, transactionId string) error
+	FinalizeJob(jobIdStr string, transactionId string) error
+	FinalizeFailedJob(jobIdStr string) error
 }
 
 func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error) {
@@ -79,7 +80,7 @@ func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResp
 	return helper.ParseAifcoreAPIResponse[any](response)
 }
 
-func (svc *service) FinalizeLoanJob(jobIdStr string, transactionId string) error {
+func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
 	if err := svc.transactionRepo.CallUpdateLogTransAPI(transactionId, map[string]interface{}{
 		"success": helper.BoolPtr(true),
 	}); err != nil {
@@ -94,6 +95,18 @@ func (svc *service) FinalizeLoanJob(jobIdStr string, transactionId string) error
 	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.SuccessCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
+		"end_at":        helper.TimePtr(time.Now()),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update job status")
+	}
+
+	return nil
+}
+
+func (svc *service) FinalizeFailedJob(jobIdStr string) error {
+	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
+		"success_count": helper.IntPtr(0),
+		"status":        helper.StringPtr(constant.JobStatusFailed),
 		"end_at":        helper.TimePtr(time.Now()),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update job status")

@@ -8,7 +8,6 @@ import (
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
 	"front-office/pkg/procat/log"
-	"time"
 )
 
 func NewService(
@@ -74,18 +73,14 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 
 	result, err := loanHandler(apiKey, memberId, jobIdStr, companyId, reqBody)
 	if err != nil {
-		if err := svc.logRepo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
-			"success_count": helper.IntPtr(0),
-			"status":        helper.StringPtr(constant.JobStatusFailed),
-			"end_at":        helper.TimePtr(time.Now()),
-		}); err != nil {
-			return nil, apperror.MapRepoError(err, "failed to update job status")
+		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+			return nil, err
 		}
 
 		return nil, apperror.MapRepoError(err, "failed to process multiple loan request")
 	}
 
-	if err := svc.logService.FinalizeLoanJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.logService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
 		return nil, err
 	}
 
