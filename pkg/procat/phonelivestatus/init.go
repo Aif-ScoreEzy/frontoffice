@@ -16,7 +16,7 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	memberRepository := member.NewRepository(cfg, client)
 	roleRepository := role.NewRepository(cfg, client)
 	logOperationRepo := operation.NewRepository(cfg, client)
-	service := NewService(repository)
+	service := NewService(repository, memberRepository)
 	memberService := member.NewService(memberRepository, roleRepository, logOperationRepo)
 	controller := NewController(service, memberService)
 
