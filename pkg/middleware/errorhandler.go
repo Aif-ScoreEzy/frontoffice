@@ -19,8 +19,7 @@ func ErrorHandler() fiber.ErrorHandler {
 				Int("status_code", appErr.StatusCode).
 				Str("message", appErr.Message).
 				Str("method", method).
-				Str("path", path).
-				Msg("application error")
+				Str("path", path)
 
 			return c.Status(appErr.StatusCode).JSON(fiber.Map{
 				"message": appErr.Message,
