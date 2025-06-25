@@ -109,20 +109,14 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.svc.GetPhoneLiveStatusDetailsByRangeDate(filter)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
 	}
 
 	var buf bytes.Buffer
-
-	filename, err := ctrl.svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobsSummary(filter, &buf)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	c.Set("Content-Type", "text/csv")
@@ -141,20 +135,11 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	// Get JobDetails By JobId
-	result, err := ctrl.svc.GetAllPhoneLiveStatusDetails(filter)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
 	var buf bytes.Buffer
 
-	filename, err := ctrl.svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobDetails(filter, &buf)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	c.Set("Content-Type", "text/csv")

@@ -19,7 +19,7 @@ type MstPhoneLiveStatusJob struct {
 	EndAt        *time.Time         `json:"end_time"`
 }
 
-type MstPhoneLiveStatusJobDetail struct {
+type mstPhoneLiveStatusJobDetail struct {
 	Id               uint                  `json:"id"`
 	MemberId         uint                  `json:"member_id"`
 	Member           member.MstMember      `json:"-"`
@@ -79,7 +79,7 @@ type jobDetailRespData struct {
 	DevReachable               int64                          `json:"dev_reachable"`
 	DevUnreachable             int64                          `json:"dev_unreachable"`
 	DevUnavailable             int64                          `json:"dev_unavailable"`
-	JobDetails                 []*MstPhoneLiveStatusJobDetail `json:"job_details"`
+	JobDetails                 []*mstPhoneLiveStatusJobDetail `json:"job_details"`
 }
 
 type jobsSummaryRespData struct {

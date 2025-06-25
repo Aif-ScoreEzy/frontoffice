@@ -3,16 +3,12 @@ package phonelivestatus
 import (
 	"bytes"
 	"encoding/csv"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/apperror"
-	"io"
 	"log"
 	"mime/multipart"
-	"net/http"
 	"strconv"
 )
 
@@ -29,11 +25,12 @@ type service struct {
 type Service interface {
 	CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error)
 	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
-	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
-	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
+	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
+	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
-	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
+	ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
+	ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
 	UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error)
 	UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
@@ -59,30 +56,30 @@ func (svc *service) GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobLi
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
-	jobDetail, err := svc.repo.CallGetJobDetailsAPI(filter)
+	jobDetails, err := svc.repo.CallGetJobDetailsAPI(filter)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
+	}
+
+	return jobDetails, nil
+}
+
+func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
+	jobDetails, err := svc.repo.CallGetAllJobDetailsAPI(filter)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
+	}
+
+	return jobDetails, nil
+}
+
+func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
+	jobDetail, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
 	}
 
 	return jobDetail, nil
-}
-
-func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
-	response, err := svc.repo.CallGetAllJobDetailsAPI(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
-}
-
-func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
-	response, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
 }
 
 func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error) {
@@ -94,32 +91,32 @@ func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryR
 	return jobsSummary, nil
 }
 
-func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
-	w := csv.NewWriter(buf)
-
-	header := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}
-	if err := w.Write(header); err != nil {
-		return "", fmt.Errorf("failed to write CSV header")
+func (svc *service) ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
+	data, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
+	if err != nil {
+		return "", apperror.MapRepoError(err, "failed to fetch job details")
 	}
 
-	for _, record := range data {
-		row := []string{record.PhoneNumber, record.SubscriberStatus, record.DeviceStatus, record.Status, record.Operator, record.PhoneType}
-		if err := w.Write(row); err != nil {
-			return "", fmt.Errorf("failed to write CSV data")
-		}
+	if err := writeJobDetailsToCSV(buf, data); err != nil {
+		return "", apperror.Internal("failed to write CSV", err)
 	}
 
-	w.Flush()
-	if err := w.Error(); err != nil {
-		return "", fmt.Errorf("failed to flush CSV data")
+	filename := formatCSVFileName("job_summary", filter.StartDate, filter.EndDate)
+
+	return filename, nil
+}
+
+func (svc *service) ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
+	data, err := svc.repo.CallGetAllJobDetailsAPI(filter)
+	if err != nil {
+		return "", apperror.MapRepoError(err, "failed to fetch job details")
 	}
 
-	var filename string
-	if filter.EndDate != "" && filter.EndDate != filter.StartDate {
-		filename = fmt.Sprintf("jobs_summary_%s_until_%s.csv", filter.StartDate, filter.EndDate)
-	} else {
-		filename = fmt.Sprintf("job_summary_%s.csv", filter.StartDate)
+	if err := writeJobDetailsToCSV(buf, data); err != nil {
+		return "", apperror.Internal("failed to write CSV", err)
 	}
+
+	filename := formatCSVFileName("job_summary", filter.StartDate, filter.EndDate)
 
 	return filename, nil
 }
@@ -165,24 +162,28 @@ func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, fileH
 	return nil
 }
 
-func parseGenericResponse[T any](response *http.Response) (*APIResponse[T], error) {
-	var apiResponse APIResponse[T]
+func writeJobDetailsToCSV(buf *bytes.Buffer, data []*mstPhoneLiveStatusJobDetail) error {
+	w := csv.NewWriter(buf)
+	headers := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}
 
-	if response == nil {
-		return nil, errors.New("nil response")
+	if err := w.Write(headers); err != nil {
+		return err
 	}
 
-	dataBytes, err := io.ReadAll(response.Body)
-	defer response.Body.Close()
-	if err != nil {
-		return nil, err
+	for _, d := range data {
+		row := []string{d.PhoneNumber, d.SubscriberStatus, d.DeviceStatus, d.Status, d.Operator, d.PhoneType}
+		if err := w.Write(row); err != nil {
+			return err
+		}
 	}
 
-	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
-		return nil, err
+	w.Flush()
+	return w.Error()
+}
+
+func formatCSVFileName(base, startDate, endDate string) string {
+	if endDate != "" && endDate != startDate {
+		return fmt.Sprintf("%s_%s_until_%s.csv", base, startDate, endDate)
 	}
-
-	apiResponse.StatusCode = response.StatusCode
-
-	return &apiResponse, nil
+	return fmt.Sprintf("%s_%s.csv", base, startDate)
 }
