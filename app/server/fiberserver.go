@@ -2,7 +2,9 @@ package server
 
 import (
 	"front-office/app/config"
+
 	"front-office/pkg/core"
+	"front-office/pkg/middleware"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,7 +19,11 @@ type fiberServer struct {
 
 func NewServer(cfg *config.Config) Server {
 	return &fiberServer{
-		App: fiber.New(),
+		App: fiber.New(
+			fiber.Config{
+				ErrorHandler: middleware.ErrorHandler(),
+			},
+		),
 		Cfg: cfg,
 	}
 }

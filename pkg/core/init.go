@@ -24,11 +24,11 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	client := httpclient.NewDefaultClient(10 * time.Second)
 
 	userGroup := routeGroup.Group("users")
-	auth.SetupInit(userGroup, cfg)
-	member.SetupInit(userGroup, cfg)
+	auth.SetupInit(userGroup, cfg, client)
+	member.SetupInit(userGroup, cfg, client)
 
 	roleGroup := routeGroup.Group("roles")
-	role.SetupInit(roleGroup, cfg)
+	role.SetupInit(roleGroup, cfg, client)
 
 	permissionGroup := routeGroup.Group("permissions")
 	permission.SetupInit(permissionGroup)
@@ -44,11 +44,11 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 
 	logGroup := routeGroup.Group("logs")
 	transaction.SetupInit(logGroup, cfg, client)
-	operation.SetupInit(logGroup, cfg)
+	operation.SetupInit(logGroup, cfg, client)
 
 	productGroup := routeGroup.Group("products")
 	procat.SetupInit(productGroup, cfg)
-	phonelivestatus.SetupInit(productGroup, cfg)
+	phonelivestatus.SetupInit(productGroup, cfg, client)
 
 	templateGroup := routeGroup.Group("templates")
 	template.SetupInit(templateGroup)

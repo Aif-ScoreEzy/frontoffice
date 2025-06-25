@@ -1,37 +1,45 @@
 package log
 
 import (
+	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
+	"front-office/internal/apperror"
+	"front-office/pkg/core/log/transaction"
+	"time"
 )
 
-func NewService(repo Repository) Service {
+func NewService(repo Repository, transactionRepo transaction.Repository) Service {
 	return &service{
-		repo: repo,
+		repo,
+		transactionRepo,
 	}
 }
 
 type service struct {
-	repo Repository
+	repo            Repository
+	transactionRepo transaction.Repository
 }
 
 type Service interface {
-	CreateProCatJob(req *CreateJobRequest) (*model.AifcoreAPIResponse[createJobDataResponse], error)
-	UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.AifcoreAPIResponse[any], error)
+	CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error)
+	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	FinalizeJob(jobIdStr string, transactionId string) error
+	FinalizeFailedJob(jobIdStr string) error
 }
 
-func (svc *service) CreateProCatJob(req *CreateJobRequest) (*model.AifcoreAPIResponse[createJobDataResponse], error) {
-	response, err := svc.repo.CallCreateProCatJobAPI(req)
+func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error) {
+	result, err := svc.repo.CallCreateProCatJobAPI(req)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to create job")
 	}
 
-	return helper.ParseAifcoreAPIResponse[createJobDataResponse](response)
+	return result, nil
 }
 
-func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 	data := map[string]interface{}{}
 
 	if req.SuccessCount != nil {
@@ -46,28 +54,63 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) (*model.Ai
 		data["end_at"] = *req.EndAt
 	}
 
-	response, err := svc.repo.CallUpdateJobAPI(jobId, data)
+	err := svc.repo.CallUpdateJobAPI(jobId, data)
 	if err != nil {
-		return nil, err
+		return apperror.MapRepoError(err, "failed to update job")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return nil
 }
 
 func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
-	response, err := svc.repo.CallGetProCatJobAPI(filter)
+	result, err := svc.repo.CallGetProCatJobAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch jobs")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return result, nil
 }
 
 func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
-	response, err := svc.repo.CallGetProCatJobDetailAPI(filter)
+	result, err := svc.repo.CallGetProCatJobDetailAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return result, nil
+}
+
+func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
+	if err := svc.transactionRepo.CallUpdateLogTransAPI(transactionId, map[string]interface{}{
+		"success": helper.BoolPtr(true),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update transaction log")
+	}
+
+	count, err := svc.transactionRepo.CallLogTransSuccessCountAPI(jobIdStr)
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to get success count")
+	}
+
+	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
+		"success_count": helper.IntPtr(int(count.SuccessCount)),
+		"status":        helper.StringPtr(constant.JobStatusDone),
+		"end_at":        helper.TimePtr(time.Now()),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update job status")
+	}
+
+	return nil
+}
+
+func (svc *service) FinalizeFailedJob(jobIdStr string) error {
+	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
+		"success_count": helper.IntPtr(0),
+		"status":        helper.StringPtr(constant.JobStatusFailed),
+		"end_at":        helper.TimePtr(time.Now()),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update job status")
+	}
+
+	return nil
 }

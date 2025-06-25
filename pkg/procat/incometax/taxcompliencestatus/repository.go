@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
+	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
 	"time"
@@ -25,36 +27,42 @@ type repository struct {
 }
 
 type Repository interface {
-	CallTaxComplianceStatusAPI(apiKey, jobId string, request *taxComplianceStatusRequest) (*http.Response, error)
+	CallTaxComplianceStatusAPI(apiKey, jobId string, request *taxComplianceStatusRequest) (*model.ProCatAPIResponse[taxComplianceDataResponse], error)
 }
 
-func (repo *repository) CallTaxComplianceStatusAPI(apiKey, jobId string, request *taxComplianceStatusRequest) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/incometax/tax-compliance-status"
+func (repo *repository) CallTaxComplianceStatusAPI(apiKey, jobId string, reqBody *taxComplianceStatusRequest) (*model.ProCatAPIResponse[taxComplianceDataResponse], error) {
+	url := fmt.Sprintf("%s/product/incometax/tax-compliance-status", repo.cfg.Env.ProductCatalogHost)
 
-	jsonBody, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, apiUrl, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.XAPIKey, apiKey)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("job_id", jobId)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	resp, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	apiResp, err := helper.ParseProCatAPIResponse[taxComplianceDataResponse](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, err
 }

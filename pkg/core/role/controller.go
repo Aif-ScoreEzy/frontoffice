@@ -1,64 +1,56 @@
 package role
 
 import (
-	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(service Service) Controller {
-	return &controller{Svc: service}
+	return &controller{svc: service}
 }
 
 type controller struct {
-	Svc Service
+	svc Service
 }
 
 type Controller interface {
 	GetRoleById(c *fiber.Ctx) error
-	GetAllRoles(c *fiber.Ctx) error
+	GetRoles(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetRoleById(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		return apperror.BadRequest("missing role id")
+	}
 
-	result, err := ctrl.Svc.GetRoleById(id)
+	role, err := ctrl.svc.GetRoleById(id)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result == nil || result.Data.RoleId == 0 {
-		statusCode, resp := helper.GetError(constant.DataNotFound)
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	resp := helper.ResponseSuccess(
-		"Succeed to get a role by Id",
-		result.Data,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get a role by Id",
+		role,
+	))
 }
 
-func (ctrl *controller) GetAllRoles(c *fiber.Ctx) error {
+func (ctrl *controller) GetRoles(c *fiber.Ctx) error {
 	name := c.Query("name", "")
 
 	filter := RoleFilter{
 		Name: name,
 	}
 
-	result, err := ctrl.Svc.GetAllRoles(filter)
-	if err != nil || result == nil || !result.Success {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
+	roles, err := ctrl.svc.GetRoles(filter)
+	if err != nil {
+		return err
 	}
 
-	resp := helper.ResponseSuccess(
-		"Succeed to get list of roles",
-		result.Data,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get list of roles",
+		roles,
+	))
 }

@@ -19,7 +19,7 @@ type MstPhoneLiveStatusJob struct {
 	EndAt        *time.Time         `json:"end_time"`
 }
 
-type MstPhoneLiveStatusJobDetail struct {
+type mstPhoneLiveStatusJobDetail struct {
 	Id               uint                  `json:"id"`
 	MemberId         uint                  `json:"member_id"`
 	Member           member.MstMember      `json:"-"`
@@ -45,7 +45,7 @@ type PhoneLiveStatusRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
-type PhoneLiveStatusFilter struct {
+type phoneLiveStatusFilter struct {
 	Page      string
 	Size      string
 	Offset    string
@@ -65,12 +65,12 @@ type APIResponse[T any] struct {
 	StatusCode int    `json:"-"`
 }
 
-type JobListResponse struct {
+type jobListRespData struct {
 	Jobs      []*MstPhoneLiveStatusJob `json:"jobs"`
 	TotalData int                      `json:"total_data"`
 }
 
-type JobDetailsResponse struct {
+type jobDetailRespData struct {
 	TotalData                  int64                          `json:"total_data"`
 	TotalDataPercentageSuccess int64                          `json:"total_data_percentage_success"`
 	TotalDataPercentageFail    int64                          `json:"total_data_percentage_fail"`
@@ -79,10 +79,10 @@ type JobDetailsResponse struct {
 	DevReachable               int64                          `json:"dev_reachable"`
 	DevUnreachable             int64                          `json:"dev_unreachable"`
 	DevUnavailable             int64                          `json:"dev_unavailable"`
-	JobDetails                 []*MstPhoneLiveStatusJobDetail `json:"job_details"`
+	JobDetails                 []*mstPhoneLiveStatusJobDetail `json:"job_details"`
 }
 
-type JobsSummaryResponse struct {
+type jobsSummaryRespData struct {
 	TotalData        int64 `json:"total_data"`
 	TotalDataSuccess int64 `json:"total_data_percentage_success"`
 	TotalDataFail    int64 `json:"total_data_percentage_fail"`
@@ -94,11 +94,31 @@ type JobsSummaryResponse struct {
 }
 
 type createJobRequest struct {
-	MemberId                uint                     `json:"member_id"`
-	CompanyId               uint                     `json:"company_id"`
-	PhoneLiveStatusRequests []PhoneLiveStatusRequest `json:"requests"`
+	MemberId                uint                      `json:"member_id"`
+	CompanyId               uint                      `json:"company_id"`
+	PhoneLiveStatusRequests []*PhoneLiveStatusRequest `json:"requests"`
 }
 
 type createJobResponseData struct {
 	JobId uint `json:"job_id"`
+}
+
+type updateJobRequest struct {
+	SuccessCount *int       `json:"success_count"`
+	Status       *string    `json:"status"`
+	EndAt        *time.Time `json:"end_at"`
+}
+
+type updateJobDetailRequest struct {
+	InProgress       *bool      `json:"in_progress"`
+	Sequence         *int       `json:"sequence"`
+	Status           *string    `json:"status"`
+	Message          *string    `json:"message"`
+	SubscriberStatus *string    `json:"subscriber_status"`
+	DeviceStatus     *string    `json:"device_status"`
+	PhoneType        *string    `json:"phone_type"`
+	Operator         *string    `json:"operator"`
+	PricingStrategy  *string    `json:"pricing_strategy"`
+	TransactionId    *string    `json:"transaction_id"`
+	EndAt            *time.Time `json:"end_time"`
 }

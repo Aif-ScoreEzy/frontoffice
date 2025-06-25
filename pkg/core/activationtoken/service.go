@@ -1,14 +1,13 @@
 package activationtoken
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"strconv"
 
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"strings"
 )
 
@@ -22,41 +21,34 @@ type service struct {
 }
 
 type Service interface {
-	CreateActivationToken(userId, companyId uint, roleId uint) (string, *AifResponse, error)
+	CreateActivationToken(memberId, companyId uint, roleId uint) (string, error)
 	ValidateActivationToken(authHeader string) (string, uint, error)
-	FindActivationTokenByToken(token string) (*AifResponse, error)
+	GetActivationToken(token string) (*MstActivationToken, error)
 }
 
-func (svc *service) CreateActivationToken(userId, companyId, roleId uint) (string, *AifResponse, error) {
+func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (string, error) {
 	secret := svc.Cfg.Env.JwtSecretKey
-	minutesToExpired, _ := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
-
-	token, err := helper.GenerateToken(secret, minutesToExpired, userId, companyId, roleId, "")
+	minutesToExpired, err := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
 	if err != nil {
-		return "", nil, err
+		return "", apperror.Internal("invalid activation expiry config", err)
+	}
+
+	token, err := helper.GenerateToken(secret, minutesToExpired, memberId, companyId, roleId, "")
+	if err != nil {
+		return "", apperror.Internal("generate activation token failed", err)
 	}
 
 	req := &CreateActivationTokenRequest{
 		Token: token,
 	}
 
-	userIdStr := helper.ConvertUintToString(userId)
-	response, err := svc.Repo.CreateActivationTokenAifCore(req, userIdStr)
+	memberIdStr := helper.ConvertUintToString(memberId)
+	err = svc.Repo.CallCreateActivationTokenAPI(memberIdStr, req)
 	if err != nil {
-		return "", nil, err
+		return "", err
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return "", nil, err
-		}
-	}
-
-	return token, baseResponse, nil
+	return token, nil
 }
 
 func (svc *service) ValidateActivationToken(authHeader string) (string, uint, error) {
@@ -82,21 +74,11 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 	return token, userId, nil
 }
 
-func (svc *service) FindActivationTokenByToken(token string) (*AifResponse, error) {
-	response, err := svc.Repo.FindOneActivationTokenBytoken(token)
+func (svc *service) GetActivationToken(token string) (*MstActivationToken, error) {
+	activationToken, err := svc.Repo.CallGetActivationTokenAPI(token)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to get activation token")
 	}
 
-	var baseResponse *AifResponse
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return nil, err
-		}
-	}
-
-	return baseResponse, nil
+	return activationToken, nil
 }

@@ -46,14 +46,14 @@ type RegisterMemberRequest struct {
 	Key       string `json:"key"`
 }
 
-type dataRegisterMemberResponse struct {
+type registerResponseData struct {
 	MemberId uint `json:"member_id"`
 }
 
 type RegisterMemberResponse struct {
-	Data       *dataRegisterMemberResponse `json:"data"`
-	Message    string                      `json:"message"`
-	StatusCode int                         `json:"-"`
+	Data       *registerResponseData `json:"data"`
+	Message    string                `json:"message"`
+	StatusCode int                   `json:"-"`
 }
 
 type UpdateUserRequest struct {
@@ -64,7 +64,7 @@ type UpdateUserRequest struct {
 	Active     *bool   `json:"active"`
 }
 
-type UserUpdateResponse struct {
+type userUpdateResponse struct {
 	Id        uint   `json:"id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
@@ -94,6 +94,7 @@ type MemberFilter struct {
 	Page      string
 	Limit     string
 	Keyword   string
+	RoleName  string
 	RoleID    string
 	Status    string
 	StartDate string
@@ -141,3 +142,7 @@ type Meta struct {
 	Size       any `json:"size,omitempty"`
 	Message    any `json:"message,omitempty"`
 }
+
+const (
+	memberRoleID = 2
+)

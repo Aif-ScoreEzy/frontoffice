@@ -4,16 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"front-office/helper"
+	"front-office/internal/apperror"
+	"front-office/pkg/core/member"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(svc Service) Controller {
-	return &controller{Svc: svc}
+func NewController(svc Service, memberSvc member.Service) Controller {
+	return &controller{svc, memberSvc}
 }
 
 type controller struct {
-	Svc Service
+	svc       Service
+	memberSvc member.Service
 }
 
 type Controller interface {
@@ -27,7 +30,7 @@ type Controller interface {
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		Page:      c.Query("page", "1"),
 		Size:      c.Query("size", "10"),
 		StartDate: c.Query("start_date", ""),
@@ -37,24 +40,19 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusJob(filter)
+	jobs, err := ctrl.svc.GetPhoneLiveStatusJob(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeeded to get phone live status jobs",
+		jobs,
+	))
 }
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		Page:      c.Query("page", "1"),
 		Size:      c.Query("size", "10"),
 		JobId:     c.Params("id"),
@@ -63,24 +61,23 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsSummary(filter)
+	if filter.JobId == "" {
+		return apperror.BadRequest("missing job ID")
+	}
+
+	jobDetail, err := ctrl.svc.GetPhoneLiveStatusDetailsSummary(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeeded to get phone live status job details",
+		jobDetail,
+	))
 }
 
 func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
@@ -88,24 +85,23 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetJobsSummary(filter)
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
+	}
+
+	jobsSummary, err := ctrl.svc.GetJobsSummary(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeeded to get phone live status jobs summary",
+		jobsSummary,
+	))
 }
 
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
@@ -113,20 +109,14 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsByRangeDate(filter)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
 	}
 
 	var buf bytes.Buffer
-
-	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobsSummary(filter, &buf)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	c.Set("Content-Type", "text/csv")
@@ -136,7 +126,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		JobId:     c.Params("id"),
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),
@@ -145,20 +135,11 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	// Get JobDetails By JobId
-	result, err := ctrl.Svc.GetAllPhoneLiveStatusDetails(filter)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-		return c.Status(statusCode).JSON(resp)
-	}
-
 	var buf bytes.Buffer
 
-	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobDetails(filter, &buf)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	c.Set("Content-Type", "text/csv")
@@ -172,7 +153,7 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	err := ctrl.Svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -204,7 +185,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	err = ctrl.Svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
+	err = ctrl.svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

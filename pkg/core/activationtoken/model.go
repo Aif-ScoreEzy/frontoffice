@@ -3,19 +3,14 @@ package activationtoken
 import (
 	"front-office/pkg/core/member"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type MstActivationToken struct {
-	Id         string           `gorm:"primarykey" json:"id"`
-	Token      string           `gorm:"not null" json:"token"`
-	Activation bool             `gorm:"not null;default:false" json:"activation"`
-	MemberId   uint             `json:"member_id"`
-	Member     member.MstMember `gorm:"foreignKey:MemberId" json:"-"`
-	CreatedAt  time.Time        `json:"created_at"`
-	UpdatedAt  time.Time        `json:"-"`
-	DeletedAt  gorm.DeletedAt   `gorm:"index" json:"-"`
+	Id        string           `gorm:"primarykey" json:"id"`
+	Token     string           `gorm:"not null" json:"token"`
+	MemberId  uint             `json:"member_id"`
+	Member    member.MstMember `gorm:"foreignKey:MemberId" json:"-"`
+	CreatedAt time.Time        `json:"created_at"`
 }
 
 type CreateActivationTokenRequest struct {

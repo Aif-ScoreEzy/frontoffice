@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
 	"time"
@@ -23,26 +24,32 @@ type repository struct {
 }
 
 type Repository interface {
-	CallGetProductBySlug(slug string) (*http.Response, error)
+	CallGetProductBySlug(slug string) (*productResponseData, error)
 }
 
-func (repo *repository) CallGetProductBySlug(slug string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/product/slug/" + slug
+func (repo *repository) CallGetProductBySlug(slug string) (*productResponseData, error) {
+	url := fmt.Sprintf("%s/api/core/product/slug/%s", repo.cfg.Env.AifcoreHost, slug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	resp, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	apiResp, err := helper.ParseAifcoreAPIResponse[*productResponseData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }

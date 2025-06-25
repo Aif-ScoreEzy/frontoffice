@@ -1,66 +1,120 @@
 package transaction
 
 import (
+	"fmt"
 	"front-office/common/constant"
+	"front-office/helper"
 	"net/http"
 )
 
-func (repo *repository) CallLogScoreezyAPI() (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/list"
+func (repo *repository) CallScoreezyLogsAPI() ([]*LogTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	client := &http.Client{}
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	return client.Do(request)
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
-func (repo *repository) CallLogScoreezyByDateAPI(companyId, date string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/by"
+func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*LogTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/by", repo.cfg.Env.AifcoreHost)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	q := request.URL.Query()
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := req.URL.Query()
 	q.Add("company_id", companyId)
 	q.Add("date", date)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
-func (repo *repository) CallLogScoreezyByRangeDateAPI(companyId, startDate, endDate string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/range"
+func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/range", repo.cfg.Env.AifcoreHost)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	q := request.URL.Query()
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := req.URL.Query()
 	q.Add("date_start", startDate)
 	q.Add("date_end", endDate)
 	q.Add("company_id", companyId)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
-func (repo *repository) CallLogScoreezyByMonthAPI(companyId, month string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/logging/transaction/scoreezy/month"
+func (repo *repository) CallScoreezyLogsByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/month", repo.cfg.Env.AifcoreHost)
 
-	request, _ := http.NewRequest(http.MethodGet, apiUrl, nil)
-	request.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
 
-	q := request.URL.Query()
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := req.URL.Query()
 	q.Add("company_id", companyId)
 	q.Add("month", month)
-	request.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(request)
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }

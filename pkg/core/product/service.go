@@ -1,8 +1,7 @@
 package product
 
 import (
-	"front-office/common/model"
-	"front-office/helper"
+	"front-office/internal/apperror"
 )
 
 func NewService(repo Repository) Service {
@@ -16,14 +15,17 @@ type service struct {
 }
 
 type Service interface {
-	GetProductBySlug(slug string) (*model.AifcoreAPIResponse[productResponseData], error)
+	GetProductBySlug(slug string) (*productResponseData, error)
 }
 
-func (svc *service) GetProductBySlug(slug string) (*model.AifcoreAPIResponse[productResponseData], error) {
-	response, err := svc.repo.CallGetProductBySlug(slug)
+func (svc *service) GetProductBySlug(slug string) (*productResponseData, error) {
+	product, err := svc.repo.CallGetProductBySlug(slug)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch product")
+	}
+	if product.ProductId == 0 {
+		return nil, apperror.NotFound("product not found")
 	}
 
-	return helper.ParseAifcoreAPIResponse[productResponseData](response)
+	return product, err
 }

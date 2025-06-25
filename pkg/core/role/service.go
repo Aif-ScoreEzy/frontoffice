@@ -1,10 +1,7 @@
 package role
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
+	"front-office/internal/apperror"
 )
 
 func NewService(repo Repository) Service {
@@ -16,62 +13,33 @@ type service struct {
 }
 
 type Service interface {
-	GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error)
-	GetRoleById(id string) (*AifResponse, error)
+	GetRoles(filter RoleFilter) ([]*MstRole, error)
+	GetRoleById(id string) (*MstRole, error)
 }
 
-func (s *service) GetAllRoles(filter RoleFilter) (*AifResponseWithMultipleData, error) {
-	res, err := s.Repo.FindAll(filter)
+func (s *service) GetRoles(filter RoleFilter) ([]*MstRole, error) {
+	roles, err := s.Repo.CallGetRolesAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch roles")
 	}
 
-	return parseMultipleResponse(res)
+	if len(roles) == 0 {
+		return nil, apperror.NotFound("role not found")
+
+	}
+
+	return roles, nil
 }
 
-func (s *service) GetRoleById(id string) (*AifResponse, error) {
-	res, err := s.Repo.FindOneById(id)
+func (s *service) GetRoleById(id string) (*MstRole, error) {
+	role, err := s.Repo.CallGetRoleAPI(id)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch role")
 	}
 
-	return parseSingleResponse(res)
-}
-
-func parseResponse(response *http.Response, result interface{}) error {
-	if response == nil {
-		return fmt.Errorf("response is nil")
-	}
-	defer response.Body.Close()
-
-	dataByte, err := io.ReadAll(response.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+	if role.RoleId == 0 {
+		return nil, apperror.NotFound("role not found")
 	}
 
-	if err := json.Unmarshal(dataByte, result); err != nil {
-		return fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return nil
-}
-
-func parseSingleResponse(response *http.Response) (*AifResponse, error) {
-	var baseResponse AifResponse
-
-	if err := parseResponse(response, &baseResponse); err != nil {
-		return nil, err
-	}
-
-	return &baseResponse, nil
-}
-
-func parseMultipleResponse(response *http.Response) (*AifResponseWithMultipleData, error) {
-	var baseResponse AifResponseWithMultipleData
-
-	if err := parseResponse(response, &baseResponse); err != nil {
-		return nil, err
-	}
-
-	return &baseResponse, nil
+	return role, nil
 }

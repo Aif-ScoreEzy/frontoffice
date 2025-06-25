@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
+	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.9.0
 	github.com/usepzaka/validator v1.0.6
 	golang.org/x/crypto v0.22.0
@@ -26,7 +27,7 @@ require (
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

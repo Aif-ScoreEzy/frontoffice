@@ -17,11 +17,11 @@ type Meta struct {
 }
 
 type AifcoreAPIResponse[T any] struct {
-	Success    bool        `json:"success"`
-	Data       T           `json:"data"`
-	Message    string      `json:"message"`
-	Meta       interface{} `json:"meta,omitempty"`
-	StatusCode int         `json:"-"`
+	Success    bool   `json:"success"`
+	Data       T      `json:"data"`
+	Message    string `json:"message"`
+	Meta       *Meta  `json:"meta,omitempty"`
+	StatusCode int    `json:"-"`
 }
 
 type ProCatAPIResponse[T any] struct {
