@@ -85,20 +85,19 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.svc.GetJobsSummary(filter)
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
+	}
+
+	jobsSummary, err := ctrl.svc.GetJobsSummary(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeeded to get phone live status jobs summary",
+		jobsSummary,
+	))
 }
 
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {

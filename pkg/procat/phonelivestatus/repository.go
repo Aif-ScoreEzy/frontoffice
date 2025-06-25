@@ -31,7 +31,7 @@ type Repository interface {
 	CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) (*http.Response, error)
 	CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusFilter) (*http.Response, error)
-	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*http.Response, error)
+	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	CallUpdateJob(jobId string, req *updateJobRequest) (*http.Response, error)
 	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) (*http.Response, error)
 	CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error)
@@ -186,27 +186,39 @@ func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusF
 	return client.Do(httpRequest)
 }
 
-func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := fmt.Sprintf(`%v/api/core/phone-live-status/jobs-summary`, repo.cfg.Env.AifcoreHost)
+func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error) {
+	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs-summary`, repo.cfg.Env.AifcoreHost)
 
-	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", filter.MemberId)
-	httpRequest.Header.Set("X-Company-ID", filter.CompanyId)
-	httpRequest.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-Member-ID", filter.MemberId)
+	req.Header.Set("X-Company-ID", filter.CompanyId)
+	req.Header.Set("X-Tier-Level", filter.TierLevel)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(httpRequest)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobsSummaryRespData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, err
 }
 
 func (repo *repository) CallUpdateJob(jobId string, req *updateJobRequest) (*http.Response, error) {

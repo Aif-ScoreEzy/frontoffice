@@ -31,7 +31,7 @@ type Service interface {
 	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
-	GetJobsSummary(filter *phoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
+	GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
 	UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error)
@@ -85,13 +85,13 @@ func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatus
 	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
 }
 
-func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error) {
-	response, err := svc.repo.CallGetJobsSummary(filter)
+func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error) {
+	jobsSummary, err := svc.repo.CallGetJobsSummary(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch phone live status jobs summary")
 	}
 
-	return parseGenericResponse[JobsSummaryResponse](response)
+	return jobsSummary, nil
 }
 
 func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {

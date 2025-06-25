@@ -82,7 +82,7 @@ type jobDetailRespData struct {
 	JobDetails                 []*MstPhoneLiveStatusJobDetail `json:"job_details"`
 }
 
-type JobsSummaryResponse struct {
+type jobsSummaryRespData struct {
 	TotalData        int64 `json:"total_data"`
 	TotalDataSuccess int64 `json:"total_data_percentage_success"`
 	TotalDataFail    int64 `json:"total_data_percentage_fail"`
