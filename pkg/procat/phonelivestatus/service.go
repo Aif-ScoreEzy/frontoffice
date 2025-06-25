@@ -7,19 +7,22 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/apperror"
+	"front-office/pkg/core/member"
 	"log"
 	"mime/multipart"
 	"strconv"
 )
 
-func NewService(repo Repository) Service {
+func NewService(repo Repository, memberRepo member.Repository) Service {
 	return &service{
 		repo,
+		memberRepo,
 	}
 }
 
 type service struct {
-	repo Repository
+	repo       Repository
+	memberRepo member.Repository
 }
 
 type Service interface {
@@ -143,6 +146,14 @@ func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetai
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
+	// member, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	// 	Id:        memberId,
+	// 	CompanyId: companyId,
+	// })
+	// if err != nil {
+	// 	return apperror.MapRepoError(err, "failed to fetch ")
+	// }
+
 	response, err := svc.repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
 	log.Println("phone live status resss==> ", response, err)
 
