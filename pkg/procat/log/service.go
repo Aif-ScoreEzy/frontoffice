@@ -63,21 +63,21 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 }
 
 func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
-	response, err := svc.repo.CallGetProCatJobAPI(filter)
+	result, err := svc.repo.CallGetProCatJobAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch jobs")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return result, nil
 }
 
 func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
-	response, err := svc.repo.CallGetProCatJobDetailAPI(filter)
+	result, err := svc.repo.CallGetProCatJobDetailAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return result, nil
 }
 
 func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {

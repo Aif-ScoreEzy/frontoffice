@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
@@ -28,8 +29,8 @@ type repository struct {
 type Repository interface {
 	CallCreateProCatJobAPI(reqBody *CreateJobRequest) (*createJobDataResponse, error)
 	CallUpdateJobAPI(jobId string, req map[string]interface{}) error
-	CallGetProCatJobAPI(filter *logFilter) (*http.Response, error)
-	CallGetProCatJobDetailAPI(filter *logFilter) (*http.Response, error)
+	CallGetProCatJobAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	CallGetProCatJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 }
 
 func (repo *repository) CallCreateProCatJobAPI(reqBody *CreateJobRequest) (*createJobDataResponse, error) {
@@ -98,45 +99,76 @@ func (repo *repository) CallUpdateJobAPI(jobId string, reqBody map[string]interf
 	return nil
 }
 
-func (repo *repository) CallGetProCatJobAPI(filter *logFilter) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/product/" + filter.ProductSlug + "/jobs"
+func (repo *repository) CallGetProCatJobAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
-	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", filter.MemberId)
-	httpRequest.Header.Set("X-Company-ID", filter.CompanyId)
-	httpRequest.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-Member-ID", filter.MemberId)
+	req.Header.Set("X-Company-ID", filter.CompanyId)
+	req.Header.Set("X-Tier-Level", filter.TierLevel)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Size)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(httpRequest)
-}
-
-func (repo *repository) CallGetProCatJobDetailAPI(filter *logFilter) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/product/" + filter.ProductSlug + "/jobs/" + filter.JobId
-
-	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	apiResp, err := helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", filter.MemberId)
-	httpRequest.Header.Set("X-Company-ID", filter.CompanyId)
-	httpRequest.Header.Set("X-Tier-Level", filter.TierLevel)
+	return apiResp, nil
+}
 
-	client := http.Client{}
+func (repo *repository) CallGetProCatJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs/%s", repo.cfg.Env.AifcoreHost, filter.ProductSlug, filter.JobId)
 
-	return client.Do(httpRequest)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-Member-ID", filter.MemberId)
+	req.Header.Set("X-Company-ID", filter.CompanyId)
+	req.Header.Set("X-Tier-Level", filter.TierLevel)
+
+	q := req.URL.Query()
+	q.Add("page", filter.Page)
+	q.Add("size", filter.Size)
+	q.Add("start_date", filter.StartDate)
+	q.Add("end_date", filter.EndDate)
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, nil
 }
