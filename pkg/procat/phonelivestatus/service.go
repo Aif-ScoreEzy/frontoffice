@@ -28,12 +28,12 @@ type service struct {
 
 type Service interface {
 	CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error)
-	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*jobListRespData, error)
-	GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
-	GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
-	GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
-	GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
-	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *PhoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
+	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
+	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
+	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
+	GetJobsSummary(filter *phoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
+	GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
+	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
 	UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error)
 	UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
@@ -49,7 +49,7 @@ func (svc *service) CreateJob(memberId, companyId string, request *createJobRequ
 	return job, err
 }
 
-func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*jobListRespData, error) {
+func (svc *service) GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error) {
 	jobs, err := svc.repo.CallGetPhoneLiveStatusJobAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch phone live status jobs")
@@ -58,16 +58,16 @@ func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*jobLi
 	return jobs, nil
 }
 
-func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {
-	response, err := svc.repo.CallGetJobDetailsAPI(filter)
+func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
+	jobDetail, err := svc.repo.CallGetJobDetailsAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
 	}
 
-	return parseGenericResponse[JobDetailsResponse](response)
+	return jobDetail, nil
 }
 
-func (svc *service) GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
+func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
 	response, err := svc.repo.CallGetAllJobDetailsAPI(filter)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (svc *service) GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) 
 	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
 }
 
-func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
+func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error) {
 	response, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatus
 	return parseGenericResponse[[]MstPhoneLiveStatusJobDetail](response)
 }
 
-func (svc *service) GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error) {
+func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error) {
 	response, err := svc.repo.CallGetJobsSummary(filter)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (svc *service) GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[
 	return parseGenericResponse[JobsSummaryResponse](response)
 }
 
-func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *PhoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
+func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
 	w := csv.NewWriter(buf)
 
 	header := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"front-office/pkg/core/member"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,7 +30,7 @@ type Controller interface {
 }
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		Page:      c.Query("page", "1"),
 		Size:      c.Query("size", "10"),
 		StartDate: c.Query("start_date", ""),
@@ -45,13 +46,13 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get a phone live status jobs",
+		"succeeded to get phone live status jobs",
 		jobs,
 	))
 }
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		Page:      c.Query("page", "1"),
 		Size:      c.Query("size", "10"),
 		JobId:     c.Params("id"),
@@ -60,24 +61,23 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.svc.GetPhoneLiveStatusDetailsSummary(filter)
+	if filter.JobId == "" {
+		return apperror.BadRequest("missing job ID")
+	}
+
+	jobDetail, err := ctrl.svc.GetPhoneLiveStatusDetailsSummary(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeeded to get phone live status job details",
+		jobDetail,
+	))
 }
 
 func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
@@ -102,7 +102,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
@@ -133,7 +133,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
-	filter := &PhoneLiveStatusFilter{
+	filter := &phoneLiveStatusFilter{
 		JobId:     c.Params("id"),
 		StartDate: c.Query("start_date", ""),
 		EndDate:   c.Query("end_date", ""),

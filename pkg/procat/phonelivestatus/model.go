@@ -45,7 +45,7 @@ type PhoneLiveStatusRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
-type PhoneLiveStatusFilter struct {
+type phoneLiveStatusFilter struct {
 	Page      string
 	Size      string
 	Offset    string
@@ -70,7 +70,7 @@ type jobListRespData struct {
 	TotalData int                      `json:"total_data"`
 }
 
-type JobDetailsResponse struct {
+type jobDetailRespData struct {
 	TotalData                  int64                          `json:"total_data"`
 	TotalDataPercentageSuccess int64                          `json:"total_data_percentage_success"`
 	TotalDataPercentageFail    int64                          `json:"total_data_percentage_fail"`
