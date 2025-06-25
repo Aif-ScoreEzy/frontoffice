@@ -28,7 +28,7 @@ type service struct {
 
 type Service interface {
 	CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error)
-	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
+	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*jobListRespData, error)
 	GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
@@ -41,21 +41,21 @@ type Service interface {
 }
 
 func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error) {
-	res, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
+	job, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "create job failed")
 	}
 
-	return &res.Data, err
+	return job, err
 }
 
-func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
-	response, err := svc.repo.CallGetPhoneLiveStatusJobAPI(filter)
+func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*jobListRespData, error) {
+	jobs, err := svc.repo.CallGetPhoneLiveStatusJobAPI(filter)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "failed to fetch phone live status jobs")
 	}
 
-	return parseGenericResponse[JobListResponse](response)
+	return jobs, nil
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error) {

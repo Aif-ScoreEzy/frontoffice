@@ -39,20 +39,15 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.svc.GetPhoneLiveStatusJob(filter)
+	jobs, err := ctrl.svc.GetPhoneLiveStatusJob(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get a phone live status jobs",
+		jobs,
+	))
 }
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {

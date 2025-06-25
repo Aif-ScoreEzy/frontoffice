@@ -2,17 +2,18 @@ package phonelivestatus
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
-	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
@@ -25,8 +26,8 @@ type repository struct {
 }
 
 type Repository interface {
-	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error)
-	CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
+	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*createJobResponseData, error)
+	CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*jobListRespData, error)
 	CallGetJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
 	CallGetAllJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
 	CallGetJobDetailsByRangeDateAPI(filter *PhoneLiveStatusFilter) (*http.Response, error)
@@ -37,68 +38,75 @@ type Repository interface {
 	CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error)
 }
 
-func (repo *repository) CallCreateJobAPI(memberId, companyId string, request *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error) {
+func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
 
-	// serialize request body
-	jsonBody, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	// build http request
-	httpRequest, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
-
-	// send http request
-	httpResponse, err := repo.client.Do(httpRequest)
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
-	}
-	defer httpResponse.Body.Close()
-
-	// parse structured response
-	parsed, err := helper.ParseAifcoreAPIResponse[createJobResponseData](httpResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse Aifcore response: %w", err)
-	}
-
-	if httpResponse.StatusCode >= 400 || !parsed.Success {
-		return nil, fmt.Errorf("aifcore error: %s (status: %d)", parsed.Message, httpResponse.StatusCode)
-	}
-
-	return parsed, nil
-}
-
-func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs"
-
-	httpRequest, err := http.NewRequest(http.MethodGet, apiUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", filter.MemberId)
-	httpRequest.Header.Set("X-Company-ID", filter.CompanyId)
-	httpRequest.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-Member-ID", memberId)
+	req.Header.Set("X-Company-ID", companyId)
 
-	q := httpRequest.URL.Query()
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*createJobResponseData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, err
+}
+
+func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *PhoneLiveStatusFilter) (*jobListRespData, error) {
+	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-Member-ID", filter.MemberId)
+	req.Header.Set("X-Company-ID", filter.CompanyId)
+	req.Header.Set("X-Tier-Level", filter.TierLevel)
+
+	q := req.URL.Query()
 	q.Add("page", filter.Page)
 	q.Add("size", filter.Size)
 	q.Add("start_date", filter.StartDate)
 	q.Add("end_date", filter.EndDate)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	client := http.Client{}
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
 
-	return client.Do(httpRequest)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobListRespData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, err
 }
 
 func (repo *repository) CallGetJobDetailsAPI(filter *PhoneLiveStatusFilter) (*http.Response, error) {

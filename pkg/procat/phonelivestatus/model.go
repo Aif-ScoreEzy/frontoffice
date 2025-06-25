@@ -65,7 +65,7 @@ type APIResponse[T any] struct {
 	StatusCode int    `json:"-"`
 }
 
-type JobListResponse struct {
+type jobListRespData struct {
 	Jobs      []*MstPhoneLiveStatusJob `json:"jobs"`
 	TotalData int                      `json:"total_data"`
 }
