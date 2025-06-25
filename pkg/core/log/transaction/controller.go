@@ -1,18 +1,15 @@
 package transaction
 
 import (
-	"front-office/pkg/core/member"
-
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(service Service, memberService member.Service) Controller {
-	return &controller{Svc: service, MemberSvc: memberService}
+func NewController(service Service) Controller {
+	return &controller{svc: service}
 }
 
 type controller struct {
-	Svc       Service
-	MemberSvc member.Service
+	svc Service
 }
 
 type Controller interface {

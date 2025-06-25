@@ -15,15 +15,13 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	repo := NewRepository(cfg, client)
 	productRepo := product.NewRepository(cfg, client)
 	logRepo := log.NewRepository(cfg, client)
-	transRepo := transaction.NewRepository(cfg, client)
+	transactionRepo := transaction.NewRepository(cfg, client)
 
-	service := NewService(repo)
-	productService := product.NewService(productRepo)
-	logService := log.NewService(logRepo)
-	transService := transaction.NewService(transRepo)
+	logService := log.NewService(logRepo, transactionRepo)
+	service := NewService(repo, productRepo, logRepo, transactionRepo, logService)
 
-	controller := NewController(service, productService, logService, transService)
+	controller := NewController(service)
 
 	loanRecordCheckerGroup := apiGroup.Group("loan-record-checker")
-	loanRecordCheckerGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(LoanRecordCheckerRequest{}), middleware.GetJWTPayloadFromCookie(), controller.LoanRecordChecker)
+	loanRecordCheckerGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(loanRecordCheckerRequest{}), middleware.GetJWTPayloadFromCookie(), controller.LoanRecordChecker)
 }

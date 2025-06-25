@@ -43,15 +43,7 @@ func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 
 	result, err := ctrl.Svc.GetProCatJob(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
+		return err
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
@@ -75,15 +67,7 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 
 	result, err := ctrl.Svc.GetProCatJobDetail(filter)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if result.StatusCode != fiber.StatusOK {
-		_, resp := helper.GetError(result.Message)
-
-		return c.Status(result.StatusCode).JSON(resp)
+		return err
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)

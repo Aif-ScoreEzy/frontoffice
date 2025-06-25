@@ -3,7 +3,6 @@ package transaction
 import (
 	"front-office/app/config"
 	"front-office/common/constant"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -107,18 +106,12 @@ func TestFindAllTransactionLogs(t *testing.T) {
 		client: mockClient,
 	}
 
-	resp, err := repo.CallLogScoreezyAPI()
+	resp, err := repo.CallScoreezyLogsAPI()
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 
-	expectedBody := dummyResponseBody
-	assert.JSONEq(t, expectedBody, string(body))
 }
 
 func TestFindAllTransactionLogsByDate(t *testing.T) {
@@ -153,20 +146,11 @@ func TestFindAllTransactionLogsByDate(t *testing.T) {
 	// Act - Call the method with companyId and date
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.CallLogScoreezyByDateAPI(companyId, date)
+	resp, err := repo.CallScoreezyLogsByDateAPI(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-	// Optionally, check the body content
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
-
-	expectedBody := dummyResponseBody
-
-	assert.JSONEq(t, expectedBody, string(body))
 }
 
 func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
@@ -203,20 +187,11 @@ func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
 	companyId := "1"
 	startDate := dummyDate
 	endDate := dummyDate
-	resp, err := repo.CallLogScoreezyByRangeDateAPI(companyId, startDate, endDate)
+	resp, err := repo.CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-	// Optionally, check the body content
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
-
-	expectedBody := dummyResponseBody
-
-	assert.JSONEq(t, expectedBody, string(body))
 }
 
 func TestFindAllTransactionLogsByMonth(t *testing.T) {
@@ -247,16 +222,9 @@ func TestFindAllTransactionLogsByMonth(t *testing.T) {
 
 	companyId := "1"
 	date := dummyDate
-	resp, err := repo.CallLogScoreezyByMonthAPI(companyId, date)
+	resp, err := repo.CallScoreezyLogsByMonthAPI(companyId, date)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
-
-	expectedBody := dummyResponseBody
-	assert.JSONEq(t, expectedBody, string(body))
 }

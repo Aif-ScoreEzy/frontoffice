@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"front-office/helper"
+	"front-office/pkg/core/member"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewController(svc Service) Controller {
-	return &controller{Svc: svc}
+func NewController(svc Service, memberSvc member.Service) Controller {
+	return &controller{svc, memberSvc}
 }
 
 type controller struct {
-	Svc Service
+	svc       Service
+	memberSvc member.Service
 }
 
 type Controller interface {
@@ -37,7 +39,7 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusJob(filter)
+	result, err := ctrl.svc.GetPhoneLiveStatusJob(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -63,7 +65,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsSummary(filter)
+	result, err := ctrl.svc.GetPhoneLiveStatusDetailsSummary(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -88,7 +90,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetJobsSummary(filter)
+	result, err := ctrl.svc.GetJobsSummary(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -113,7 +115,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
 	}
 
-	result, err := ctrl.Svc.GetPhoneLiveStatusDetailsByRangeDate(filter)
+	result, err := ctrl.svc.GetPhoneLiveStatusDetailsByRangeDate(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -122,7 +124,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 
 	var buf bytes.Buffer
 
-	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobsSummary(result.Data, filter, &buf)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -146,7 +148,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	}
 
 	// Get JobDetails By JobId
-	result, err := ctrl.Svc.GetAllPhoneLiveStatusDetails(filter)
+	result, err := ctrl.svc.GetAllPhoneLiveStatusDetails(filter)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -154,7 +156,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 
 	var buf bytes.Buffer
 
-	filename, err := ctrl.Svc.ExportJobsSummary(result.Data, filter, &buf)
+	filename, err := ctrl.svc.ExportJobsSummary(result.Data, filter, &buf)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -172,7 +174,7 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	err := ctrl.Svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, req)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 
@@ -204,7 +206,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	err = ctrl.Svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
+	err = ctrl.svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 

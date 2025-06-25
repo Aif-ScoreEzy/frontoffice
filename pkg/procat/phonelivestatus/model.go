@@ -94,11 +94,31 @@ type JobsSummaryResponse struct {
 }
 
 type createJobRequest struct {
-	MemberId                uint                     `json:"member_id"`
-	CompanyId               uint                     `json:"company_id"`
-	PhoneLiveStatusRequests []PhoneLiveStatusRequest `json:"requests"`
+	MemberId                uint                      `json:"member_id"`
+	CompanyId               uint                      `json:"company_id"`
+	PhoneLiveStatusRequests []*PhoneLiveStatusRequest `json:"requests"`
 }
 
 type createJobResponseData struct {
 	JobId uint `json:"job_id"`
+}
+
+type updateJobRequest struct {
+	SuccessCount *int       `json:"success_count"`
+	Status       *string    `json:"status"`
+	EndAt        *time.Time `json:"end_at"`
+}
+
+type updateJobDetailRequest struct {
+	InProgress       *bool      `json:"in_progress"`
+	Sequence         *int       `json:"sequence"`
+	Status           *string    `json:"status"`
+	Message          *string    `json:"message"`
+	SubscriberStatus *string    `json:"subscriber_status"`
+	DeviceStatus     *string    `json:"device_status"`
+	PhoneType        *string    `json:"phone_type"`
+	Operator         *string    `json:"operator"`
+	PricingStrategy  *string    `json:"pricing_strategy"`
+	TransactionId    *string    `json:"transaction_id"`
+	EndAt            *time.Time `json:"end_time"`
 }

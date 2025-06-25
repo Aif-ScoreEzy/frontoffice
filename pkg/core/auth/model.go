@@ -14,12 +14,12 @@ type RegisterAdminRequest struct {
 	RoleId          string `json:"role_id" validate:"required~Field Role is required"`
 }
 
-type UserLoginRequest struct {
+type userLoginRequest struct {
 	Email    string `json:"email" validate:"required~Field Email is required"`
 	Password string `json:"password" validate:"required~Field Password is required"`
 }
 
-type UserLoginResponse struct {
+type loginResponse struct {
 	Id                 uint        `json:"id"`
 	Name               string      `json:"name"`
 	Email              string      `json:"email"`
@@ -30,7 +30,7 @@ type UserLoginResponse struct {
 	SubscriberProducts interface{} `json:"subscriber_products"`
 }
 
-type dataLoginResponse struct {
+type loginResponseData struct {
 	MemberId           uint        `json:"member_id"`
 	Name               string      `json:"name"`
 	Email              string      `json:"email"`
@@ -42,11 +42,11 @@ type dataLoginResponse struct {
 	SubscriberProducts interface{} `json:"subscriber_products"`
 }
 
-type aifcoreAuthMemberResponse struct {
-	Success    bool               `json:"success"`
-	Data       *dataLoginResponse `json:"data"`
-	StatusCode int                `json:"status_code"`
-	Message    string             `json:"message"`
+type tokenPayload struct {
+	MemberId  uint   `json:"member_id"`
+	CompanyId uint   `json:"company_id"`
+	RoleId    uint   `json:"role_id"`
+	ApiKey    string `json:"api_key"`
 }
 
 type LoginResponse struct {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"os"
 	"strconv"
 	"time"
@@ -36,7 +37,10 @@ func SetHeaderAuth(c *fiber.Ctx) error {
 
 func SetCookiePasswordResetToken(c *fiber.Ctx) error {
 	token := c.Params("token")
-	minutesToExpired, _ := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
+	minutesToExpired, err := strconv.Atoi(os.Getenv("JWT_RESET_PASSWORD_EXPIRES_MINUTES"))
+	if err != nil {
+		return apperror.Internal("invalid password reset expiry config", err)
+	}
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "password_reset_cookie",
@@ -107,6 +111,7 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		secret := os.Getenv("JWT_SECRET_KEY")
 		token := c.Cookies("password_reset_cookie")
+		fmt.Println("get", token)
 		if token == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"message": "no access token provided",

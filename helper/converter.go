@@ -20,5 +20,6 @@ func InterfaceToUint(input interface{}) (uint, error) {
 
 func BoolPtr(b bool) *bool           { return &b }
 func IntPtr(i int) *int              { return &i }
+func UintPtr(u uint) *uint           { return &u }
 func StringPtr(s string) *string     { return &s }
 func TimePtr(t time.Time) *time.Time { return &t }

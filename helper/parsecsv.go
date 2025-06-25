@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"front-office/common/constant"
+	"log"
 	"mime/multipart"
 )
 
@@ -12,7 +13,11 @@ func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]str
 	if err != nil {
 		return nil, 0, err
 	}
-	defer fileContent.Close()
+	defer func() {
+		if err := fileContent.Close(); err != nil {
+			log.Printf("failed to close file: %v", err)
+		}
+	}()
 
 	reader := csv.NewReader(fileContent)
 	reader.FieldsPerRecord = -1

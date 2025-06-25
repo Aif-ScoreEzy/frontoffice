@@ -1,31 +1,19 @@
 package loanrecordchecker
 
 import (
-	"front-office/common/constant"
-	"front-office/helper"
-	"front-office/pkg/core/log/transaction"
-	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
-	"strconv"
-	"time"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func NewController(
 	svc Service,
-	productSvc product.Service,
-	logSvc log.Service,
-	transactionSvc transaction.Service,
 ) Controller {
-	return &controller{svc, productSvc, logSvc, transactionSvc}
+	return &controller{svc}
 }
 
 type controller struct {
-	svc            Service
-	productSvc     product.Service
-	logSvc         log.Service
-	transactionSvc transaction.Service
+	svc Service
 }
 
 type Controller interface {
@@ -33,73 +21,15 @@ type Controller interface {
 }
 
 func (ctrl *controller) LoanRecordChecker(c *fiber.Ctx) error {
-	req := c.Locals("request").(*LoanRecordCheckerRequest)
-	apiKey, _ := c.Locals("apiKey").(string)
-	memberId, _ := c.Locals("userId").(uint)
-	companyId, _ := c.Locals("companyId").(uint)
+	reqBody := c.Locals("request").(*loanRecordCheckerRequest)
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
+	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	memberIdStr := strconv.FormatUint(uint64(memberId), 10)
-	companyIdStr := strconv.FormatUint(uint64(companyId), 10)
-
-	productRes, err := ctrl.productSvc.GetProductBySlug(constant.SlugLoanRecordChecker)
+	result, err := ctrl.svc.LoanRecordChecker(apiKey, memberIdStr, companyIdStr, reqBody)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	jobRes, err := ctrl.logSvc.CreateProCatJob(&log.CreateJobRequest{
-		ProductId: productRes.Data.ProductId,
-		MemberId:  memberIdStr,
-		CompanyId: companyIdStr,
-		Total:     1,
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	jobIdStr := strconv.FormatUint(uint64(jobRes.Data.JobId), 10)
-	loanRecordRes, err := ctrl.svc.LoanRecordChecker(req, apiKey, jobIdStr, memberIdStr, companyIdStr)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if loanRecordRes.StatusCode > fiber.StatusBadRequest {
-		_, resp := helper.GetError(loanRecordRes.Data.Status)
-
-		return c.Status(loanRecordRes.StatusCode).JSON(resp)
-	}
-
-	_, err = ctrl.transactionSvc.UpdateLogProCat(loanRecordRes.TransactionId, &transaction.UpdateTransRequest{
-		Success: helper.BoolPtr(true),
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	logTransRes, err := ctrl.transactionSvc.GetLogTransSuccessCount(jobIdStr)
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	_, err = ctrl.logSvc.UpdateJobAPI(jobIdStr, &log.UpdateJobRequest{
-		SuccessCount: &logTransRes.Data.SuccessCount,
-		Status:       helper.StringPtr(constant.JobStatusDone),
-		EndAt:        helper.TimePtr(time.Now()),
-	})
-	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	return c.Status(loanRecordRes.StatusCode).JSON(loanRecordRes)
+	return c.Status(result.StatusCode).JSON(result)
 }

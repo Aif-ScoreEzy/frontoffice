@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
+	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
 )
@@ -23,35 +25,36 @@ type repository struct {
 }
 
 type Repository interface {
-	CallLoanRecordCheckerAPI(request *LoanRecordCheckerRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error)
+	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, request *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (repo *repository) CallLoanRecordCheckerAPI(request *LoanRecordCheckerRequest, apiKey, jobId, memberId, companyId string) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.ProductCatalogHost + "/product/compliance/loan-record-checker"
+func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+	url := fmt.Sprintf("%s/product/compliance/loan-record-checker", repo.cfg.Env.ProductCatalogHost)
 
-	jsonBodyValue, err := json.Marshal(request)
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-API-KEY", apiKey)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-API-KEY", apiKey)
+	req.Header.Set("X-Member-ID", memberId)
+	req.Header.Set("X-Company-ID", companyId)
 
-	q := httpRequest.URL.Query()
+	q := req.URL.Query()
 	q.Add("job_id", jobId)
-	httpRequest.URL.RawQuery = q.Encode()
+	req.URL.RawQuery = q.Encode()
 
-	response, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
+	return helper.ParseProCatAPIResponse[dataLoanRecord](resp)
 }

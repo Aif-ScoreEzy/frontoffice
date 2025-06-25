@@ -8,10 +8,12 @@ import (
 	"fmt"
 	"front-office/common/model"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 )
 
 func NewService(repo Repository) Service {
@@ -25,24 +27,26 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(memberId, companyId string, request *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error)
+	CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error)
 	GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error)
 	GetAllPhoneLiveStatusDetails(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *PhoneLiveStatusFilter) (*APIResponse[[]MstPhoneLiveStatusJobDetail], error)
 	GetJobsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobsSummaryResponse], error)
 	GetPhoneLiveStatusDetailsSummary(filter *PhoneLiveStatusFilter) (*APIResponse[JobDetailsResponse], error)
 	ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter *PhoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
+	UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error)
+	UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error)
 	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
-func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*model.AifcoreAPIResponse[createJobResponseData], error) {
-	response, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
+func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error) {
+	res, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
 	if err != nil {
-		return nil, err
+		return nil, apperror.MapRepoError(err, "create job failed")
 	}
 
-	return helper.ParseAifcoreAPIResponse[createJobResponseData](response)
+	return &res.Data, err
 }
 
 func (svc *service) GetPhoneLiveStatusJob(filter *PhoneLiveStatusFilter) (*APIResponse[JobListResponse], error) {
@@ -118,6 +122,27 @@ func (svc *service) ExportJobsSummary(data []MstPhoneLiveStatusJobDetail, filter
 	}
 
 	return filename, nil
+}
+
+func (svc *service) UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error) {
+	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
+	response, err := svc.repo.CallUpdateJob(jobIdStr, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[any](response)
+}
+
+func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error) {
+	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
+	jobDetailIdStr := strconv.FormatUint(uint64(jobId), 10)
+	response, err := svc.repo.CallUpdateJobDetail(jobIdStr, jobDetailIdStr, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return helper.ParseAifcoreAPIResponse[any](response)
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {

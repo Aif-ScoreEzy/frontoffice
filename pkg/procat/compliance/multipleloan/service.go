@@ -4,47 +4,83 @@ import (
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
-	"net/http"
+	"front-office/internal/apperror"
+	"front-office/pkg/core/log/transaction"
+	"front-office/pkg/core/product"
+	"front-office/pkg/procat/log"
 )
 
-func NewService(repo Repository) Service {
+func NewService(
+	repo Repository,
+	productRepo product.Repository,
+	logRepo log.Repository,
+	transactionRepo transaction.Repository,
+	logService log.Service,
+) Service {
 	return &service{
-		repo: repo,
+		repo,
+		productRepo,
+		logRepo,
+		transactionRepo,
+		logService,
 	}
 }
 
 type service struct {
-	repo Repository
+	repo            Repository
+	productRepo     product.Repository
+	logRepo         log.Repository
+	transactionRepo transaction.Repository
+	logService      log.Service
 }
 
 type Service interface {
-	MultipleLoan(apiKey, jobId, productSlug, memberId, companyId string, request *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	MultipleLoan(apiKey, productSlug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 }
 
-func (svc *service) MultipleLoan(apiKey, jobId, productSlug, memberId, companyId string, request *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
-	var response *http.Response
-	var err error
+type multipleLoanFunc func(string, string, string, string, *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 
-	switch productSlug {
-	case constant.SlugMultipleLoan7Days:
-		response, err = svc.repo.CallMultipleLoan7Days(request, apiKey, memberId, jobId, companyId)
-		if err != nil {
-			return nil, err
-		}
-	case constant.SlugMultipleLoan30Days:
-		response, err = svc.repo.CallMultipleLoan30Days(request, apiKey, memberId, jobId, companyId)
-		if err != nil {
-			return nil, err
-		}
-	case constant.SlugMultipleLoan90Days:
-		response, err = svc.repo.CallMultipleLoan90Days(request, apiKey, memberId, jobId, companyId)
-		if err != nil {
-			return nil, err
-		}
+func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	product, err := svc.productRepo.CallGetProductBySlug(productSlug)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to fetch product")
+	}
+	if product.ProductId == 0 {
+		return nil, apperror.NotFound("product not found")
 	}
 
-	result, err := helper.ParseProCatAPIResponse[dataMultipleLoanResponse](response)
+	jobRes, err := svc.logRepo.CallCreateProCatJobAPI(&log.CreateJobRequest{
+		ProductId: product.ProductId,
+		MemberId:  memberId,
+		CompanyId: companyId,
+		Total:     1,
+	})
 	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to create job")
+	}
+	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
+
+	loanHandlers := map[string]multipleLoanFunc{
+		constant.SlugMultipleLoan7Days:  svc.repo.CallMultipleLoan7Days,
+		constant.SlugMultipleLoan30Days: svc.repo.CallMultipleLoan30Days,
+		constant.SlugMultipleLoan90Days: svc.repo.CallMultipleLoan90Days,
+	}
+
+	loanHandler, ok := loanHandlers[productSlug]
+	if !ok {
+		return nil, apperror.BadRequest("unsupported product type")
+	}
+
+	result, err := loanHandler(apiKey, memberId, jobIdStr, companyId, reqBody)
+	if err != nil {
+		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+			return nil, err
+		}
+
+		return nil, apperror.MapRepoError(err, "failed to process multiple loan request")
+	}
+
+	if err := svc.logService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
 		return nil, err
 	}
 

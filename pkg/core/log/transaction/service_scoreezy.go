@@ -1,78 +1,77 @@
 package transaction
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
+	"front-office/internal/apperror"
 )
 
-func (svc *service) GetLogScoreezy() (*AifResponse, int, error) {
-	response, err := svc.repo.CallLogScoreezyAPI()
+func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
+	logs, err := svc.repo.CallScoreezyLogsAPI()
 	if err != nil {
-		return nil, 0, err
+		return nil, apperror.MapRepoError(err, "failed to fetch logs")
 	}
 
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, 0, err
+	result := make([]*scoreezyLogResponse, 0, len(logs))
+	for _, log := range logs {
+		result = append(result, &scoreezyLogResponse{
+			Name:      log.Member.Name,
+			Grade:     log.Grade,
+			CreatedAt: log.CreatedAt,
+		})
 	}
 
-	return result, response.StatusCode, nil
+	return result, nil
 }
 
-func (svc *service) GetLogScoreezyByDate(companyId, date string) (*AifResponse, int, error) {
-	response, err := svc.repo.CallLogScoreezyByDateAPI(companyId, date)
+func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLogResponse, error) {
+	logs, err := svc.repo.CallScoreezyLogsByDateAPI(companyId, date)
 	if err != nil {
-		return nil, 0, err
+		return nil, apperror.MapRepoError(err, "failed to fetch logs")
 	}
 
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, 0, err
+	result := make([]*scoreezyLogResponse, 0, len(logs))
+	for _, log := range logs {
+		result = append(result, &scoreezyLogResponse{
+			Name:      log.Member.Name,
+			Grade:     log.Grade,
+			CreatedAt: log.CreatedAt,
+		})
 	}
 
-	return result, response.StatusCode, nil
+	return result, nil
 }
 
-func (svc *service) GetLogScoreezyByRangeDate(startDate, endDate, companyId, page string) (*AifResponse, int, error) {
-	response, err := svc.repo.CallLogScoreezyByRangeDateAPI(companyId, startDate, endDate)
+func (svc *service) GetScoreezyLogsByRangeDate(startDate, endDate, companyId, page string) ([]*scoreezyLogResponse, error) {
+	logs, err := svc.repo.CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate)
 	if err != nil {
-		return nil, 0, err
+		return nil, apperror.MapRepoError(err, "failed to fetch logs")
 	}
 
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, 0, err
+	result := make([]*scoreezyLogResponse, 0, len(logs))
+	for _, log := range logs {
+		result = append(result, &scoreezyLogResponse{
+			Name:      log.Member.Name,
+			Grade:     log.Grade,
+			CreatedAt: log.CreatedAt,
+		})
 	}
 
-	return result, response.StatusCode, nil
+	return result, nil
 }
 
-func (svc *service) GetLogScoreezyByMonth(companyId, month string) (*AifResponse, int, error) {
-	response, err := svc.repo.CallLogScoreezyByMonthAPI(companyId, month)
+func (svc *service) GetScoreezyLogsByMonth(companyId, month string) ([]*scoreezyLogResponse, error) {
+	logs, err := svc.repo.CallScoreezyLogsByMonthAPI(companyId, month)
 	if err != nil {
-		return nil, 0, err
+		return nil, apperror.MapRepoError(err, "failed to fetch logs")
 	}
 
-	result, err := parseResponse(response)
-	if err != nil {
-		return nil, 0, err
+	result := make([]*scoreezyLogResponse, 0, len(logs))
+	for _, log := range logs {
+		result = append(result, &scoreezyLogResponse{
+			Name:      log.Member.Name,
+			Grade:     log.Grade,
+			CreatedAt: log.CreatedAt,
+		})
 	}
 
-	return result, response.StatusCode, nil
-}
-
-func parseResponse(response *http.Response) (*AifResponse, error) {
-	var baseResponse *AifResponse
-
-	if response != nil {
-		dataBytes, _ := io.ReadAll(response.Body)
-		defer response.Body.Close()
-
-		if err := json.Unmarshal(dataBytes, &baseResponse); err != nil {
-			return nil, err
-		}
-	}
-
-	return baseResponse, nil
+	return result, nil
 }

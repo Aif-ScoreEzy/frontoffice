@@ -3,8 +3,10 @@ package helper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
+	"front-office/internal/apperror"
 	"io"
 	"net/http"
 
@@ -90,45 +92,55 @@ func GetError(errorMessage string) (int, interface{}) {
 }
 
 func ParseAifcoreAPIResponse[T any](response *http.Response) (*model.AifcoreAPIResponse[T], error) {
-	var apiResponse model.AifcoreAPIResponse[T]
-
 	if response == nil {
-		return nil, errors.New("nil response")
+		return nil, errors.New("nil http response")
 	}
 
 	dataBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	apiResponse.StatusCode = response.StatusCode
+	var apiResp model.AifcoreAPIResponse[T]
+	if err := json.Unmarshal(dataBytes, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w; raw: %s", err, string(dataBytes))
+	}
 
-	return &apiResponse, nil
+	apiResp.StatusCode = response.StatusCode
+
+	if apiResp.StatusCode >= 400 || !apiResp.Success {
+		return nil, &apperror.ExternalAPIError{
+			StatusCode: apiResp.StatusCode,
+			Message:    apiResp.Message,
+		}
+	}
+
+	return &apiResp, nil
 }
 
 func ParseProCatAPIResponse[T any](response *http.Response) (*model.ProCatAPIResponse[T], error) {
-	var apiResponse model.ProCatAPIResponse[T]
-
 	if response == nil {
-		return nil, errors.New("nil response")
+		return nil, errors.New("nil http response")
 	}
 
 	dataBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	if err := json.Unmarshal(dataBytes, &apiResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	apiResponse.StatusCode = response.StatusCode
+	var apiResp model.ProCatAPIResponse[T]
+	if err := json.Unmarshal(dataBytes, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w; raw: %s", err, string(dataBytes))
+	}
 
-	return &apiResponse, nil
+	apiResp.StatusCode = response.StatusCode
+
+	if apiResp.StatusCode >= 400 || !apiResp.Success {
+		return nil, &apperror.ExternalAPIError{
+			StatusCode: apiResp.StatusCode,
+			Message:    apiResp.Message,
+		}
+	}
+
+	return &apiResp, nil
 }
