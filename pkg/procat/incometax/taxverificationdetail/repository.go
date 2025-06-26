@@ -10,30 +10,37 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
 	"time"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
 	return &repository{
-		cfg:    cfg,
-		client: client,
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
 	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationDataResponse], error)
+	CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error)
 }
 
-func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationDataResponse], error) {
+func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
 	url := fmt.Sprintf("%s/product/incometax/tax-verification-detail", repo.cfg.Env.ProductCatalogHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -59,7 +66,7 @@ func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *ta
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseProCatAPIResponse[taxVerificationDataResponse](resp)
+	apiResp, err := helper.ParseProCatAPIResponse[taxVerificationRespData](resp)
 	if err != nil {
 		return nil, err
 	}
