@@ -32,6 +32,9 @@ jobs:
       - name: Convert coverage to lcov
         run: $HOME/go/bin/gcov2lcov -infile coverage.out -outfile coverage.lcov
 
+      - name: Show lcov output
+        run: cat coverage.lcov
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
