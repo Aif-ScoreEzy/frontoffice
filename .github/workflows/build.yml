@@ -33,7 +33,9 @@ jobs:
         run: $HOME/go/bin/gcov2lcov -infile coverage.out -outfile coverage.lcov
 
       - name: SonarQube Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=Aif-ScoreEzy_frontoffice
