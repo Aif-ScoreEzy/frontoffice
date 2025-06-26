@@ -33,7 +33,7 @@ func (repo *repository) CallTaxPayerStatusAPI(apiKey string, request *taxPayerSt
 
 	jsonBody, err := json.Marshal(request)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

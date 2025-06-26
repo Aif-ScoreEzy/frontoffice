@@ -11,11 +11,11 @@ func MapExternalAPIError(err *ExternalAPIError) error {
 	case 400:
 		return BadRequest(err.Message)
 	case 401:
-		return Unauthorized("unauthorized")
+		return Unauthorized(err.Message)
 	case 403:
-		return Forbidden("access forbidden")
+		return Forbidden(err.Message)
 	case 404:
-		return NotFound("resource not found")
+		return NotFound(err.Message)
 	case 409:
 		return Conflict(err.Message)
 	case 422:
@@ -23,7 +23,7 @@ func MapExternalAPIError(err *ExternalAPIError) error {
 	case 429:
 		return TooManyRequests("too many requests")
 	case 500:
-		return Internal("internal server error", nil)
+		return Internal(err.Message, err)
 	case 502:
 		return BadGateway("bad gateway from external service")
 	case 503:

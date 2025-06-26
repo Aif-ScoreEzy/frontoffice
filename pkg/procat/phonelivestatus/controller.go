@@ -149,23 +149,20 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
-	req := c.Locals("request").(*PhoneLiveStatusRequest)
+	reqBody := c.Locals("request").(*phoneLiveStatusRequest)
+
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, reqBody)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"success",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {

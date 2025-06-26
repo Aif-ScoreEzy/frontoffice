@@ -140,7 +140,9 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to fetch member")
 	}
-
+	if user.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFound)
+	}
 	if user.IsVerified && user.Active {
 		return apperror.BadRequest(constant.AlreadyVerified)
 	}

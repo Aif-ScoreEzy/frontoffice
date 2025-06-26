@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -32,9 +32,10 @@ type Repository interface {
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
-	CallUpdateJob(jobId string, req *updateJobRequest) (*http.Response, error)
-	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) (*http.Response, error)
-	CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error)
+	CallGetProcessedCount(jobId string) (*getSuccessCountRespData, error)
+	CallUpdateJob(jobId string, req *updateJobRequest) error
+	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) error
+	CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
 	CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error)
 }
 
@@ -159,7 +160,6 @@ func (repo *repository) CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) (
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	req.Header.Set("X-Member-ID", filter.MemberId)
 	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
@@ -245,74 +245,128 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallUpdateJob(jobId string, req *updateJobRequest) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs/" + jobId
+func (repo *repository) CallGetProcessedCount(jobId string) (*getSuccessCountRespData, error) {
+	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/success_count`, repo.cfg.Env.AifcoreHost, jobId)
 
-	jsonBodyValue, err := json.Marshal(req)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-
-	response, err := repo.client.Do(httpRequest)
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
-}
-
-func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/jobs/" + jobId + "/" + jobDetailId
-
-	jsonBodyValue, err := json.Marshal(req)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*getSuccessCountRespData](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPut, apiUrl, bytes.NewBuffer(jsonBodyValue))
+	return apiResp.Data, err
+}
+
+func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) error {
+	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, jobId)
+
+	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	response, err := repo.client.Do(httpRequest)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *updateJobDetailRequest) error {
+	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details/%v`, repo.cfg.Env.AifcoreHost, jobId, jobDetailId)
+
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
+	url := repo.cfg.Env.ProductCatalogHost + "/product/identity/phone-live-status"
+
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set("X-API-KEY", apiKey)
+
+	resp, err := repo.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	return response, nil
-}
-
-func (repo *repository) CallPhoneLiveStatusAPI(memberId, companyId string, request *PhoneLiveStatusRequest) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/single-search"
-
-	jsonBodyValue, err := json.Marshal(request)
+	apiResp, err := helper.ParseProCatAPIResponse[phoneLiveStatusRespData](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, bytes.NewBuffer(jsonBodyValue))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpRequest.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
-
-	log.Println("phone live status reqqq==> ", httpRequest)
-
-	client := http.Client{}
-
-	return client.Do(httpRequest)
+	return apiResp, nil
 }
 
 func (repo *repository) CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error) {

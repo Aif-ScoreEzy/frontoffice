@@ -8,7 +8,6 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/httpclient"
-	"log"
 
 	"net/http"
 )
@@ -174,7 +173,6 @@ func (repo *repository) AuthMemberAifCore(reqBody *userLoginRequest) (*loginResp
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
-	log.Println("reqqq auth member login", req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -183,7 +181,6 @@ func (repo *repository) AuthMemberAifCore(reqBody *userLoginRequest) (*loginResp
 
 	// send http request
 	resp, err := repo.client.Do(req)
-	log.Println("resssss auth member login", resp)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}

@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/member"
-	"log"
 	"mime/multipart"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/usepzaka/validator"
 )
 
 func NewService(repo Repository, memberRepo member.Repository) Service {
@@ -26,7 +30,7 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error)
+	CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error)
 	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
@@ -34,16 +38,16 @@ type Service interface {
 	GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
 	ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
-	UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error)
-	UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error)
-	ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error
+	UpdateJob(jobId uint, reqBody *updateJobRequest) error
+	UpdateJobDetail(jobId, jobDetailId uint, reqBody *updateJobDetailRequest) error
+	ProcessPhoneLiveStatus(memberId, companyId string, reqBody *phoneLiveStatusRequest) error
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
-func (svc *service) CreateJob(memberId, companyId string, request *createJobRequest) (*createJobResponseData, error) {
-	job, err := svc.repo.CallCreateJobAPI(memberId, companyId, request)
+func (svc *service) CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error) {
+	job, err := svc.repo.CallCreateJobAPI(memberId, companyId, reqBody)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "create job failed")
+		return nil, apperror.MapRepoError(err, "failed to create phone live status job")
 	}
 
 	return job, err
@@ -124,40 +128,68 @@ func (svc *service) ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.B
 	return filename, nil
 }
 
-func (svc *service) UpdateJob(jobId uint, req *updateJobRequest) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) UpdateJob(jobId uint, reqBody *updateJobRequest) error {
 	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
-	response, err := svc.repo.CallUpdateJob(jobIdStr, req)
-	if err != nil {
-		return nil, err
+	if err := svc.repo.CallUpdateJob(jobIdStr, reqBody); err != nil {
+		return apperror.MapRepoError(err, "failed to update phone live status job")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return nil
 }
 
-func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, req *updateJobDetailRequest) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, reqBody *updateJobDetailRequest) error {
 	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
 	jobDetailIdStr := strconv.FormatUint(uint64(jobId), 10)
-	response, err := svc.repo.CallUpdateJobDetail(jobIdStr, jobDetailIdStr, req)
-	if err != nil {
-		return nil, err
+	if err := svc.repo.CallUpdateJobDetail(jobIdStr, jobDetailIdStr, reqBody); err != nil {
+		return apperror.MapRepoError(err, "failed to update phone live status job detail")
 	}
 
-	return helper.ParseAifcoreAPIResponse[any](response)
+	return nil
 }
 
-func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, req *PhoneLiveStatusRequest) error {
-	// member, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
-	// 	Id:        memberId,
-	// 	CompanyId: companyId,
-	// })
-	// if err != nil {
-	// 	return apperror.MapRepoError(err, "failed to fetch ")
-	// }
-
-	response, err := svc.repo.CallPhoneLiveStatusAPI(memberId, companyId, req)
-	log.Println("phone live status resss==> ", response, err)
-
+func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *phoneLiveStatusRequest) error {
+	member, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+		Id:        memberId,
+		CompanyId: companyId,
+	})
 	if err != nil {
+		return apperror.MapRepoError(err, "failed to fetch member")
+	}
+	if member.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFound)
+	}
+
+	job, err := svc.repo.CallCreateJobAPI(memberId, companyId, &createJobRequest{
+		PhoneLiveStatusRequests: []*phoneLiveStatusRequest{reqBody},
+	})
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to create phone live status job")
+	}
+	jobIdStr := strconv.Itoa(int(job.JobId))
+
+	jobDetails, err := svc.repo.CallGetAllJobDetailsAPI(&phoneLiveStatusFilter{
+		JobId:     jobIdStr,
+		MemberId:  memberId,
+		CompanyId: companyId,
+	})
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to fetch job detail")
+	}
+	if len(jobDetails) == 0 {
+		return apperror.NotFound("no job details found")
+	}
+	jobDetailIdStr := strconv.Itoa(int(jobDetails[0].Id))
+
+	if err := svc.validateSingleRequest(jobIdStr, jobDetailIdStr, reqBody); err != nil {
+		return err
+	}
+
+	result, err := svc.processPhoneLiveStatus(member.Key, jobIdStr, jobDetailIdStr, jobDetails[0])
+	if err != nil {
+		return err
+	}
+
+	if err := svc.finalizeJob(jobIdStr, jobDetailIdStr, result); err != nil {
 		return err
 	}
 
@@ -197,4 +229,100 @@ func formatCSVFileName(base, startDate, endDate string) string {
 		return fmt.Sprintf("%s_%s_until_%s.csv", base, startDate, endDate)
 	}
 	return fmt.Sprintf("%s_%s.csv", base, startDate)
+}
+
+func (svc *service) validateSingleRequest(jobId, jobDetailId string, reqBody *phoneLiveStatusRequest) error {
+	if errValidation := validator.ValidateStruct(reqBody); errValidation != nil {
+		if err := svc.repo.CallUpdateJob(jobId, &updateJobRequest{
+			Status:       helper.StringPtr(constant.JobStatusDone),
+			SuccessCount: helper.IntPtr(1),
+			EndAt:        helper.TimePtr(time.Now()),
+		}); err != nil {
+			return apperror.MapRepoError(err, "failed to update phone live status job")
+		}
+
+		if err := svc.repo.CallUpdateJobDetail(jobId, jobDetailId, &updateJobDetailRequest{
+			Message:    helper.StringPtr(errValidation.Error()),
+			InProgress: helper.BoolPtr(false),
+			Status:     helper.StringPtr(constant.JobStatusFailed),
+		}); err != nil {
+			return apperror.MapRepoError(err, "failed to update phone live status job detail")
+		}
+
+		return apperror.BadRequest(errValidation.Error())
+	}
+
+	return nil
+}
+
+func (svc *service) processPhoneLiveStatus(apiKey, jobId, jobDetailId string, jobDetail *mstPhoneLiveStatusJobDetail) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
+	req := &phoneLiveStatusRequest{
+		PhoneNumber: jobDetail.PhoneNumber,
+		TrxId:       strconv.FormatUint(uint64(jobDetail.JobId), 10),
+	}
+
+	result, err := svc.repo.CallPhoneLiveStatusAPI(apiKey, req)
+	if err != nil {
+		if err := svc.repo.CallUpdateJobDetail(jobId, jobDetailId, &updateJobDetailRequest{
+			Message:    helper.StringPtr(err.Error()),
+			InProgress: helper.BoolPtr(false),
+			Status:     helper.StringPtr(constant.JobStatusError),
+		}); err != nil {
+			return nil, apperror.MapRepoError(err, "failed to update phone live status job detail")
+		}
+
+		return nil, apperror.MapRepoError(err, "failed to process phone live status request")
+	}
+
+	return result, nil
+}
+
+func parseLiveStatusData(liveStatus string) (subscriberStatus, deviceStatus string, err error) {
+	if liveStatus == "" {
+		return "", "", nil
+	}
+
+	parts := strings.Split(liveStatus, ",")
+
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
+}
+
+func (svc *service) finalizeJob(jobId, jobDetailId string, phoneLiveResp *model.ProCatAPIResponse[phoneLiveStatusRespData]) error {
+	status := "success"
+	if len(phoneLiveResp.Data.Errors) > 0 && phoneLiveResp.Data.Errors[0].Code == -60001 {
+		status = "fail"
+	}
+
+	subcriberStatus, deviceStatus, err := parseLiveStatusData(phoneLiveResp.Data.LiveStatus)
+	if err != nil {
+		return apperror.Internal("failed to parse live status data", err)
+	}
+
+	if err := svc.repo.CallUpdateJobDetail(jobId, jobDetailId, &updateJobDetailRequest{
+		Status:           helper.StringPtr(status),
+		InProgress:       helper.BoolPtr(false),
+		SubscriberStatus: helper.StringPtr(subcriberStatus),
+		DeviceStatus:     helper.StringPtr(deviceStatus),
+		PhoneType:        helper.StringPtr(phoneLiveResp.Data.PhoneType),
+		Operator:         helper.StringPtr(phoneLiveResp.Data.Operator),
+		PricingStrategy:  helper.StringPtr(phoneLiveResp.PricingStrategy),
+		TransactionId:    helper.StringPtr(phoneLiveResp.TransactionId),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update phone live status job detail")
+	}
+
+	count, err := svc.repo.CallGetProcessedCount(jobId)
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to get processed count request")
+	}
+
+	if err := svc.repo.CallUpdateJob(jobId, &updateJobRequest{
+		Status:       helper.StringPtr(constant.JobStatusDone),
+		SuccessCount: helper.IntPtr(int(count.SuccessCount)),
+		EndAt:        helper.TimePtr(time.Now()),
+	}); err != nil {
+		return apperror.MapRepoError(err, "failed to update phone live status job")
+	}
+
+	return nil
 }
