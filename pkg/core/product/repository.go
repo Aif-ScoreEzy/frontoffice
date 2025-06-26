@@ -35,14 +35,14 @@ func (repo *repository) CallGetProductBySlug(slug string) (*productResponseData,
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 

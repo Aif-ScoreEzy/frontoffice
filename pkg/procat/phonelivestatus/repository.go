@@ -44,7 +44,7 @@ func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *cr
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -56,12 +56,12 @@ func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *cr
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", memberId)
-	req.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.XMemberId, memberId)
+	req.Header.Set(constant.XCompanyId, companyId)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -85,9 +85,9 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilt
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("page", filter.Page)
@@ -98,7 +98,7 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilt
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -122,9 +122,9 @@ func (repo *repository) CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jo
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("page", filter.Page)
@@ -134,7 +134,7 @@ func (repo *repository) CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jo
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -158,12 +158,12 @@ func (repo *repository) CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) (
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -187,9 +187,9 @@ func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusF
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("start_date", filter.StartDate)
@@ -198,7 +198,7 @@ func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusF
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -222,9 +222,9 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("start_date", filter.StartDate)
@@ -233,7 +233,7 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -260,7 +260,7 @@ func (repo *repository) CallGetProcessedCount(jobId string) (*getSuccessCountRes
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -277,7 +277,7 @@ func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) e
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -292,7 +292,7 @@ func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) e
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("HTTP request failed: %w", err)
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -309,7 +309,7 @@ func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -324,7 +324,7 @@ func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("HTTP request failed: %w", err)
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -341,7 +341,7 @@ func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLive
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -349,15 +349,15 @@ func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLive
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-API-KEY", apiKey)
+	req.Header.Set(constant.XAPIKey, apiKey)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -400,8 +400,8 @@ func (repo *repository) CallBulkPhoneLiveStatusAPI(memberId, companyId string, f
 	}
 
 	httpRequest.Header.Set(constant.HeaderContentType, writer.FormDataContentType())
-	httpRequest.Header.Set("X-Member-ID", memberId)
-	httpRequest.Header.Set("X-Company-ID", companyId)
+	httpRequest.Header.Set(constant.XMemberId, memberId)
+	httpRequest.Header.Set(constant.XCompanyId, companyId)
 
 	client := http.Client{}
 

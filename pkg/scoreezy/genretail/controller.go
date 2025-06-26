@@ -42,7 +42,7 @@ type Controller interface {
 
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals("request").(*GenRetailRequest)
-	apiKey := c.Get("X-API-KEY")
+	apiKey := c.Get(constant.XAPIKey)
 	companyId := c.Locals("companyId")
 
 	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
@@ -123,7 +123,7 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	tempType := fmt.Sprintf("%v", c.Locals("tempType"))
-	apiKey := c.Get("X-API-KEY")
+	apiKey := c.Get(constant.XAPIKey)
 
 	// Get the file from the form data
 	fileHeader, err := c.FormFile("file")

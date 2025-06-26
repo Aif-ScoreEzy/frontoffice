@@ -35,18 +35,18 @@ func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-API-KEY", apiKey)
-	req.Header.Set("X-Member-ID", memberId)
-	req.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.XMemberId, memberId)
+	req.Header.Set(constant.XCompanyId, companyId)
 
 	q := req.URL.Query()
 	q.Add("job_id", jobId)
@@ -54,7 +54,7 @@ func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -71,18 +71,18 @@ func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyI
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-API-KEY", apiKey)
-	req.Header.Set("X-Member-ID", memberId)
-	req.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.XMemberId, memberId)
+	req.Header.Set(constant.XCompanyId, companyId)
 
 	q := req.URL.Query()
 	q.Add("job_id", jobId)
@@ -90,7 +90,7 @@ func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyI
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -107,18 +107,18 @@ func (repo *repository) CallMultipleLoan90Days(apiKey, jobId, memberId, companyI
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-API-KEY", apiKey)
-	req.Header.Set("X-Member-ID", memberId)
-	req.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.XMemberId, memberId)
+	req.Header.Set(constant.XCompanyId, companyId)
 
 	q := req.URL.Query()
 	q.Add("job_id", jobId)
@@ -126,7 +126,7 @@ func (repo *repository) CallMultipleLoan90Days(apiKey, jobId, memberId, companyI
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 

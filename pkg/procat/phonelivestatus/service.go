@@ -131,7 +131,7 @@ func (svc *service) ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.B
 func (svc *service) UpdateJob(jobId uint, reqBody *updateJobRequest) error {
 	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
 	if err := svc.repo.CallUpdateJob(jobIdStr, reqBody); err != nil {
-		return apperror.MapRepoError(err, "failed to update phone live status job")
+		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 	}
 
 	return nil
@@ -141,7 +141,7 @@ func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, reqBody *updateJobD
 	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
 	jobDetailIdStr := strconv.FormatUint(uint64(jobId), 10)
 	if err := svc.repo.CallUpdateJobDetail(jobIdStr, jobDetailIdStr, reqBody); err != nil {
-		return apperror.MapRepoError(err, "failed to update phone live status job detail")
+		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveDetail)
 	}
 
 	return nil
@@ -238,7 +238,7 @@ func (svc *service) validateSingleRequest(jobId, jobDetailId string, reqBody *ph
 			SuccessCount: helper.IntPtr(1),
 			EndAt:        helper.TimePtr(time.Now()),
 		}); err != nil {
-			return apperror.MapRepoError(err, "failed to update phone live status job")
+			return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 		}
 
 		if err := svc.repo.CallUpdateJobDetail(jobId, jobDetailId, &updateJobDetailRequest{
@@ -246,7 +246,7 @@ func (svc *service) validateSingleRequest(jobId, jobDetailId string, reqBody *ph
 			InProgress: helper.BoolPtr(false),
 			Status:     helper.StringPtr(constant.JobStatusFailed),
 		}); err != nil {
-			return apperror.MapRepoError(err, "failed to update phone live status job detail")
+			return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveDetail)
 		}
 
 		return apperror.BadRequest(errValidation.Error())
@@ -268,7 +268,7 @@ func (svc *service) processPhoneLiveStatus(apiKey, jobId, jobDetailId string, jo
 			InProgress: helper.BoolPtr(false),
 			Status:     helper.StringPtr(constant.JobStatusError),
 		}); err != nil {
-			return nil, apperror.MapRepoError(err, "failed to update phone live status job detail")
+			return nil, apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveDetail)
 		}
 
 		return nil, apperror.MapRepoError(err, "failed to process phone live status request")
@@ -308,7 +308,7 @@ func (svc *service) finalizeJob(jobId, jobDetailId string, phoneLiveResp *model.
 		PricingStrategy:  helper.StringPtr(phoneLiveResp.PricingStrategy),
 		TransactionId:    helper.StringPtr(phoneLiveResp.TransactionId),
 	}); err != nil {
-		return apperror.MapRepoError(err, "failed to update phone live status job detail")
+		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveDetail)
 	}
 
 	count, err := svc.repo.CallGetProcessedCount(jobId)
@@ -321,7 +321,7 @@ func (svc *service) finalizeJob(jobId, jobDetailId string, phoneLiveResp *model.
 		SuccessCount: helper.IntPtr(int(count.SuccessCount)),
 		EndAt:        helper.TimePtr(time.Now()),
 	}); err != nil {
-		return apperror.MapRepoError(err, "failed to update phone live status job")
+		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 	}
 
 	return nil

@@ -35,7 +35,7 @@ func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *ta
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -43,7 +43,7 @@ func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *ta
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -55,7 +55,7 @@ func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *ta
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
