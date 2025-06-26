@@ -23,11 +23,14 @@ jobs:
       - name: Run tests with coverage
         run: go test -v ./... -coverprofile=coverage.out
 
+      - name: Debug coverage file
+        run: cat coverage.out
+
       - name: Install gcov2lcov
         run: go install github.com/jandelgado/gcov2lcov@latest
 
       - name: Convert coverage to lcov
-        run: $HOME/go/bin/gcov2lcov coverage.out > coverage.lcov
+        run: $HOME/go/bin/gcov2lcov -infile coverage.out -outfile coverage.lcov
 
       - name: SonarQube Scan
         uses: sonarsource/sonarcloud-github-action@master
