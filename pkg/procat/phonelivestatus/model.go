@@ -105,7 +105,7 @@ type createJobRequest struct {
 	PhoneLiveStatusRequests []*phoneLiveStatusRequest `json:"requests"`
 }
 
-type createJobResponseData struct {
+type createJobRespData struct {
 	JobId uint `json:"job_id"`
 }
 

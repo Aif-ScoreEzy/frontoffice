@@ -2,9 +2,11 @@ package phonelivestatus
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"io"
 	"net/http"
 	"strings"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockClient struct {
@@ -23,125 +26,735 @@ func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-func TestPhoneLiveStatusAPI_Success(t *testing.T) {
-	cfg := &config.Config{
+func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository, *MockClient) {
+	t.Helper()
+
+	mockClient := new(MockClient)
+	mockClient.On("Do", mock.Anything).Return(response, err)
+
+	repo := NewRepository(&config.Config{
 		Env: &config.Environment{
 			ProductCatalogHost: constant.MockHost,
+			AifcoreHost:        constant.MockHost,
 		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
+	}, mockClient, nil)
 
-	expectedBody := `{
-			"message": "Succeed to Request Data",
-			"success": true,
-			"input": {
-				"phone number": "081282177383"
+	return repo, mockClient
+}
+
+func TestCallCreateJobAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[createJobRespData]{
+			Success: true,
+			Data:    createJobRespData{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[jobListRespData]{
+			Success: true,
+			Data:    jobListRespData{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			JobId: "100",
+		}
+		result, err := repo.CallGetPhoneLiveStatusJobAPI(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "100", filter.JobId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetPhoneLiveStatusJobAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetPhoneLiveStatusJobAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetPhoneLiveStatusJobAPI(&phoneLiveStatusFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetJobDetailsAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[jobDetailRespData]{
+			Success: true,
+			Data:    jobDetailRespData{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			JobId: "100",
+		}
+		result, err := repo.CallGetJobDetailsAPI(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "100", filter.JobId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetAllJobDetailsAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
+			Success: true,
+			Data:    []*mstPhoneLiveStatusJobDetail{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			JobId: "100",
+		}
+		result, err := repo.CallGetAllJobDetailsAPI(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "100", filter.JobId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetAllJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetAllJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetAllJobDetailsAPI(&phoneLiveStatusFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
+			Success: true,
+			Data:    []*mstPhoneLiveStatusJobDetail{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			MemberId: constant.DummyMemberId,
+		}
+		result, err := repo.CallGetJobDetailsByRangeDateAPI(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, constant.DummyMemberId, filter.MemberId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetJobsSummary(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[jobsSummaryRespData]{
+			Success: true,
+			Data:    jobsSummaryRespData{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			MemberId: constant.DummyMemberId,
+		}
+		result, err := repo.CallGetJobsSummary(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, constant.DummyMemberId, filter.MemberId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetJobsSummary(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetJobsSummary(&phoneLiveStatusFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetJobsSummary(&phoneLiveStatusFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallGetProcessedCount(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[jobsSummaryRespData]{
+			Success: true,
+			Data:    jobsSummaryRespData{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		filter := &phoneLiveStatusFilter{
+			MemberId: constant.DummyMemberId,
+		}
+		result, err := repo.CallGetProcessedCountAPI(constant.DummyJobId)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, constant.DummyMemberId, filter.MemberId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetProcessedCountAPI(constant.DummyJobId)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetProcessedCountAPI(constant.DummyJobId)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetProcessedCountAPI(constant.DummyJobId)
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallUpdateJob(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+			Data:    nil,
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		successStatus := "success"
+		req := &updateJobRequest{
+			Status: &successStatus,
+		}
+		err = repo.CallUpdateJob(constant.DummyJobId, req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, &successStatus, req.Status)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallUpdateJobDetail(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+			Data:    nil,
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		successStatus := "success"
+		req := &updateJobDetailRequest{
+			Status: &successStatus,
+		}
+		err = repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, &successStatus, req.Status)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
+
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestCallPhoneLiveStatusAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.ProCatAPIResponse[phoneLiveStatusRespData]{
+			Success: true,
+			Message: "Succeed to Request Data.",
+			Data: phoneLiveStatusRespData{
+				LiveStatus: "active, reachable",
 			},
-			"data": {
-				"live_status": "active, reachable"
-			},
-			"pricing_strategy": "PAY",
-			"transaction_id": "",
-			"date": "yyyy-mmm-dd HH-MM-SS"
-		}`
+			PricingStrategy: "PAY",
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
 
-	mockResp := &http.Response{
-		Body:   io.NopCloser(bytes.NewReader([]byte(expectedBody))),
-		Header: http.Header{"Content-Type": []string{"application/json"}},
-	}
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
 
-	mockClient.
-		On("Do", mock.AnythingOfType("*http.Request")).
-		Return(mockResp, nil)
+		repo, mockClient := setupMockRepo(t, resp, nil)
 
-	req := &phoneLiveStatusRequest{
-		PhoneNumber: "08111111110",
-		TrxId:       "trx-123",
-	}
+		result, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, &phoneLiveStatusRequest{})
 
-	resp, err := repo.CallPhoneLiveStatusAPI("test-api-key", req)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		assert.Equal(t, "Succeed to Request Data.", result.Message)
+		assert.Equal(t, "active, reachable", result.Data.LiveStatus)
+		assert.Equal(t, "PAY", result.PricingStrategy)
+		mockClient.AssertExpectations(t)
+	})
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	mockClient.AssertExpectations(t)
-}
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
 
-func TestCallPhoneLiveStatusAPI_HTTPRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
 
-	// Setup request yang valid
-	req := &phoneLiveStatusRequest{}
+		result, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, &phoneLiveStatusRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
 
-	// Setup mock untuk mengembalikan error
-	expectedErr := errors.New("failed to make HTTP request")
-	mockClient.
-		On("Do", mock.MatchedBy(func(req *http.Request) bool {
-			return req.Header.Get(constant.XAPIKey) == "test-api-key" &&
-				req.Header.Get("Content-Type") == "application/json"
-		})).
-		Return(&http.Response{}, expectedErr)
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+		}, mockClient, nil)
 
-	_, err := repo.CallPhoneLiveStatusAPI("test-api-key", req)
+		_, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, &phoneLiveStatusRequest{})
+		assert.Error(t, err)
+	})
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to make HTTP request")
-	mockClient.AssertExpectations(t)
-}
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
 
-func TestPhoneLiveStatusAPI_NewRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockInvalidHost, // Invalid URL to simulate error
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-	req := &phoneLiveStatusRequest{
-		PhoneNumber: "08111111110",
-		TrxId:       "trx-123",
-	}
+		req := &phoneLiveStatusRequest{}
+		_, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, req)
 
-	_, err := repo.CallPhoneLiveStatusAPI("test-api-key", req)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
 
-	assert.Error(t, err)
-}
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
 
-func TestPhoneLiveStatusAPI_ParseResponseError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
+		repo, mockClient := setupMockRepo(t, resp, nil)
 
-	invalidJSON := `this is not json`
-
-	mockResp := &http.Response{
-		Body:       io.NopCloser(strings.NewReader(invalidJSON)),
-		StatusCode: http.StatusOK,
-		Header:     http.Header{"Content-Type": []string{"application/json"}},
-	}
-
-	mockClient.
-		On("Do", mock.AnythingOfType("*http.Request")).
-		Return(mockResp, nil)
-
-	req := &phoneLiveStatusRequest{
-		PhoneNumber: "08111111110",
-		TrxId:       "trx-123",
-	}
-
-	_, err := repo.CallPhoneLiveStatusAPI("test-api-key", req)
-
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid character")
+		result, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, &phoneLiveStatusRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }

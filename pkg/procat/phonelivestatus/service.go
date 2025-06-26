@@ -30,7 +30,7 @@ type service struct {
 }
 
 type Service interface {
-	CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error)
+	CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error)
 	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
@@ -44,7 +44,7 @@ type Service interface {
 	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
-func (svc *service) CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error) {
+func (svc *service) CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error) {
 	job, err := svc.repo.CallCreateJobAPI(memberId, companyId, reqBody)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to create phone live status job")
@@ -311,7 +311,7 @@ func (svc *service) finalizeJob(jobId, jobDetailId string, phoneLiveResp *model.
 		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveDetail)
 	}
 
-	count, err := svc.repo.CallGetProcessedCount(jobId)
+	count, err := svc.repo.CallGetProcessedCountAPI(jobId)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}

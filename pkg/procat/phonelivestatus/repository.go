@@ -10,39 +10,49 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"time"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*createJobResponseData, error)
+	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*createJobRespData, error)
 	CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
-	CallGetProcessedCount(jobId string) (*getSuccessCountRespData, error)
+	CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error)
 	CallUpdateJob(jobId string, req *updateJobRequest) error
 	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) error
 	CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
 	CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error)
 }
 
-func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *createJobRequest) (*createJobResponseData, error) {
+func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error) {
 	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -65,7 +75,7 @@ func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *cr
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[*createJobResponseData](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*createJobRespData](resp)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +255,7 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallGetProcessedCount(jobId string) (*getSuccessCountRespData, error) {
+func (repo *repository) CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error) {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/success_count`, repo.cfg.Env.AifcoreHost, jobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -275,7 +285,7 @@ func (repo *repository) CallGetProcessedCount(jobId string) (*getSuccessCountRes
 func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) error {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, jobId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -307,7 +317,7 @@ func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) e
 func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *updateJobDetailRequest) error {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details/%v`, repo.cfg.Env.AifcoreHost, jobId, jobDetailId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -339,7 +349,7 @@ func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *
 func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
 	url := repo.cfg.Env.ProductCatalogHost + "/product/identity/phone-live-status"
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
