@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockClient struct {
@@ -25,87 +26,95 @@ func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-func TestCallLoanRecordCheckerAPI_Success(t *testing.T) {
+func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository, *MockClient) {
+	t.Helper()
+
 	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}, mockClient)
+	mockClient.On("Do", mock.Anything).Return(response, err)
 
-	mockData := model.ProCatAPIResponse[dataLoanRecord]{
-		Success: true,
-		Message: "ok",
-		Data:    dataLoanRecord{},
-	}
-	body, _ := json.Marshal(mockData)
-
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewReader(body)),
-	}
-
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
-
-	result, err := repo.CallLoanRecordCheckerAPI("apiKey", "jobId", "memberId", "companyId", &loanRecordCheckerRequest{})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.True(t, result.Success)
-	mockClient.AssertExpectations(t)
-}
-
-func TestCallLoanRecordCheckerAPI_NewRequestError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
-	}, mockClient)
-
-	_, err := repo.CallLoanRecordCheckerAPI("apiKey", "jobId", "memberId", "companyId", &loanRecordCheckerRequest{})
-	assert.Error(t, err)
-}
-
-func TestCallPhoneLiveStatusAPI_HTTPRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
-
-	req := &loanRecordCheckerRequest{}
-
-	expectedErr := errors.New("failed to make HTTP request")
-	mockClient.
-		On("Do", mock.MatchedBy(func(req *http.Request) bool {
-			return req.Header.Get(constant.XAPIKey) == "test-api-key" &&
-				req.Header.Get("Content-Type") == "application/json"
-		})).
-		Return(&http.Response{}, expectedErr)
-
-	_, err := repo.CallLoanRecordCheckerAPI("test-api-key", "job-id", "member-id", "company-id", req)
-
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to make HTTP request")
-	mockClient.AssertExpectations(t)
-}
-
-func TestCallLoanRecordCheckerAPI_ParseError(t *testing.T) {
-	mockClient := new(MockClient)
 	repo := NewRepository(&config.Config{
 		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
-	}, mockClient)
+	}, mockClient, nil)
 
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-	}
+	return repo, mockClient
+}
 
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
+func TestCallLoanRecordCheckerAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.ProCatAPIResponse[dataLoanRecord]{
+			Success: true,
+			Message: "success",
+			Data:    dataLoanRecord{Remarks: "-", Status: "-"},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
 
-	result, err := repo.CallLoanRecordCheckerAPI("apiKey", "jobId", "memberId", "companyId", &loanRecordCheckerRequest{})
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	mockClient.AssertExpectations(t)
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		assert.Equal(t, "-", result.Data.Status)
+		assert.Equal(t, "-", result.Data.Remarks)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		req := &loanRecordCheckerRequest{}
+		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }

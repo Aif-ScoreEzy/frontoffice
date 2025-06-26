@@ -9,19 +9,26 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal // default behavior
+	}
+
 	return &repository{
-		cfg:    cfg,
-		client: client,
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
 	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
@@ -33,7 +40,7 @@ type Repository interface {
 func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
 	url := fmt.Sprintf("%s/product/compliance/multiple-loan/7-days", repo.cfg.Env.ProductCatalogHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -69,7 +76,7 @@ func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId
 func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
 	url := fmt.Sprintf("%s/product/compliance/multiple-loan/30-days", repo.cfg.Env.ProductCatalogHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -105,7 +112,7 @@ func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyI
 func (repo *repository) CallMultipleLoan90Days(apiKey, jobId, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
 	url := fmt.Sprintf("%s/product/compliance/multiple-loan/90-days", repo.cfg.Env.ProductCatalogHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}

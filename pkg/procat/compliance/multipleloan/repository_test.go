@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockClient struct {
@@ -25,254 +26,249 @@ func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-func TestCallMultipleLoan7DaysAPI_Success(t *testing.T) {
+func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository, *MockClient) {
+	t.Helper()
+
 	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}, mockClient)
+	mockClient.On("Do", mock.Anything).Return(response, err)
 
-	mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
-		Success: true,
-		Message: "ok",
-		Data:    dataMultipleLoanResponse{},
-	}
-	body, _ := json.Marshal(mockData)
-
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewReader(body)),
-	}
-
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
-
-	result, err := repo.CallMultipleLoan7Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.True(t, result.Success)
-	mockClient.AssertExpectations(t)
-}
-
-func TestCallMultipleLoan7DaysAPI_NewRequestError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
-	}, mockClient)
-
-	_, err := repo.CallMultipleLoan7Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Error(t, err)
-}
-
-func TestCallMultipleLoan7DaysAPI_HTTPRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
-
-	req := &multipleLoanRequest{}
-
-	expectedErr := errors.New("failed to make HTTP request")
-	mockClient.
-		On("Do", mock.MatchedBy(func(req *http.Request) bool {
-			return req.Header.Get("Content-Type") == "application/json"
-		})).
-		Return(&http.Response{}, expectedErr)
-
-	_, err := repo.CallMultipleLoan7Days("test-api-key", "job-id", "member-id", "company-id", req)
-
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to make HTTP request")
-	mockClient.AssertExpectations(t)
-}
-
-func TestCallMultipleLoan7DaysAPI_ParseError(t *testing.T) {
-	mockClient := new(MockClient)
 	repo := NewRepository(&config.Config{
 		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
-	}, mockClient)
+	}, mockClient, nil)
 
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-	}
-
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
-
-	result, err := repo.CallMultipleLoan7Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	mockClient.AssertExpectations(t)
+	return repo, mockClient
 }
 
-func TestCallMultipleLoan30DaysAPI_Success(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}, mockClient)
+func TestCallMultipleLoan7DaysAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
+			Success: true,
+			Message: "success",
+			Data:    dataMultipleLoanResponse{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
 
-	mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
-		Success: true,
-		Message: "ok",
-		Data:    dataMultipleLoanResponse{},
-	}
-	body, _ := json.Marshal(mockData)
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
 
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewReader(body)),
-	}
+		repo, mockClient := setupMockRepo(t, resp, nil)
 
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
+		result, err := repo.CallMultipleLoan7Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
 
-	result, err := repo.CallMultipleLoan30Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		mockClient.AssertExpectations(t)
+	})
 
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.True(t, result.Success)
-	mockClient.AssertExpectations(t)
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		result, err := repo.CallMultipleLoan7Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallMultipleLoan7Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		req := &multipleLoanRequest{}
+		_, err := repo.CallMultipleLoan7Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallMultipleLoan7Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }
 
-func TestCallMultipleLoan30DaysAPI_NewRequestError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
-	}, mockClient)
+func TestCallMultipleLoan30DaysAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
+			Success: true,
+			Message: "success",
+			Data:    dataMultipleLoanResponse{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
 
-	_, err := repo.CallMultipleLoan30Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Error(t, err)
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallMultipleLoan30Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		result, err := repo.CallMultipleLoan30Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallMultipleLoan30Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		req := &multipleLoanRequest{}
+		_, err := repo.CallMultipleLoan30Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallMultipleLoan30Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }
 
-func TestCallMultipleLoan30DaysAPI_HTTPRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
+func TestCallMultipleLoan90DaysAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
+			Success: true,
+			Message: "success",
+			Data:    dataMultipleLoanResponse{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
 
-	req := &multipleLoanRequest{}
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
 
-	expectedErr := errors.New("failed to make HTTP request")
-	mockClient.
-		On("Do", mock.MatchedBy(func(req *http.Request) bool {
-			return req.Header.Get("Content-Type") == "application/json"
-		})).
-		Return(&http.Response{}, expectedErr)
+		repo, mockClient := setupMockRepo(t, resp, nil)
 
-	_, err := repo.CallMultipleLoan30Days("test-api-key", "job-id", "member-id", "company-id", req)
+		result, err := repo.CallMultipleLoan90Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to make HTTP request")
-	mockClient.AssertExpectations(t)
-}
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.Success)
+		mockClient.AssertExpectations(t)
+	})
 
-func TestCallMultipleLoan30DaysAPI_ParseError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
-	}, mockClient)
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New("failed to marshal request body")
+		}
 
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-	}
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
 
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
+		result, err := repo.CallMultipleLoan90Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to marshal request body")
+	})
 
-	result, err := repo.CallMultipleLoan30Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	mockClient.AssertExpectations(t)
-}
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+		}, mockClient, nil)
 
-func TestCallMultipleLoan90DaysAPI_Success(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}, mockClient)
+		_, err := repo.CallMultipleLoan90Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Error(t, err)
+	})
 
-	mockData := model.ProCatAPIResponse[dataMultipleLoanResponse]{
-		Success: true,
-		Message: "ok",
-		Data:    dataMultipleLoanResponse{},
-	}
-	body, _ := json.Marshal(mockData)
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New("failed to make HTTP request")
 
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewReader(body)),
-	}
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
+		req := &multipleLoanRequest{}
+		_, err := repo.CallMultipleLoan90Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
 
-	result, err := repo.CallMultipleLoan90Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		mockClient.AssertExpectations(t)
+	})
 
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.True(t, result.Success)
-	mockClient.AssertExpectations(t)
-}
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
 
-func TestCallMultipleLoan90DaysAPI_NewRequestError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
-	}, mockClient)
+		repo, mockClient := setupMockRepo(t, resp, nil)
 
-	_, err := repo.CallMultipleLoan90Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Error(t, err)
-}
-
-func TestCallMultipleLoan90DaysAPI_HTTPRequestError(t *testing.T) {
-	cfg := &config.Config{
-		Env: &config.Environment{
-			ProductCatalogHost: constant.MockHost,
-		},
-	}
-	mockClient := new(MockClient)
-	repo := NewRepository(cfg, mockClient)
-
-	req := &multipleLoanRequest{}
-
-	expectedErr := errors.New("failed to make HTTP request")
-	mockClient.
-		On("Do", mock.MatchedBy(func(req *http.Request) bool {
-			return req.Header.Get("Content-Type") == "application/json"
-		})).
-		Return(&http.Response{}, expectedErr)
-
-	_, err := repo.CallMultipleLoan90Days("test-api-key", "job-id", "member-id", "company-id", req)
-
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to make HTTP request")
-	mockClient.AssertExpectations(t)
-}
-
-func TestCallMultipleLoan90DaysAPI_ParseError(t *testing.T) {
-	mockClient := new(MockClient)
-	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
-	}, mockClient)
-
-	resp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-	}
-
-	mockClient.On("Do", mock.Anything).Return(resp, nil)
-
-	result, err := repo.CallMultipleLoan90Days("apiKey", "jobId", "memberId", "companyId", &multipleLoanRequest{})
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	mockClient.AssertExpectations(t)
+		result, err := repo.CallMultipleLoan90Days(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &multipleLoanRequest{})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
 }
