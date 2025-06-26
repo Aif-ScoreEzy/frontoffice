@@ -1,14 +1,11 @@
 name: Build
 on:
   push:
-    branches:
-      - master
-      - dev
+    branches: [master, dev]
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-      - master
-      - dev
+    branches: [master, dev]
+
 jobs:
   sonarqube:
     name: SonarQube
@@ -16,13 +13,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
 
       - name: Run tests with coverage
         run: go test -v ./... -coverprofile=coverage.out
 
-      - name: Convert coverage to lcov (opsional, jika SonarCloud)
-        run: go run github.com/jandelgado/gcov2lcov coverage.out > coverage.lcov
+      - name: Install gcov2lcov
+        run: go install github.com/jandelgado/gcov2lcov@latest
+
+      - name: Convert coverage to lcov
+        run: $HOME/go/bin/gcov2lcov coverage.out > coverage.lcov
 
       - name: SonarQube Scan
         uses: sonarsource/sonarcloud-github-action@master
@@ -30,4 +35,4 @@ jobs:
           args: >
             -Dsonar.projectKey=Aif-ScoreEzy_frontoffice
             -Dsonar.organization=aif-scoreezy
-            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.go.coverage.reportPaths=coverage.lcov
