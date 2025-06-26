@@ -44,3 +44,6 @@ jobs:
             -Dsonar.projectKey=Aif-ScoreEzy_frontoffice
             -Dsonar.organization=aif-scoreezy
             -Dsonar.go.coverage.reportPaths=coverage.lcov
+            -Dsonar.sources=.
+            -Dsonar.sources=internal,pkg
+            -Dsonar.verbose=true
