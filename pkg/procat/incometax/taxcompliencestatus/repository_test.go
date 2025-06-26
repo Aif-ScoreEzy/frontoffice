@@ -2,9 +2,12 @@ package taxcompliancestatus
 
 import (
 	"bytes"
+	"errors"
 	"front-office/app/config"
+	"front-office/common/constant"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,10 +23,10 @@ func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-func TestCallTaxComplianceStatusAPI(t *testing.T) {
+func TestCallTaxComplianceStatusAPI_Success(t *testing.T) {
 	cfg := &config.Config{
 		Env: &config.Environment{
-			ProductCatalogHost: "http://mock-host",
+			ProductCatalogHost: constant.MockHost,
 		},
 	}
 	mockClient := new(MockClient)
@@ -63,5 +66,57 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
+	mockClient.AssertExpectations(t)
+}
+
+func TestCallTaxComplianceStatusAPI_NewRequestError(t *testing.T) {
+	mockClient := new(MockClient)
+	repo := NewRepository(&config.Config{
+		Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
+	}, mockClient)
+
+	_, err := repo.CallTaxComplianceStatusAPI("apiKey", "jobId", &taxComplianceStatusRequest{})
+	assert.Error(t, err)
+}
+
+func TestCallTaxComplianceStatusAPI_HTTPRequestError(t *testing.T) {
+	cfg := &config.Config{
+		Env: &config.Environment{
+			ProductCatalogHost: constant.MockHost,
+		},
+	}
+	mockClient := new(MockClient)
+	repo := NewRepository(cfg, mockClient)
+
+	expectedErr := errors.New("failed to make HTTP request")
+	mockClient.
+		On("Do", mock.MatchedBy(func(req *http.Request) bool {
+			return req.Header.Get("Content-Type") == "application/json"
+		})).
+		Return(&http.Response{}, expectedErr)
+
+	_, err := repo.CallTaxComplianceStatusAPI("test-api-key", "job-id", &taxComplianceStatusRequest{})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to make HTTP request")
+	mockClient.AssertExpectations(t)
+}
+
+func TestCallTaxScoreAPI_ParseError(t *testing.T) {
+	mockClient := new(MockClient)
+	repo := NewRepository(&config.Config{
+		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+	}, mockClient)
+
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+	}
+
+	mockClient.On("Do", mock.Anything).Return(resp, nil)
+
+	result, err := repo.CallTaxComplianceStatusAPI("apiKey", "jobId", &taxComplianceStatusRequest{})
+	assert.Nil(t, result)
+	assert.Error(t, err)
 	mockClient.AssertExpectations(t)
 }
