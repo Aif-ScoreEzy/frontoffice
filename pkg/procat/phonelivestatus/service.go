@@ -153,7 +153,7 @@ func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *
 		CompanyId: companyId,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if member.MemberId == 0 {
 		return apperror.NotFound(constant.UserNotFound)

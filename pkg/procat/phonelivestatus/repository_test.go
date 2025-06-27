@@ -67,7 +67,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 	t.Run("MarshalError", func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
-			return nil, errors.New("failed to marshal request body")
+			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
 
 		repo := NewRepository(&config.Config{
@@ -77,7 +77,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to marshal request body")
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
 	t.Run("NewRequestError", func(t *testing.T) {
@@ -92,14 +92,14 @@ func TestCallCreateJobAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -158,14 +158,14 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetPhoneLiveStatusJobAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -224,14 +224,14 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -290,14 +290,14 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetAllJobDetailsAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -356,14 +356,14 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -422,14 +422,14 @@ func TestCallGetJobsSummary(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetJobsSummary(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -488,14 +488,14 @@ func TestCallGetProcessedCount(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		_, err := repo.CallGetProcessedCountAPI(constant.DummyJobId)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -544,7 +544,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 	t.Run("MarshalError", func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
-			return nil, errors.New("failed to marshal request body")
+			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
 
 		repo := NewRepository(&config.Config{
@@ -554,7 +554,7 @@ func TestCallUpdateJob(t *testing.T) {
 		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to marshal request body")
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
 	t.Run("NewRequestError", func(t *testing.T) {
@@ -569,14 +569,14 @@ func TestCallUpdateJob(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -624,7 +624,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 
 	t.Run("MarshalError", func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
-			return nil, errors.New("failed to marshal request body")
+			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
 
 		repo := NewRepository(&config.Config{
@@ -634,7 +634,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to marshal request body")
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
 	t.Run("NewRequestError", func(t *testing.T) {
@@ -649,14 +649,14 @@ func TestCallUpdateJobDetail(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		err := repo.CallUpdateJobDetail(constant.DummyJobId, constant.DummyJobDetailId, &updateJobDetailRequest{})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -708,7 +708,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 
 	t.Run("MarshalError", func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
-			return nil, errors.New("failed to marshal request body")
+			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
 
 		repo := NewRepository(&config.Config{
@@ -718,7 +718,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		result, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, &phoneLiveStatusRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to marshal request body")
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
 	t.Run("NewRequestError", func(t *testing.T) {
@@ -732,7 +732,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 	})
 
 	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New("failed to make HTTP request")
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
@@ -740,7 +740,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		_, err := repo.CallPhoneLiveStatusAPI(constant.DummyAPIKey, req)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to make HTTP request")
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
 		mockClient.AssertExpectations(t)
 	})
 

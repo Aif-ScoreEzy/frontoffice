@@ -1,13 +1,14 @@
 package transaction
 
 import (
+	"front-office/common/constant"
 	"front-office/internal/apperror"
 )
 
 func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
 	logs, err := svc.repo.CallScoreezyLogsAPI()
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch logs")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
 
 	result := make([]*scoreezyLogResponse, 0, len(logs))
@@ -25,7 +26,7 @@ func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
 func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLogResponse, error) {
 	logs, err := svc.repo.CallScoreezyLogsByDateAPI(companyId, date)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch logs")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
 
 	result := make([]*scoreezyLogResponse, 0, len(logs))
@@ -43,7 +44,7 @@ func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLo
 func (svc *service) GetScoreezyLogsByRangeDate(startDate, endDate, companyId, page string) ([]*scoreezyLogResponse, error) {
 	logs, err := svc.repo.CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch logs")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
 
 	result := make([]*scoreezyLogResponse, 0, len(logs))
@@ -61,7 +62,7 @@ func (svc *service) GetScoreezyLogsByRangeDate(startDate, endDate, companyId, pa
 func (svc *service) GetScoreezyLogsByMonth(companyId, month string) ([]*scoreezyLogResponse, error) {
 	logs, err := svc.repo.CallScoreezyLogsByMonthAPI(companyId, month)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch logs")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
 
 	result := make([]*scoreezyLogResponse, 0, len(logs))
