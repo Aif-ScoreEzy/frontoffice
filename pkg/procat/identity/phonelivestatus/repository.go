@@ -11,8 +11,6 @@ import (
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"front-office/internal/jsonutil"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -36,7 +34,7 @@ type repository struct {
 }
 
 type Repository interface {
-	CallCreateJobAPI(memberId, companyId string, req *createJobRequest) (*createJobRespData, error)
+	CallCreateJobAPI(payload *createJobRequest) (*createJobRespData, error)
 	CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
@@ -45,14 +43,13 @@ type Repository interface {
 	CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error)
 	CallUpdateJob(jobId string, req *updateJobRequest) error
 	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) error
-	CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
-	CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error)
+	CallPhoneLiveStatusAPI(apiKey string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
 }
 
-func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error) {
+func (repo *repository) CallCreateJobAPI(payload *createJobRequest) (*createJobRespData, error) {
 	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
 
-	bodyBytes, err := repo.marshalFn(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -66,10 +63,11 @@ func (repo *repository) CallCreateJobAPI(memberId, companyId string, reqBody *cr
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XMemberId, memberId)
-	req.Header.Set(constant.XCompanyId, companyId)
+	req.Header.Set(constant.XMemberId, payload.MemberId)
+	req.Header.Set(constant.XCompanyId, payload.CompanyId)
 
 	resp, err := repo.client.Do(req)
+	fmt.Println("pppppp", req, resp)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
@@ -282,10 +280,10 @@ func (repo *repository) CallGetProcessedCountAPI(jobId string) (*getSuccessCount
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) error {
+func (repo *repository) CallUpdateJob(jobId string, payload *updateJobRequest) error {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, jobId)
 
-	bodyBytes, err := repo.marshalFn(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -314,10 +312,10 @@ func (repo *repository) CallUpdateJob(jobId string, reqBody *updateJobRequest) e
 	return nil
 }
 
-func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *updateJobDetailRequest) error {
+func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, payload *updateJobDetailRequest) error {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details/%v`, repo.cfg.Env.AifcoreHost, jobId, jobDetailId)
 
-	bodyBytes, err := repo.marshalFn(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -346,10 +344,10 @@ func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, reqBody *
 	return nil
 }
 
-func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
+func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
 	url := repo.cfg.Env.ProductCatalogHost + "/product/identity/phone-live-status"
 
-	bodyBytes, err := repo.marshalFn(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -377,43 +375,4 @@ func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, reqBody *phoneLive
 	}
 
 	return apiResp, nil
-}
-
-func (repo *repository) CallBulkPhoneLiveStatusAPI(memberId, companyId string, fileHeader *multipart.FileHeader) (*http.Response, error) {
-	apiUrl := repo.cfg.Env.AifcoreHost + "/api/core/phone-live-status/bulk-search"
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-
-	part, err := writer.CreateFormFile("file", fileHeader.Filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create form file: %w", err)
-	}
-
-	if _, err := io.Copy(part, file); err != nil {
-		return nil, fmt.Errorf("failed to copy file content: %w", err)
-	}
-
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
-	}
-
-	httpRequest, err := http.NewRequest(http.MethodPost, apiUrl, body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	httpRequest.Header.Set(constant.HeaderContentType, writer.FormDataContentType())
-	httpRequest.Header.Set(constant.XMemberId, memberId)
-	httpRequest.Header.Set(constant.XCompanyId, companyId)
-
-	client := http.Client{}
-
-	return client.Do(httpRequest)
 }

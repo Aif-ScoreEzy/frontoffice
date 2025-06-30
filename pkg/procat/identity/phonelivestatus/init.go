@@ -27,5 +27,5 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	phoneLiveStatusGroup.Get("/jobs/:id/details", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
 	phoneLiveStatusGroup.Get("/jobs/:id/details/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobDetails)
 	phoneLiveStatusGroup.Post("/single-search", middleware.Auth(), middleware.IsRequestValid(phoneLiveStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
-	phoneLiveStatusGroup.Post("/bulk-search", middleware.Auth(), middleware.IsRequestValid(phoneLiveStatusRequest{}), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
+	phoneLiveStatusGroup.Post("/bulk-search", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
 }

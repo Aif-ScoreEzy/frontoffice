@@ -58,7 +58,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		result, err := repo.CallCreateJobAPI(&createJobRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -74,7 +74,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		result, err := repo.CallCreateJobAPI(&createJobRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -86,7 +86,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		_, err := repo.CallCreateJobAPI(&createJobRequest{})
 
 		assert.Error(t, err)
 	})
@@ -96,7 +96,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		_, err := repo.CallCreateJobAPI(&createJobRequest{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -111,7 +111,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(constant.DummyMemberId, constant.DummyCompanyId, &createJobRequest{})
+		result, err := repo.CallCreateJobAPI(&createJobRequest{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)

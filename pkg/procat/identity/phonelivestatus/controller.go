@@ -171,28 +171,16 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
-	}
-
-	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
-		_, resp := helper.GetError(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return apperror.BadRequest(err.Error())
 	}
 
 	err = ctrl.svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"success",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }

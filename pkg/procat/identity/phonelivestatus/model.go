@@ -20,25 +20,22 @@ type mstPhoneLiveStatusJob struct {
 }
 
 type mstPhoneLiveStatusJobDetail struct {
-	Id               uint                  `json:"id"`
-	MemberId         uint                  `json:"member_id"`
-	Member           member.MstMember      `json:"-"`
-	CompanyId        uint                  `json:"company_id"`
-	Company          company.MstCompany    `json:"-"`
-	JobId            uint                  `json:"job_id"`
-	Job              mstPhoneLiveStatusJob `json:"-"`
-	PhoneNumber      string                `json:"phone_number"`
-	InProgress       bool                  `json:"in_progess"`
-	Sequence         int                   `json:"sequence"`
-	Status           string                `json:"status"`
-	Message          *string               `json:"message"`
-	SubscriberStatus string                `json:"subscriber_status"`
-	DeviceStatus     string                `json:"device_status"`
-	PhoneType        string                `json:"phone_type"`
-	Operator         string                `json:"operator"`
-	PricingStrategy  string                `json:"pricing_strategy"`
-	TransactionId    string                `json:"transaction_id"`
-	CreatedAt        time.Time             `json:"created_at"`
+	Id               uint      `json:"id"`
+	MemberId         uint      `json:"member_id"`
+	CompanyId        uint      `json:"company_id"`
+	JobId            uint      `json:"job_id"`
+	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
+	InProgress       bool      `json:"in_progess"`
+	Sequence         int       `json:"sequence"`
+	Status           string    `json:"status"`
+	Message          *string   `json:"message"`
+	SubscriberStatus string    `json:"subscriber_status"`
+	DeviceStatus     string    `json:"device_status"`
+	PhoneType        string    `json:"phone_type"`
+	Operator         string    `json:"operator"`
+	PricingStrategy  string    `json:"pricing_strategy"`
+	TransactionId    string    `json:"transaction_id"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 type phoneLiveStatusRequest struct {
@@ -100,8 +97,8 @@ type jobsSummaryRespData struct {
 }
 
 type createJobRequest struct {
-	MemberId                uint                      `json:"member_id"`
-	CompanyId               uint                      `json:"company_id"`
+	MemberId                string                    `json:"member_id"`
+	CompanyId               string                    `json:"company_id"`
 	PhoneLiveStatusRequests []*phoneLiveStatusRequest `json:"requests"`
 }
 
