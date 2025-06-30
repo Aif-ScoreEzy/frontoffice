@@ -13,7 +13,6 @@ import (
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/template"
 	"front-office/pkg/procat"
-	"front-office/pkg/procat/phonelivestatus"
 	"front-office/pkg/scoreezy/genretail"
 	"time"
 
@@ -48,7 +47,6 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 
 	productGroup := routeGroup.Group("products")
 	procat.SetupInit(productGroup, cfg)
-	phonelivestatus.SetupInit(productGroup, cfg, client)
 
 	templateGroup := routeGroup.Group("templates")
 	template.SetupInit(templateGroup)

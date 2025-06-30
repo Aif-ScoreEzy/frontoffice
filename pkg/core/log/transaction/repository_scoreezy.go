@@ -12,14 +12,14 @@ func (repo *repository) CallScoreezyLogsAPI() ([]*LogTransScoreezy, error) {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -36,7 +36,7 @@ func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*Lo
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -48,7 +48,7 @@ func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*Lo
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -65,7 +65,7 @@ func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, end
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -78,7 +78,7 @@ func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, end
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -95,7 +95,7 @@ func (repo *repository) CallScoreezyLogsByMonthAPI(companyId, month string) ([]*
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -107,7 +107,7 @@ func (repo *repository) CallScoreezyLogsByMonthAPI(companyId, month string) ([]*
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 

@@ -35,10 +35,10 @@ type service struct {
 }
 
 type Service interface {
-	CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationDataResponse], error)
+	CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error)
 }
 
-func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationDataResponse], error) {
+func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
 	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugTaxVerificationDetail)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")

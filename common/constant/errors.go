@@ -53,4 +53,20 @@ const (
 	InvalidImageFile   = "invalid image file"
 	InvalidStatusValue = "invalid value for 'status'"
 	SendEmailFailed    = "send email failed"
+
+	ErrFailedMarshalReq   = "failed to marshal request body"
+	ErrHTTPReqFailed      = "failed to marshal request body"
+	FailedFetchMember     = "failed to fetch member"
+	FailedUpdateMember    = "failed to update member"
+	FailedFetchLogs       = "failed to fetch logs"
+	InvalidUserSession    = "invalid user session"
+	InvalidCompanySession = "invalid company session"
+	MissingUserId         = "missing user id"
+	MissingAccessToken    = "no access token provided"
+
+	ErrMsgMarshalReqBody = "failed to marshal request body: %w"
+	ErrMsgHTTPReqFailed  = "HTTP request failed: %w"
+
+	ErrMsgUpdatePhoneLiveJob    = "failed to update phone live status job"
+	ErrMsgUpdatePhoneLiveDetail = "failed to update phone live status job detail"
 )

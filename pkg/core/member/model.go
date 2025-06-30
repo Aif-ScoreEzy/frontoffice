@@ -16,7 +16,7 @@ type MstMember struct {
 	Email             string             `json:"email" gorm:"unique" validate:"required,email"`
 	Password          string             `json:"password"`
 	Phone             string             `json:"phone"`
-	Key               string             `json:"-" gorm:"uniqueIndex"`
+	Key               string             `json:"api_key" gorm:"uniqueIndex"`
 	Active            bool               `json:"active"`
 	ParentId          string             `json:"parent_id"`
 	CompanyId         uint               `json:"company_id"`

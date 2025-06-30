@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type MstPhoneLiveStatusJob struct {
+type mstPhoneLiveStatusJob struct {
 	Id           uint               `json:"id"`
 	Total        int                `json:"total"`
 	SuccessCount int                `json:"success_count"`
@@ -20,29 +20,39 @@ type MstPhoneLiveStatusJob struct {
 }
 
 type mstPhoneLiveStatusJobDetail struct {
-	Id               uint                  `json:"id"`
-	MemberId         uint                  `json:"member_id"`
-	Member           member.MstMember      `json:"-"`
-	CompanyId        uint                  `json:"company_id"`
-	Company          company.MstCompany    `json:"-"`
-	JobId            uint                  `json:"job_id"`
-	Job              MstPhoneLiveStatusJob `json:"-"`
-	PhoneNumber      string                `json:"phone_number"`
-	InProgress       bool                  `json:"in_progess"`
-	Sequence         int                   `json:"sequence"`
-	Status           string                `json:"status"`
-	Message          *string               `json:"message"`
-	SubscriberStatus string                `json:"subscriber_status"`
-	DeviceStatus     string                `json:"device_status"`
-	PhoneType        string                `json:"phone_type"`
-	Operator         string                `json:"operator"`
-	PricingStrategy  string                `json:"pricing_strategy"`
-	TransactionId    string                `json:"transaction_id"`
-	CreatedAt        time.Time             `json:"created_at"`
+	Id               uint      `json:"id"`
+	MemberId         uint      `json:"member_id"`
+	CompanyId        uint      `json:"company_id"`
+	JobId            uint      `json:"job_id"`
+	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
+	InProgress       bool      `json:"in_progess"`
+	Sequence         int       `json:"sequence"`
+	Status           string    `json:"status"`
+	Message          *string   `json:"message"`
+	SubscriberStatus string    `json:"subscriber_status"`
+	DeviceStatus     string    `json:"device_status"`
+	PhoneType        string    `json:"phone_type"`
+	Operator         string    `json:"operator"`
+	PricingStrategy  string    `json:"pricing_strategy"`
+	TransactionId    string    `json:"transaction_id"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
-type PhoneLiveStatusRequest struct {
-	PhoneNumber string `json:"phone_number"`
+type phoneLiveStatusRequest struct {
+	PhoneNumber string `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
+	TrxId       string `json:"trx_id"`
+}
+
+type phoneLiveStatusRespData struct {
+	LiveStatus string      `json:"live_status"`
+	PhoneType  string      `json:"phone_type"`
+	Operator   string      `json:"operator"`
+	Errors     []errorData `json:"errors"`
+}
+
+type errorData struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
 }
 
 type phoneLiveStatusFilter struct {
@@ -58,15 +68,8 @@ type phoneLiveStatusFilter struct {
 	Keyword   string
 }
 
-type APIResponse[T any] struct {
-	Success    bool   `json:"success"`
-	Data       T      `json:"data"`
-	Message    string `json:"message"`
-	StatusCode int    `json:"-"`
-}
-
 type jobListRespData struct {
-	Jobs      []*MstPhoneLiveStatusJob `json:"jobs"`
+	Jobs      []*mstPhoneLiveStatusJob `json:"jobs"`
 	TotalData int                      `json:"total_data"`
 }
 
@@ -94,13 +97,17 @@ type jobsSummaryRespData struct {
 }
 
 type createJobRequest struct {
-	MemberId                uint                      `json:"member_id"`
-	CompanyId               uint                      `json:"company_id"`
-	PhoneLiveStatusRequests []*PhoneLiveStatusRequest `json:"requests"`
+	MemberId                string                    `json:"member_id"`
+	CompanyId               string                    `json:"company_id"`
+	PhoneLiveStatusRequests []*phoneLiveStatusRequest `json:"requests"`
 }
 
-type createJobResponseData struct {
+type createJobRespData struct {
 	JobId uint `json:"job_id"`
+}
+
+type getSuccessCountRespData struct {
+	SuccessCount uint `json:"success_count"`
 }
 
 type updateJobRequest struct {

@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/apperror"
 
@@ -14,7 +15,7 @@ func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log transaction",
+		constant.SucceedGetLogTrans,
 		logs,
 	))
 }
@@ -33,7 +34,7 @@ func (ctrl *controller) GetLogScoreezyByDate(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log transaction",
+		constant.SucceedGetLogTrans,
 		logs,
 	))
 }
@@ -54,7 +55,7 @@ func (ctrl *controller) GetLogScoreezyByRangeDate(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log transaction",
+		constant.SucceedGetLogTrans,
 		logs,
 	))
 }
@@ -73,7 +74,7 @@ func (ctrl *controller) GetLogScoreezyByMonth(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log transaction",
+		constant.SucceedGetLogTrans,
 		logs,
 	))
 }

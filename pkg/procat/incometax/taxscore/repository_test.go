@@ -1,4 +1,4 @@
-package taxcompliancestatus
+package taxscore
 
 import (
 	"bytes"
@@ -39,13 +39,13 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 	return repo, mockClient
 }
 
-func TestCallTaxComplianceStatusAPI(t *testing.T) {
+func TestCallTaxScoreAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.ProCatAPIResponse[taxComplianceRespData]{
+		mockData := model.ProCatAPIResponse[taxScoreRespData]{
 			Success: true,
 			Message: "Succeed to Request Data.",
-			Data: taxComplianceRespData{
-				Status: "Reported",
+			Data: taxScoreRespData{
+				Score: "0",
 			},
 			PricingStrategy: "PAY",
 		}
@@ -59,13 +59,13 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallTaxScoreAPI(constant.DummyAPIKey, constant.DummyJobId, &taxScoreRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
 		assert.Equal(t, "Succeed to Request Data.", result.Message)
-		assert.Equal(t, "Reported", result.Data.Status)
+		assert.Equal(t, "0", result.Data.Score)
 		assert.Equal(t, "PAY", result.PricingStrategy)
 		mockClient.AssertExpectations(t)
 	})
@@ -79,7 +79,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallTaxScoreAPI(constant.DummyAPIKey, constant.DummyJobId, &taxScoreRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -91,7 +91,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		_, err := repo.CallTaxScoreAPI(constant.DummyAPIKey, constant.DummyJobId, &taxScoreRequest{})
 		assert.Error(t, err)
 	})
 
@@ -100,8 +100,8 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		req := &taxComplianceStatusRequest{}
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, req)
+		req := &taxScoreRequest{}
+		_, err := repo.CallTaxScoreAPI(constant.DummyAPIKey, constant.DummyJobId, req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -116,7 +116,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallTaxScoreAPI(constant.DummyAPIKey, constant.DummyJobId, &taxScoreRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

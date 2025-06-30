@@ -8,10 +8,10 @@ import (
 	"mime/multipart"
 )
 
-func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]string, int, error) {
+func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]string, error) {
 	fileContent, err := file.Open()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer func() {
 		if err := fileContent.Close(); err != nil {
@@ -24,17 +24,17 @@ func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]str
 
 	csvData, err := reader.ReadAll()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	header := csvData[0]
 	for i, expectedHeader := range expectedHeaders {
 		if header[i] != expectedHeader {
-			return nil, 0, errors.New(constant.HeaderTemplateNotValid)
+			return nil, errors.New(constant.HeaderTemplateNotValid)
 		}
 	}
 
-	totalData := len(csvData) - 1
+	// totalData := len(csvData) - 1
 
-	return csvData, totalData, nil
+	return csvData, nil
 }
