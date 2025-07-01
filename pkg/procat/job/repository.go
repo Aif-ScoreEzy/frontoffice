@@ -1,4 +1,4 @@
-package log
+package job
 
 import (
 	"bytes"
@@ -38,7 +38,7 @@ func (repo *repository) CallCreateProCatJobAPI(reqBody *CreateJobRequest) (*crea
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -46,16 +46,16 @@ func (repo *repository) CallCreateProCatJobAPI(reqBody *CreateJobRequest) (*crea
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", reqBody.MemberId)
-	req.Header.Set("X-Company-ID", reqBody.CompanyId)
+	req.Header.Set(constant.XMemberId, reqBody.MemberId)
+	req.Header.Set(constant.XCompanyId, reqBody.CompanyId)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -72,7 +72,7 @@ func (repo *repository) CallUpdateJobAPI(jobId string, reqBody map[string]interf
 
 	bodyBytes, err := json.Marshal(reqBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -80,14 +80,14 @@ func (repo *repository) CallUpdateJobAPI(jobId string, reqBody map[string]interf
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", err)
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("HTTP request failed: %w", err)
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -107,13 +107,13 @@ func (repo *repository) CallGetProCatJobAPI(filter *logFilter) (*model.AifcoreAP
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("page", filter.Page)
@@ -124,7 +124,7 @@ func (repo *repository) CallGetProCatJobAPI(filter *logFilter) (*model.AifcoreAP
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 
@@ -144,13 +144,13 @@ func (repo *repository) CallGetProCatJobDetailAPI(filter *logFilter) (*model.Aif
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-Member-ID", filter.MemberId)
-	req.Header.Set("X-Company-ID", filter.CompanyId)
-	req.Header.Set("X-Tier-Level", filter.TierLevel)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
+	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("page", filter.Page)
@@ -161,7 +161,7 @@ func (repo *repository) CallGetProCatJobDetailAPI(filter *logFilter) (*model.Aif
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 

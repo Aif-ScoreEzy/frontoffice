@@ -28,6 +28,7 @@ func (r *repository) GetTemplatePath(category, filename string) (string, error) 
 func (r *repository) GetAvailableTemplates() (map[string][]string, error) {
 	categories := []string{
 		constant.PhoneLiveTemplates,
+		constant.LoanRecordCheckerTemplates,
 	}
 
 	result := make(map[string][]string)

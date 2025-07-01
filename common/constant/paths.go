@@ -4,5 +4,6 @@ const (
 	TemplateBaseDir = "./public/templates/"
 
 	// Subdirectories
-	PhoneLiveTemplates = "phonelivestatus"
+	PhoneLiveTemplates         = "phonelivestatus"
+	LoanRecordCheckerTemplates = "loanrecordchecker"
 )

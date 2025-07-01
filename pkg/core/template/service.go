@@ -39,11 +39,12 @@ func (s *service) ListTemplates() ([]TemplateInfo, error) {
 	return result, nil
 }
 
-// Helper function
 func getCategoryDescription(category string) string {
 	switch category {
 	case constant.PhoneLiveTemplates:
 		return "Phone live status template"
+	case constant.LoanRecordCheckerTemplates:
+		return "Loan record checker template"
 	default:
 		return "Common template"
 	}

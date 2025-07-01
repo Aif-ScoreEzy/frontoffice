@@ -149,53 +149,39 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
-	req := c.Locals("request").(*PhoneLiveStatusRequest)
+	reqBody := c.Locals("request").(*phoneLiveStatusRequest)
+
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
-	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, req)
+	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, reqBody)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"success",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return apperror.BadRequest(err.Error())
 	}
 
-	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
-		_, resp := helper.GetError(err.Error())
-
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	err = ctrl.svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
+	err = ctrl.svc.BulkProcessPhoneLiveStatus(apiKey, memberId, companyId, file)
 	if err != nil {
-		statusCode, resp := helper.GetError(err.Error())
-
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
-	resp := helper.ResponseSuccess(
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
 		"success",
 		nil,
-	)
-
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }

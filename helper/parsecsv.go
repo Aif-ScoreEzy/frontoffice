@@ -8,33 +8,37 @@ import (
 	"mime/multipart"
 )
 
-func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]string, int, error) {
-	fileContent, err := file.Open()
+func ParseCSVFile(file *multipart.FileHeader, expectedHeaders []string) ([][]string, error) {
+	f, err := file.Open()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer func() {
-		if err := fileContent.Close(); err != nil {
-			log.Printf("failed to close file: %v", err)
+		if cerr := f.Close(); cerr != nil {
+			log.Printf("failed to close file: %v", cerr)
 		}
 	}()
 
-	reader := csv.NewReader(fileContent)
+	reader := csv.NewReader(f)
 	reader.FieldsPerRecord = -1
 
 	csvData, err := reader.ReadAll()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
+	}
+	if len(csvData) == 0 {
+		return nil, errors.New("empty csv file")
 	}
 
 	header := csvData[0]
+	if len(header) < len(expectedHeaders) {
+		return nil, errors.New(constant.HeaderTemplateNotValid)
+	}
 	for i, expectedHeader := range expectedHeaders {
 		if header[i] != expectedHeader {
-			return nil, 0, errors.New(constant.HeaderTemplateNotValid)
+			return nil, errors.New(constant.HeaderTemplateNotValid)
 		}
 	}
 
-	totalData := len(csvData) - 1
-
-	return csvData, totalData, nil
+	return csvData, nil
 }

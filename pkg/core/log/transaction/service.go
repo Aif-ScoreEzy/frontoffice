@@ -16,6 +16,6 @@ type Service interface {
 	GetScoreezyLogsByMonth(companyId, month string) ([]*scoreezyLogResponse, error)
 
 	// product catalog
-	GetLogTransSuccessCount(jobId string) (*getSuccessCountDataResponse, error)
+	GetProcessedLogCount(jobId string) (*getProcessedCountResp, error)
 	UpdateLogProCat(transId string, req *UpdateTransRequest) error
 }

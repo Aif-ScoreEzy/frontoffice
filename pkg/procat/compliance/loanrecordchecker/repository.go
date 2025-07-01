@@ -2,6 +2,7 @@ package loanrecordchecker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"front-office/app/config"
@@ -9,42 +10,53 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
+	"time"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal // default behavior
+	}
+
 	return &repository{
-		cfg:    cfg,
-		client: client,
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
 	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, request *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
+	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	url := fmt.Sprintf("%s/product/compliance/loan-record-checker", repo.cfg.Env.ProductCatalogHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set("X-API-KEY", apiKey)
-	req.Header.Set("X-Member-ID", memberId)
-	req.Header.Set("X-Company-ID", companyId)
+	req.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.XMemberId, memberId)
+	req.Header.Set(constant.XCompanyId, companyId)
 
 	q := req.URL.Query()
 	q.Add("job_id", jobId)
@@ -52,7 +64,7 @@ func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, compan
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 	defer resp.Body.Close()
 

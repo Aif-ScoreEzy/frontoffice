@@ -7,31 +7,31 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
+	"front-office/pkg/procat/job"
 )
 
 func NewService(
 	repo Repository,
 	productRepo product.Repository,
-	logRepo log.Repository,
+	jobRepo job.Repository,
 	transactionRepo transaction.Repository,
-	logService log.Service,
+	jobService job.Service,
 ) Service {
 	return &service{
 		repo,
 		productRepo,
-		logRepo,
+		jobRepo,
 		transactionRepo,
-		logService,
+		jobService,
 	}
 }
 
 type service struct {
 	repo            Repository
 	productRepo     product.Repository
-	logRepo         log.Repository
+	jobRepo         job.Repository
 	transactionRepo transaction.Repository
-	logService      log.Service
+	jobService      job.Service
 }
 
 type Service interface {
@@ -49,7 +49,7 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 		return nil, apperror.NotFound("product not found")
 	}
 
-	jobRes, err := svc.logRepo.CallCreateProCatJobAPI(&log.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
@@ -73,14 +73,14 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 
 	result, err := loanHandler(apiKey, memberId, jobIdStr, companyId, reqBody)
 	if err != nil {
-		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
 		}
 
 		return nil, apperror.MapRepoError(err, "failed to process multiple loan request")
 	}
 
-	if err := svc.logService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
 		return nil, err
 	}
 

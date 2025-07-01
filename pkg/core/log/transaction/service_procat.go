@@ -4,8 +4,8 @@ import (
 	"front-office/internal/apperror"
 )
 
-func (svc *service) GetLogTransSuccessCount(jobId string) (*getSuccessCountDataResponse, error) {
-	result, err := svc.repo.CallLogTransSuccessCountAPI(jobId)
+func (svc *service) GetProcessedLogCount(jobId string) (*getProcessedCountResp, error) {
+	result, err := svc.repo.CallProcessedLogCount(jobId)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get success count")
 	}
