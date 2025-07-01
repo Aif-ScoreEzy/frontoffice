@@ -166,6 +166,7 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
+	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
 	memberId := fmt.Sprintf("%v", c.Locals("userId"))
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
 
@@ -174,7 +175,7 @@ func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
 		return apperror.BadRequest(err.Error())
 	}
 
-	err = ctrl.svc.BulkProcessPhoneLiveStatus(memberId, companyId, file)
+	err = ctrl.svc.BulkProcessPhoneLiveStatus(apiKey, memberId, companyId, file)
 	if err != nil {
 		return err
 	}

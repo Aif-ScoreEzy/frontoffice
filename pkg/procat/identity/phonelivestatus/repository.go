@@ -67,7 +67,6 @@ func (repo *repository) CallCreateJobAPI(payload *createJobRequest) (*createJobR
 	req.Header.Set(constant.XCompanyId, payload.CompanyId)
 
 	resp, err := repo.client.Do(req)
-	fmt.Println("pppppp", req, resp)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
@@ -254,7 +253,7 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 }
 
 func (repo *repository) CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/success_count`, repo.cfg.Env.AifcoreHost, jobId)
+	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/processed_count`, repo.cfg.Env.AifcoreHost, jobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

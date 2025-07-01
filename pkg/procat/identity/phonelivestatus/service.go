@@ -43,13 +43,13 @@ type Service interface {
 	UpdateJob(jobId uint, reqBody *updateJobRequest) error
 	UpdateJobDetail(jobId, jobDetailId uint, reqBody *updateJobDetailRequest) error
 	ProcessPhoneLiveStatus(memberId, companyId string, reqBody *phoneLiveStatusRequest) error
-	BulkProcessPhoneLiveStatus(memberId, companyId string, fileHeader *multipart.FileHeader) error
+	BulkProcessPhoneLiveStatus(apiKey, memberId, companyId string, fileHeader *multipart.FileHeader) error
 }
 
 func (svc *service) CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error) {
 	job, err := svc.repo.CallCreateJobAPI(reqBody)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to create phone live status job")
+		return nil, apperror.MapRepoError(err, constant.ErrCreatePhoneLiveJob)
 	}
 
 	return job, err
@@ -67,7 +67,7 @@ func (svc *service) GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobLi
 func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
 	jobDetails, err := svc.repo.CallGetJobDetailsAPI(filter)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
+		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
 
 	return jobDetails, nil
@@ -76,7 +76,7 @@ func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilt
 func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
 	jobDetails, err := svc.repo.CallGetAllJobDetailsAPI(filter)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
+		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
 
 	return jobDetails, nil
@@ -85,7 +85,7 @@ func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) 
 func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
 	jobDetail, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch phone live status job detail")
+		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
 
 	return jobDetail, nil
@@ -167,7 +167,7 @@ func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *
 		PhoneLiveStatusRequests: []*phoneLiveStatusRequest{reqBody},
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to create phone live status job")
+		return apperror.MapRepoError(err, constant.ErrCreatePhoneLiveJob)
 	}
 	jobIdStr := strconv.Itoa(int(job.JobId))
 
@@ -200,20 +200,9 @@ func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *
 	return svc.finalizeJob(jobIdStr)
 }
 
-func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, file *multipart.FileHeader) error {
+func (svc *service) BulkProcessPhoneLiveStatus(apiKey, memberId, companyId string, file *multipart.FileHeader) error {
 	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
 		return apperror.BadRequest(err.Error())
-	}
-
-	member, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
-		Id:        memberId,
-		CompanyId: companyId,
-	})
-	if err != nil {
-		return apperror.MapRepoError(err, constant.FailedFetchMember)
-	}
-	if member.MemberId == 0 {
-		return apperror.NotFound(constant.UserNotFound)
 	}
 
 	records, err := helper.ParseCSVFile(file, []string{"phone_number"})
@@ -234,7 +223,7 @@ func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, file 
 		PhoneLiveStatusRequests: phoneReqs,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to create phone live status job")
+		return apperror.MapRepoError(err, constant.ErrCreatePhoneLiveJob)
 	}
 	jobIdStr := strconv.Itoa(int(job.JobId))
 
@@ -263,7 +252,7 @@ func (svc *service) BulkProcessPhoneLiveStatus(memberId, companyId string, file 
 			defer wg.Done()
 			detailID := strconv.Itoa(int(detail.Id))
 
-			if err := svc.processAndUpdatePhoneLiveStatus(member.Key, jobIdStr, detailID, detail); err != nil {
+			if err := svc.processAndUpdatePhoneLiveStatus(apiKey, jobIdStr, detailID, detail); err != nil {
 				errChan <- err
 			}
 		}(detail)
