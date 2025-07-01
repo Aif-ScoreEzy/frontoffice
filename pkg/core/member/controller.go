@@ -2,6 +2,7 @@ package member
 
 import (
 	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/operation"
@@ -56,7 +57,7 @@ func (ctrl *controller) GetBy(c *fiber.Ctx) error {
 func (ctrl *controller) GetById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return apperror.BadRequest("missing user id")
+		return apperror.BadRequest(constant.MissingUserId)
 	}
 
 	member, err := ctrl.svc.GetMemberBy(&FindUserQuery{
@@ -140,7 +141,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 
 	memberId := c.Params("id")
 	if memberId == "" {
-		return apperror.BadRequest("missing user id")
+		return apperror.BadRequest(constant.MissingUserId)
 	}
 
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
@@ -169,7 +170,7 @@ func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
 func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return apperror.BadRequest("missing user id")
+		return apperror.BadRequest(constant.MissingUserId)
 	}
 
 	companyId := fmt.Sprintf("%v", c.Locals("companyId"))

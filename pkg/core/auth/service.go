@@ -138,9 +138,11 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 		Id: userId,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
-
+	if user.MemberId == 0 {
+		return apperror.NotFound(constant.UserNotFound)
+	}
 	if user.IsVerified && user.Active {
 		return apperror.BadRequest(constant.AlreadyVerified)
 	}
@@ -283,7 +285,7 @@ func (svc *service) RequestActivation(email string) error {
 		Email: email,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 
 	if user.MemberId == 0 {
@@ -322,7 +324,7 @@ func (svc *service) RequestActivation(email string) error {
 	}
 
 	if err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields); err != nil {
-		return apperror.MapRepoError(err, "failed to update member")
+		return apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
 	return nil
@@ -333,7 +335,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 		Email: email,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if user.MemberId == 0 {
 		return apperror.NotFound(constant.UserNotFoundForgotEmail)
@@ -458,7 +460,7 @@ func (svc *service) ChangePassword(userId string, reqBody *ChangePasswordRequest
 		Id: userId,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 
 	if !helper.ValidatePasswordStrength(reqBody.NewPassword) {

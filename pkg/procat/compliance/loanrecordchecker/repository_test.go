@@ -1,4 +1,4 @@
-package taxcompliancestatus
+package loanrecordchecker
 
 import (
 	"bytes"
@@ -39,15 +39,12 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 	return repo, mockClient
 }
 
-func TestCallTaxComplianceStatusAPI(t *testing.T) {
+func TestCallLoanRecordCheckerAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.ProCatAPIResponse[taxComplianceRespData]{
+		mockData := model.ProCatAPIResponse[dataLoanRecord]{
 			Success: true,
-			Message: "Succeed to Request Data.",
-			Data: taxComplianceRespData{
-				Status: "Reported",
-			},
-			PricingStrategy: "PAY",
+			Message: "success",
+			Data:    dataLoanRecord{Remarks: "-", Status: "-"},
 		}
 		body, err := json.Marshal(mockData)
 		require.NoError(t, err)
@@ -59,14 +56,13 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
-		assert.Equal(t, "Succeed to Request Data.", result.Message)
-		assert.Equal(t, "Reported", result.Data.Status)
-		assert.Equal(t, "PAY", result.PricingStrategy)
+		assert.Equal(t, "-", result.Data.Status)
+		assert.Equal(t, "-", result.Data.Remarks)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -79,7 +75,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -91,7 +87,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Error(t, err)
 	})
 
@@ -100,8 +96,8 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		req := &taxComplianceStatusRequest{}
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, req)
+		req := &loanRecordCheckerRequest{}
+		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -116,7 +112,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

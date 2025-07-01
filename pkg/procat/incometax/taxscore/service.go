@@ -7,38 +7,38 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
+	"front-office/pkg/procat/job"
 )
 
 func NewService(
 	repo Repository,
 	productRepo product.Repository,
-	logRepo log.Repository,
+	jobRepo job.Repository,
 	transactionRepo transaction.Repository,
-	logService log.Service,
+	jobService job.Service,
 ) Service {
 	return &service{
 		repo,
 		productRepo,
-		logRepo,
+		jobRepo,
 		transactionRepo,
-		logService,
+		jobService,
 	}
 }
 
 type service struct {
 	repo            Repository
 	productRepo     product.Repository
-	logRepo         log.Repository
+	jobRepo         job.Repository
 	transactionRepo transaction.Repository
-	logService      log.Service
+	jobService      job.Service
 }
 
 type Service interface {
-	CallTaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error)
+	CallTaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error)
 }
 
-func (svc *service) CallTaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreDataResponse], error) {
+func (svc *service) CallTaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error) {
 	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugTaxScore)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
@@ -47,7 +47,7 @@ func (svc *service) CallTaxScore(apiKey, memberId, companyId string, request *ta
 		return nil, apperror.NotFound("product not found")
 	}
 
-	jobRes, err := svc.logRepo.CallCreateProCatJobAPI(&log.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
@@ -60,14 +60,14 @@ func (svc *service) CallTaxScore(apiKey, memberId, companyId string, request *ta
 
 	result, err := svc.repo.CallTaxScoreAPI(apiKey, jobIdStr, request)
 	if err != nil {
-		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
 		}
 
 		return nil, apperror.MapRepoError(err, "failed to process tax score")
 	}
 
-	if err := svc.logService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
 		return nil, err
 	}
 

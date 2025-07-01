@@ -76,7 +76,7 @@ func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Me
 func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *UpdateProfileRequest) (*userUpdateResponse, error) {
 	user, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: userId})
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch member")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if user.MemberId == 0 {
 		return nil, apperror.NotFound(constant.UserNotFound)
@@ -111,7 +111,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 	updateFields["updated_at"] = time.Now()
 
 	if err := svc.repo.CallUpdateMemberAPI(userId, updateFields); err != nil {
-		return nil, apperror.MapRepoError(err, "failed to update member")
+		return nil, apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
 	if shouldSendEmailConfirmation {
@@ -142,7 +142,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 func (svc *service) UploadProfileImage(userId string, filename *string) (*userUpdateResponse, error) {
 	user, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: userId})
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch member")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if user.MemberId == 0 {
 		return nil, apperror.NotFound(constant.UserNotFound)
@@ -157,7 +157,7 @@ func (svc *service) UploadProfileImage(userId string, filename *string) (*userUp
 	updateFields["updated_at"] = time.Now()
 
 	if err := svc.repo.CallUpdateMemberAPI(userId, updateFields); err != nil {
-		return nil, apperror.MapRepoError(err, "failed to update member")
+		return nil, apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
 	if err := svc.operationRepo.AddLogOperation(&operation.AddLogRequest{
@@ -181,7 +181,7 @@ func (svc *service) UploadProfileImage(userId string, filename *string) (*userUp
 func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, companyId, memberId string, req *UpdateUserRequest) error {
 	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if member.MemberId == 0 {
 		return apperror.NotFound(constant.UserNotFound)
@@ -244,7 +244,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 	updateFields["updated_at"] = time.Now()
 
 	if err := svc.repo.CallUpdateMemberAPI(memberId, updateFields); err != nil {
-		return apperror.MapRepoError(err, "failed to update member")
+		return apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
 	if sendEmailConfirmation {
@@ -269,7 +269,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 func (svc *service) DeleteMemberById(memberId, companyId string) error {
 	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch member")
+		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
 	if member.MemberId == 0 {
 		return apperror.NotFound(constant.UserNotFound)

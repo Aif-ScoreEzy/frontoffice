@@ -6,19 +6,19 @@ import (
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
 	"front-office/pkg/middleware"
-	"front-office/pkg/procat/log"
+	"front-office/pkg/procat/job"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	repo := NewRepository(cfg, client)
+	repo := NewRepository(cfg, client, nil)
 	productRepo := product.NewRepository(cfg, client)
-	logRepo := log.NewRepository(cfg, client)
+	jobRepo := job.NewRepository(cfg, client)
 	transactionRepo := transaction.NewRepository(cfg, client)
 
-	logService := log.NewService(logRepo, transactionRepo)
-	service := NewService(repo, productRepo, logRepo, transactionRepo, logService)
+	jobService := job.NewService(jobRepo, transactionRepo)
+	service := NewService(repo, productRepo, jobRepo, transactionRepo, jobService)
 
 	controller := NewController(service)
 

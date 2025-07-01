@@ -1,6 +1,8 @@
-package log
+package job
 
-import "time"
+import (
+	"time"
+)
 
 type CreateJobRequest struct {
 	ProductId uint   `json:"product_id" validate:"required~Field product id is required"`

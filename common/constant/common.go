@@ -6,4 +6,6 @@ const (
 	JobStatusDone       = "done"
 	JobStatusFailed     = "failed"
 	JobStatusError      = "error"
+
+	SucceedGetLogTrans = "succeed to get list of log transaction"
 )
