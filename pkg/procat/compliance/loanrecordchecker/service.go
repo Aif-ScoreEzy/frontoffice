@@ -8,7 +8,7 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/log"
+	"front-office/pkg/procat/job"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -22,25 +22,25 @@ import (
 func NewService(
 	repo Repository,
 	productRepo product.Repository,
-	logRepo log.Repository,
+	jobRepo job.Repository,
 	transactionRepo transaction.Repository,
-	logService log.Service,
+	jobService job.Service,
 ) Service {
 	return &service{
 		repo,
 		productRepo,
-		logRepo,
+		jobRepo,
 		transactionRepo,
-		logService,
+		jobService,
 	}
 }
 
 type service struct {
 	repo            Repository
 	productRepo     product.Repository
-	logRepo         log.Repository
+	jobRepo         job.Repository
 	transactionRepo transaction.Repository
-	logService      log.Service
+	jobService      job.Service
 }
 
 type Service interface {
@@ -57,7 +57,7 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 		return nil, apperror.NotFound("product not found")
 	}
 
-	jobRes, err := svc.logRepo.CallCreateProCatJobAPI(&log.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
@@ -70,7 +70,7 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 
 	result, err := svc.repo.CallLoanRecordCheckerAPI(apiKey, jobIdStr, memberId, companyId, reqBody)
 	if err != nil {
-		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
 		}
 
@@ -82,7 +82,7 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 		return nil, apperror.Internal("failed to process loan record checker", err)
 	}
 
-	if err := svc.logService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
 		return nil, err
 	}
 
@@ -109,7 +109,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 
 	memberIdStr := strconv.Itoa(int(memberId))
 	companyIdStr := strconv.Itoa(int(companyId))
-	jobRes, err := svc.logRepo.CallCreateProCatJobAPI(&log.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberIdStr,
 		CompanyId: companyIdStr,
@@ -185,7 +185,7 @@ func (svc *service) validateAndProcessLoanChecker(apiKey, jobIdStr, memberIdStr,
 
 	result, err := svc.repo.CallLoanRecordCheckerAPI(apiKey, jobIdStr, memberIdStr, companyIdStr, req)
 	if err != nil {
-		if err := svc.logService.FinalizeFailedJob(jobIdStr); err != nil {
+		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return err
 		}
 
@@ -200,7 +200,7 @@ func (svc *service) validateAndProcessLoanChecker(apiKey, jobIdStr, memberIdStr,
 	if err := svc.transactionRepo.CallUpdateLogTransAPI(result.TransactionId, map[string]interface{}{
 		"success": helper.BoolPtr(true),
 	}); err != nil {
-		return apperror.MapRepoError(err, "failed to update transaction log")
+		return apperror.MapRepoError(err, "failed to update transaction job")
 	}
 
 	return nil
@@ -212,7 +212,7 @@ func (svc *service) finalizeJob(jobId string) error {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}
 
-	if err := svc.logRepo.CallUpdateJobAPI(jobId, map[string]interface{}{
+	if err := svc.jobRepo.CallUpdateJobAPI(jobId, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
 		"end_at":        helper.TimePtr(time.Now()),
