@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
-	"front-office/helper"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,7 +27,7 @@ func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 
 	productSlug, err := mapProductSlug(slug)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(helper.ResponseFailed(err.Error()))
+		return apperror.BadRequest(err.Error())
 	}
 
 	filter := &logFilter{
@@ -54,13 +54,12 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 
 	productSlug, err := mapProductSlug(slug)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(helper.ResponseFailed(err.Error()))
+		return apperror.BadRequest(err.Error())
 	}
 
 	filter := &logFilter{
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel:   fmt.Sprintf("%v", c.Locals("roleId")),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
 	}

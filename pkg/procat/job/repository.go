@@ -150,7 +150,6 @@ func (repo *repository) CallGetProCatJobDetailAPI(filter *logFilter) (*model.Aif
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	req.Header.Set(constant.XMemberId, filter.MemberId)
 	req.Header.Set(constant.XCompanyId, filter.CompanyId)
-	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
 	q.Add("page", filter.Page)
