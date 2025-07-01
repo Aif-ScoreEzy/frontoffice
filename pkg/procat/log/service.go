@@ -110,7 +110,7 @@ func (svc *service) FinalizeFailedJob(jobIdStr string) error {
 	}
 
 	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
-		"success_count": helper.IntPtr(int(count.ProcessedCount) + 1),
+		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusFailed),
 		"end_at":        helper.TimePtr(time.Now()),
 	}); err != nil {
