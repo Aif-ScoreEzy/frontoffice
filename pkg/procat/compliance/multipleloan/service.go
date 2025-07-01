@@ -71,7 +71,7 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 		return nil, apperror.BadRequest("unsupported product type")
 	}
 
-	result, err := loanHandler(apiKey, memberId, jobIdStr, companyId, reqBody)
+	result, err := loanHandler(apiKey, jobIdStr, memberId, companyId, reqBody)
 	if err != nil {
 		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
