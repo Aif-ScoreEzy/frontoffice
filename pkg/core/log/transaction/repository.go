@@ -25,6 +25,8 @@ type Repository interface {
 	CallScoreezyLogsByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error)
 
 	// product catalog
-	CallLogTransSuccessCountAPI(jobId string) (*getSuccessCountDataResponse, error)
+	CallCreateLogTransAPI(req *LogTransProCatRequest) error
+	CallGetLogTransByJobAPI(jobId, companyId string) ([]*LogTransProductCatalog, error)
+	CallProcessedLogCount(jobId string) (*getProcessedCountResp, error)
 	CallUpdateLogTransAPI(transId string, req map[string]interface{}) error
 }

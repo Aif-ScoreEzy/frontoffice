@@ -87,13 +87,13 @@ func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
 		return apperror.MapRepoError(err, "failed to update transaction log")
 	}
 
-	count, err := svc.transactionRepo.CallLogTransSuccessCountAPI(jobIdStr)
+	count, err := svc.transactionRepo.CallProcessedLogCount(jobIdStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get success count")
 	}
 
 	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
-		"success_count": helper.IntPtr(int(count.SuccessCount)),
+		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
 		"end_at":        helper.TimePtr(time.Now()),
 	}); err != nil {
@@ -104,8 +104,13 @@ func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
 }
 
 func (svc *service) FinalizeFailedJob(jobIdStr string) error {
+	count, err := svc.transactionRepo.CallProcessedLogCount(jobIdStr)
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to get processed count request")
+	}
+
 	if err := svc.repo.CallUpdateJobAPI(jobIdStr, map[string]interface{}{
-		"success_count": helper.IntPtr(0),
+		"success_count": helper.IntPtr(int(count.ProcessedCount) + 1),
 		"status":        helper.StringPtr(constant.JobStatusFailed),
 		"end_at":        helper.TimePtr(time.Now()),
 	}); err != nil {
