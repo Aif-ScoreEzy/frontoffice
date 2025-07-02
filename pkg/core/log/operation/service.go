@@ -1,6 +1,7 @@
 package operation
 
 import (
+	"front-office/common/constant"
 	"front-office/internal/apperror"
 )
 
@@ -13,27 +14,45 @@ type service struct {
 }
 
 type Service interface {
-	GetLogsOperation(filter *LogOperationFilter) ([]*LogOperation, error)
-	GetLogsByRange(filter *LogRangeFilter) ([]*LogOperation, error)
+	GetLogsOperation(filter *LogOperationFilter) (*logOperationAPIResponse, error)
+	GetLogsByRange(filter *LogRangeFilter) (*logOperationAPIResponse, error)
 	AddLogOperation(req *AddLogRequest) error
 }
 
-func (svc *service) GetLogsOperation(filter *LogOperationFilter) ([]*LogOperation, error) {
-	logs, err := svc.repo.CallGetLogsOperationAPI(filter)
+func (svc *service) GetLogsOperation(filter *LogOperationFilter) (*logOperationAPIResponse, error) {
+	result, err := svc.repo.CallGetLogsOperationAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch log operations")
 	}
 
-	return logs, nil
+	response := &logOperationAPIResponse{
+		Message: constant.SucceedGetLogTrans,
+		Success: result.Success,
+		Data: &logOperationRespData{
+			Logs: result.Data,
+		},
+		Meta: *result.Meta,
+	}
+
+	return response, nil
 }
 
-func (svc *service) GetLogsByRange(filter *LogRangeFilter) ([]*LogOperation, error) {
-	logs, err := svc.repo.CallGetLogsByRangeAPI(filter)
+func (svc *service) GetLogsByRange(filter *LogRangeFilter) (*logOperationAPIResponse, error) {
+	result, err := svc.repo.CallGetLogsByRangeAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch log operations")
 	}
 
-	return logs, nil
+	response := &logOperationAPIResponse{
+		Message: constant.SucceedGetLogTrans,
+		Success: result.Success,
+		Data: &logOperationRespData{
+			Logs: result.Data,
+		},
+		Meta: *result.Meta,
+	}
+
+	return response, nil
 }
 
 func (svc *service) AddLogOperation(req *AddLogRequest) error {

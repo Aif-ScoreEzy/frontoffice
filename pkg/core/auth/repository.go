@@ -98,7 +98,7 @@ func (repo *repository) CallVerifyMemberAPI(userId uint, reqBody *PasswordResetR
 	}
 	defer resp.Body.Close()
 
-	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (repo *repository) CallPasswordResetAPI(userId uint, token string, reqBody 
 	}
 	defer resp.Body.Close()
 
-	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (repo *repository) CallChangePasswordAPI(userId string, reqBody *ChangePass
 	}
 	defer resp.Body.Close()
 
-	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return err
 	}
