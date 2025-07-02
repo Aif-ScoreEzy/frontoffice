@@ -1,6 +1,9 @@
 package operation
 
-import "time"
+import (
+	"front-office/common/model"
+	"time"
+)
 
 type LogOperation struct {
 	LogOpsID  uint      `json:"log_ops_id" gorm:"primaryKey;autoIncrement"`
@@ -50,8 +53,13 @@ type AddLogRequest struct {
 	Action    string `json:"action" validate:"required~Field Action is required"`
 }
 
-type AifResponse struct {
-	Success bool           `json:"success"`
-	Data    []LogOperation `json:"data"`
-	Meta    any            `json:"meta,omitempty"`
+type logOperationAPIResponse struct {
+	Message string                `json:"message"`
+	Success bool                  `json:"success"`
+	Data    *logOperationRespData `json:"data"`
+	Meta    model.Meta            `json:"meta"`
+}
+
+type logOperationRespData struct {
+	Logs interface{} `json:"logs"`
 }

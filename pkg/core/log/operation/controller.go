@@ -3,7 +3,6 @@ package operation
 import (
 	"fmt"
 	"front-office/common/constant"
-	"front-office/helper"
 	"front-office/internal/apperror"
 	"strings"
 
@@ -49,15 +48,12 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		EndDate:   endDate,
 	}
 
-	logs, err := ctrl.svc.GetLogsOperation(filter)
+	result, err := ctrl.svc.GetLogsOperation(filter)
 	if err != nil {
 		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log operation",
-		logs,
-	))
+	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
@@ -79,15 +75,12 @@ func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
 		EndDate:   endDate,
 	}
 
-	logs, err := ctrl.svc.GetLogsByRange(filter)
+	result, err := ctrl.svc.GetLogsByRange(filter)
 	if err != nil {
 		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		"succeed to get list of log operation",
-		logs,
-	))
+	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 func mapEventKeyword(input string) (string, bool) {

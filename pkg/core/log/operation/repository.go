@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"net/http"
@@ -21,12 +22,12 @@ type repository struct {
 }
 
 type Repository interface {
-	CallGetLogsOperationAPI(filter *LogOperationFilter) ([]*LogOperation, error)
-	CallGetLogsByRangeAPI(filter *LogRangeFilter) ([]*LogOperation, error)
+	CallGetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error)
+	CallGetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error)
 	AddLogOperation(req *AddLogRequest) error
 }
 
-func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) ([]*LogOperation, error) {
+func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error) {
 	url := fmt.Sprintf("%s/api/core/logging/operation/list/%s", repo.cfg.Env.AifcoreHost, filter.CompanyId)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -52,15 +53,15 @@ func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) ([]*
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogOperation](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return apiResp.Data, nil
+	return apiResp, nil
 }
 
-func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) ([]*LogOperation, error) {
+func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error) {
 	url := fmt.Sprintf("%s/api/core/logging/operation/range", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -84,12 +85,12 @@ func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) ([]*LogOpe
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[[]*LogOperation](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return apiResp.Data, nil
+	return apiResp, nil
 }
 
 func (repo *repository) AddLogOperation(reqBody *AddLogRequest) error {
