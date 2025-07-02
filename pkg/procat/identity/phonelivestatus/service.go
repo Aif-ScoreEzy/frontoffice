@@ -276,14 +276,19 @@ func (svc *service) BulkProcessPhoneLiveStatus(apiKey, memberId, companyId strin
 
 func writeJobDetailsToCSV(buf *bytes.Buffer, data []*mstPhoneLiveStatusJobDetail) error {
 	w := csv.NewWriter(buf)
-	headers := []string{"Phone Number", "Subscriber Status", "Device Status", "Status", "Operator", "Phone Type"}
+	headers := []string{"Phone Number", "Subscriber Status", "Device Status", "Operator", "Phone Type", "Status", "Description"}
 
 	if err := w.Write(headers); err != nil {
 		return err
 	}
 
 	for _, d := range data {
-		row := []string{d.PhoneNumber, d.SubscriberStatus, d.DeviceStatus, d.Status, d.Operator, d.PhoneType}
+		desc := ""
+		if d.Message != nil {
+			desc = *d.Message
+		}
+
+		row := []string{d.PhoneNumber, d.SubscriberStatus, d.DeviceStatus, d.Operator, d.PhoneType, d.Status, desc}
 		if err := w.Write(row); err != nil {
 			return err
 		}
