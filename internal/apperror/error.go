@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 type AppError struct {
@@ -21,7 +23,7 @@ func (e *AppError) Error() string {
 }
 
 func newAppError(status int, message string, err error) *AppError {
-	// log.Error().Err(err).Msg(message)
+	log.Error().Err(err).Msg(message)
 
 	return &AppError{
 		StatusCode: status,

@@ -14,7 +14,7 @@ import (
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repo := NewRepository(cfg, client, nil)
 	productRepo := product.NewRepository(cfg, client)
-	jobRepo := job.NewRepository(cfg, client)
+	jobRepo := job.NewRepository(cfg, client, nil)
 	transactionRepo := transaction.NewRepository(cfg, client)
 
 	jobService := job.NewService(jobRepo, transactionRepo)
