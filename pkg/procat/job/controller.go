@@ -65,6 +65,8 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
+		StartDate:   c.Query("start_date", ""),
+		EndDate:     c.Query("end_date", ""),
 	}
 
 	result, err := ctrl.Svc.GetProCatJobDetail(filter)

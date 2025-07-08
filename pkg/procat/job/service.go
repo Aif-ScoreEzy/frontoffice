@@ -104,7 +104,7 @@ func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (
 		return "", apperror.Internal("failed to write CSV", err)
 	}
 
-	filename := formatCSVFileName("job_detail", filter.StartDate, filter.EndDate)
+	filename := formatCSVFileName("job_detail", filter.StartDate, filter.EndDate, filter.JobId)
 	return filename, nil
 }
 
@@ -166,7 +166,11 @@ func writeToCSV[T any](buf *bytes.Buffer, headers []string, data []T, mapRow fun
 	return writer.Error()
 }
 
-func formatCSVFileName(base, startDate, endDate string) string {
+func formatCSVFileName(base, startDate, endDate, jobId string) string {
+	if startDate == "" {
+		return fmt.Sprintf("%s_id_%s.csv", base, jobId)
+	}
+
 	if endDate != "" && endDate != startDate {
 		return fmt.Sprintf("%s_%s_until_%s.csv", base, startDate, endDate)
 	}
