@@ -1,6 +1,9 @@
 package job
 
 import (
+	"bytes"
+	"encoding/csv"
+	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
@@ -22,15 +25,16 @@ type service struct {
 }
 
 type Service interface {
-	CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error)
+	CreateProCatJob(req *CreateJobRequest) (*createJobRespData, error)
 	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
-	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
 	FinalizeJob(jobIdStr string, transactionId string) error
 	FinalizeFailedJob(jobIdStr string) error
 }
 
-func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobDataResponse, error) {
+func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobRespData, error) {
 	result, err := svc.repo.CallCreateProCatJobAPI(req)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to create job")
@@ -71,13 +75,37 @@ func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[a
 	return result, nil
 }
 
-func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
 	result, err := svc.repo.CallGetProCatJobDetailAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
 
 	return result, nil
+}
+
+func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error) {
+	resp, err := svc.repo.CallGetProCatJobDetailAPI(filter)
+	if err != nil {
+		return "", apperror.MapRepoError(err, "failed to fetch job details")
+	}
+
+	headers := []string{}
+	var mapper func(*logTransProductCatalog) []string
+
+	switch filter.ProductSlug {
+	case constant.SlugLoanRecordChecker:
+		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
+		mapper = mapLoanRecordCheckerRow
+	}
+
+	err = writeToCSV[*logTransProductCatalog](buf, headers, resp.Data.JobDetails, mapper)
+	if err != nil {
+		return "", apperror.Internal("failed to write CSV", err)
+	}
+
+	filename := formatCSVFileName("job_detail", filter.StartDate, filter.EndDate)
+	return filename, nil
 }
 
 func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
@@ -118,4 +146,53 @@ func (svc *service) FinalizeFailedJob(jobIdStr string) error {
 	}
 
 	return nil
+}
+
+func writeToCSV[T any](buf *bytes.Buffer, headers []string, data []T, mapRow func(T) []string) error {
+	writer := csv.NewWriter(buf)
+
+	if err := writer.Write(headers); err != nil {
+		return err
+	}
+
+	for _, item := range data {
+		row := mapRow(item)
+		if err := writer.Write(row); err != nil {
+			return err
+		}
+	}
+
+	writer.Flush()
+	return writer.Error()
+}
+
+func formatCSVFileName(base, startDate, endDate string) string {
+	if endDate != "" && endDate != startDate {
+		return fmt.Sprintf("%s_%s_until_%s.csv", base, startDate, endDate)
+	}
+
+	return fmt.Sprintf("%s_%s.csv", base, startDate)
+}
+
+func mapLoanRecordCheckerRow(d *logTransProductCatalog) []string {
+	desc := ""
+	if d.Message != nil {
+		desc = *d.Message
+	}
+
+	remarks := ""
+	status := ""
+	if d.Data != nil {
+		remarks = d.Data.Remarks
+		status = d.Data.Status
+	}
+
+	return []string{
+		d.Input.Name,
+		d.Input.NIK,
+		d.Input.PhoneNumber,
+		remarks,
+		status,
+		desc,
+	}
 }
