@@ -22,6 +22,7 @@ func (r *repository) GetTemplatePath(category, filename string) (string, error) 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return "", err
 	}
+
 	return path, nil
 }
 
@@ -29,6 +30,7 @@ func (r *repository) GetAvailableTemplates() (map[string][]string, error) {
 	categories := []string{
 		constant.PhoneLiveTemplates,
 		constant.LoanRecordCheckerTemplates,
+		constant.MultipleLoanTemplates,
 	}
 
 	result := make(map[string][]string)

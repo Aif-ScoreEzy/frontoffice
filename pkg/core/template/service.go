@@ -45,6 +45,8 @@ func getCategoryDescription(category string) string {
 		return "Phone live status template"
 	case constant.LoanRecordCheckerTemplates:
 		return "Loan record checker template"
+	case constant.MultipleLoanTemplates:
+		return "Multiple loan template"
 	default:
 		return "Common template"
 	}

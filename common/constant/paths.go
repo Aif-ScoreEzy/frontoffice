@@ -6,4 +6,5 @@ const (
 	// Subdirectories
 	PhoneLiveTemplates         = "phonelivestatus"
 	LoanRecordCheckerTemplates = "loanrecordchecker"
+	MultipleLoanTemplates      = "multipleloan"
 )
