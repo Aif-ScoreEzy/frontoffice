@@ -319,3 +319,68 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestCallGetProCatJobDetailsAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+			Data: &jobDetailResponse{
+				TotalData: 3,
+			},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetJobDetailsAPI(&logFilter{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, result.Data.TotalData, int64(3))
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.CallGetJobDetailsAPI(&logFilter{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.CallGetJobDetailsAPI(&logFilter{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.CallGetJobDetailsAPI(&logFilter{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}

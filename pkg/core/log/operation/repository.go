@@ -38,13 +38,13 @@ func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) (*mo
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
 	q.Add("name", filter.Name)
 	q.Add("role", filter.Role)
 	q.Add("event", filter.Event)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -72,11 +72,11 @@ func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) (*model.Ai
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
 	q.Add("company_id", filter.CompanyId)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)

@@ -97,10 +97,10 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilt
 	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -134,8 +134,8 @@ func (repo *repository) CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jo
 	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
 	q.Add("keyword", filter.Keyword)
 	req.URL.RawQuery = q.Encode()
 
@@ -199,8 +199,8 @@ func (repo *repository) CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusF
 	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -234,8 +234,8 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)

@@ -3,6 +3,7 @@ package phonelivestatus
 import (
 	"bytes"
 	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/member"
@@ -31,10 +32,10 @@ type Controller interface {
 
 func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
-		Page:      c.Query("page", "1"),
-		Size:      c.Query("size", "10"),
-		StartDate: c.Query("start_date", ""),
-		EndDate:   c.Query("end_date", ""),
+		Page:      c.Query(constant.Page, "1"),
+		Size:      c.Query(constant.Size, "10"),
+		StartDate: c.Query(constant.StartDate, ""),
+		EndDate:   c.Query(constant.EndDate, ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
@@ -53,8 +54,8 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
-		Page:      c.Query("page", "1"),
-		Size:      c.Query("size", "10"),
+		Page:      c.Query(constant.Page, "1"),
+		Size:      c.Query(constant.Size, "10"),
 		JobId:     c.Params("id"),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
@@ -78,8 +79,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
-		StartDate: c.Query("start_date", ""),
-		EndDate:   c.Query("end_date", ""),
+		StartDate: c.Query(constant.StartDate, ""),
+		EndDate:   c.Query(constant.EndDate, ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
@@ -102,8 +103,8 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
-		StartDate: c.Query("start_date", ""),
-		EndDate:   c.Query("end_date", ""),
+		StartDate: c.Query(constant.StartDate, ""),
+		EndDate:   c.Query(constant.EndDate, ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
@@ -128,8 +129,8 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
 		JobId:     c.Params("id"),
-		StartDate: c.Query("start_date", ""),
-		EndDate:   c.Query("end_date", ""),
+		StartDate: c.Query(constant.StartDate, ""),
+		EndDate:   c.Query(constant.EndDate, ""),
 		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
 		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),

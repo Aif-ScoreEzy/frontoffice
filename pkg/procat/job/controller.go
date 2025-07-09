@@ -36,10 +36,10 @@ func (ctrl *controller) GetJob(c *fiber.Ctx) error {
 	}
 
 	filter := &logFilter{
-		Page:        c.Query("page", "1"),
-		Size:        c.Query("size", "10"),
-		StartDate:   c.Query("start_date", ""),
-		EndDate:     c.Query("end_date", ""),
+		Page:        c.Query(constant.Page, "1"),
+		Size:        c.Query(constant.Size, "10"),
+		StartDate:   c.Query(constant.StartDate, ""),
+		EndDate:     c.Query(constant.EndDate, ""),
 		ProductSlug: productSlug,
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
@@ -65,8 +65,8 @@ func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
 	filter := &logFilter{
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
-		Page:        c.Query("page", ""),
-		Size:        c.Query("size", ""),
+		Page:        c.Query(constant.Page, ""),
+		Size:        c.Query(constant.Size, ""),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
 	}
@@ -87,8 +87,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		return apperror.BadRequest(err.Error())
 	}
 
-	startDate := c.Query("start_date")
-	endDate := c.Query("end_date")
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query(constant.EndDate)
 	if startDate != "" && endDate == "" {
 		endDate = startDate
 	}
@@ -96,8 +96,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	filter := &logFilter{
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
-		Page:        c.Query("page", "1"),
-		Size:        c.Query("size", "10"),
+		Page:        c.Query(constant.Page, "1"),
+		Size:        c.Query(constant.Size, "10"),
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,
@@ -149,8 +149,8 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		return apperror.BadRequest(err.Error())
 	}
 
-	startDate := c.Query("start_date")
-	endDate := c.Query("end_date")
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query(constant.EndDate)
 	if startDate != "" && endDate == "" {
 		endDate = startDate
 	}

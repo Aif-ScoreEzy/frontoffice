@@ -52,12 +52,12 @@ package transaction
 // 	"message": "",
 // 	"meta": {
 // 		"total": 1,
-// 		"page": 1,
+// 		constant.Page: 1,
 // 		"total_pages": 1,
 // 		"visible": 1,
 // 		"start_data": 1,
 // 		"end_data": 1,
-// 		"size": 10,
+// 		constant.Size: 10,
 // 		"message": "Success"
 // 	}
 // }`

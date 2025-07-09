@@ -106,13 +106,13 @@ func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Limit)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Limit)
 	q.Add("keyword", filter.Keyword)
 	q.Add("status", filter.Status)
 	q.Add("role_id", filter.RoleID)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)

@@ -78,7 +78,7 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 
 	filter := &MemberFilter{
 		CompanyID: companyId,
-		Page:      c.Query("page", "1"),
+		Page:      c.Query(constant.Page, "1"),
 		Limit:     c.Query("limit", "10"),
 		Keyword:   c.Query("keyword", ""),
 		RoleName:  c.Query("role", ""),

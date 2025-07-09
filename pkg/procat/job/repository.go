@@ -124,10 +124,10 @@ func (repo *repository) CallGetJobsAPI(filter *logFilter) (*model.AifcoreAPIResp
 	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -160,8 +160,8 @@ func (repo *repository) CallGetJobDetailAPI(filter *logFilter) (*model.AifcoreAP
 	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -194,10 +194,10 @@ func (repo *repository) CallGetJobDetailsAPI(filter *logFilter) (*model.AifcoreA
 	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Size)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)

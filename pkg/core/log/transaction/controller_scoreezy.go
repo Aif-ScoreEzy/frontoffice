@@ -40,9 +40,9 @@ func (ctrl *controller) GetLogScoreezyByDate(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetLogScoreezyByDateRange(c *fiber.Ctx) error {
-	page := c.Query("page", "1")
-	startDate := c.Query("start_date")
-	endDate := c.Query("end_date")
+	page := c.Query(constant.Page, "1")
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query(constant.EndDate)
 	companyId := c.Query("company_id")
 
 	if startDate == "" || endDate == "" {
