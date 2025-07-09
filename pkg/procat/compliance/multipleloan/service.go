@@ -1,6 +1,7 @@
 package multipleloan
 
 import (
+	"errors"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
@@ -35,12 +36,17 @@ type service struct {
 }
 
 type Service interface {
-	MultipleLoan(apiKey, productSlug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
+	MultipleLoan(apiKey, slug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 }
 
 type multipleLoanFunc func(string, string, string, string, *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error)
 
-func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+func (svc *service) MultipleLoan(apiKey, slug, memberId, companyId string, reqBody *multipleLoanRequest) (*model.ProCatAPIResponse[dataMultipleLoanResponse], error) {
+	productSlug, err := mapProductSlug(slug)
+	if err != nil {
+		return nil, apperror.BadRequest("unsupported product slug")
+	}
+
 	product, err := svc.productRepo.CallGetProductBySlug(productSlug)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
@@ -60,24 +66,29 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
-	loanHandlers := map[string]multipleLoanFunc{
+	handlers := map[string]multipleLoanFunc{
 		constant.SlugMultipleLoan7Days:  svc.repo.CallMultipleLoan7Days,
 		constant.SlugMultipleLoan30Days: svc.repo.CallMultipleLoan30Days,
 		constant.SlugMultipleLoan90Days: svc.repo.CallMultipleLoan90Days,
 	}
 
-	loanHandler, ok := loanHandlers[productSlug]
+	handler, ok := handlers[productSlug]
 	if !ok {
 		return nil, apperror.BadRequest("unsupported product type")
 	}
 
-	result, err := loanHandler(apiKey, jobIdStr, memberId, companyId, reqBody)
+	result, err := handler(apiKey, jobIdStr, memberId, companyId, reqBody)
 	if err != nil {
 		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
 		}
 
-		return nil, apperror.MapRepoError(err, "failed to process multiple loan request")
+		var apiErr *apperror.ExternalAPIError
+		if errors.As(err, &apiErr) {
+			return nil, apperror.MapLoanError(apiErr)
+		}
+
+		return nil, apperror.Internal("failed to process loan record checker", err)
 	}
 
 	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {

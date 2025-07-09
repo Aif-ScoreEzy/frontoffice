@@ -2,6 +2,7 @@ package taxscore
 
 import (
 	"fmt"
+	"front-office/common/constant"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -21,10 +22,10 @@ type Controller interface {
 }
 
 func (ctrl *controller) TaxScore(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*taxScoreRequest)
-	apiKey, _ := c.Locals("apiKey").(string)
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	reqBody := c.Locals(constant.Request).(*taxScoreRequest)
+	apiKey, _ := c.Locals(constant.APIKey).(string)
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	result, err := ctrl.svc.CallTaxScore(apiKey, memberId, companyId, reqBody)
 	if err != nil {

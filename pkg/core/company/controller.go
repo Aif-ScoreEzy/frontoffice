@@ -1,6 +1,7 @@
 package company
 
 import (
+	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/pkg/core/industry"
 
@@ -21,7 +22,7 @@ type Controller interface {
 }
 
 func (ctrl *controller) UpdateCompanyById(c *fiber.Ctx) error {
-	req := c.Locals("request").(*UpdateCompanyRequest)
+	req := c.Locals(constant.Request).(*UpdateCompanyRequest)
 	id := c.Params("id")
 
 	if req.IndustryId != "" {

@@ -8,6 +8,11 @@ const (
 	XCompanyId            = "X-Company-ID"
 	XTierLevel            = "X-Tier-Level"
 
+	Request   = "request"
+	APIKey    = "apiKey"
+	UserId    = "userId"
+	CompanyId = "companyId"
+	RoleId    = "roleId"
 	Page      = "page"
 	Size      = "size"
 	StartDate = "start_date"

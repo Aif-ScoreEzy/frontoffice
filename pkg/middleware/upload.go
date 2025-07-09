@@ -12,7 +12,7 @@ import (
 
 func FileUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userId := c.Locals("userId")
+		userId := c.Locals(constant.UserId)
 
 		file, err := c.FormFile("image")
 		if err != nil {
@@ -63,7 +63,7 @@ func FileUpload() fiber.Handler {
 
 func DocUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userId := c.Locals("userId")
+		userId := c.Locals(constant.UserId)
 		fmt.Println("userId: ", userId)
 
 		// get the file upload and type information

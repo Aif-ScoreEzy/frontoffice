@@ -2,6 +2,7 @@ package taxcompliancestatus
 
 import (
 	"fmt"
+	"front-office/common/constant"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -22,10 +23,10 @@ type Controller interface {
 }
 
 func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*taxComplianceStatusRequest)
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	reqBody := c.Locals(constant.Request).(*taxComplianceStatusRequest)
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	result, err := ctrl.svc.CallTaxCompliance(apiKey, memberId, companyId, reqBody)
 	if err != nil {

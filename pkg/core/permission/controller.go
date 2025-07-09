@@ -1,6 +1,7 @@
 package permission
 
 import (
+	"front-office/common/constant"
 	"front-office/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +23,7 @@ type Controller interface {
 }
 
 func (ctrl *controller) CreatePermission(c *fiber.Ctx) error {
-	req := c.Locals("request").(*PermissionRequest)
+	req := c.Locals(constant.Request).(*PermissionRequest)
 
 	_, err := ctrl.Svc.GetPermissionByNameSvc(req.Name)
 	if err != nil {
@@ -65,7 +66,7 @@ func (ctrl *controller) GetPermissionById(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UpdatePermissionById(c *fiber.Ctx) error {
-	req := c.Locals("request").(*PermissionRequest)
+	req := c.Locals(constant.Request).(*PermissionRequest)
 	id := c.Params("id")
 
 	_, err := ctrl.Svc.IsPermissionExistSvc(id)

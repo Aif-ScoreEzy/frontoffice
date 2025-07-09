@@ -36,9 +36,9 @@ func (ctrl *controller) GetJobs(c *fiber.Ctx) error {
 		Size:      c.Query(constant.Size, "10"),
 		StartDate: c.Query(constant.StartDate, ""),
 		EndDate:   c.Query(constant.EndDate, ""),
-		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:  fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel: fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	jobs, err := ctrl.svc.GetPhoneLiveStatusJob(filter)
@@ -57,9 +57,9 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		Page:      c.Query(constant.Page, "1"),
 		Size:      c.Query(constant.Size, "10"),
 		JobId:     c.Params("id"),
-		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:  fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel: fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	if filter.JobId == "" {
@@ -81,9 +81,9 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query(constant.StartDate, ""),
 		EndDate:   c.Query(constant.EndDate, ""),
-		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:  fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel: fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	if filter.StartDate == "" || filter.EndDate == "" {
@@ -105,9 +105,9 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
 		StartDate: c.Query(constant.StartDate, ""),
 		EndDate:   c.Query(constant.EndDate, ""),
-		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:  fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel: fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	if filter.StartDate == "" || filter.EndDate == "" {
@@ -131,9 +131,9 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		JobId:     c.Params("id"),
 		StartDate: c.Query(constant.StartDate, ""),
 		EndDate:   c.Query(constant.EndDate, ""),
-		MemberId:  fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId: fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel: fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:  fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel: fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	var buf bytes.Buffer
@@ -150,10 +150,10 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*phoneLiveStatusRequest)
+	reqBody := c.Locals(constant.Request).(*phoneLiveStatusRequest)
 
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	err := ctrl.svc.ProcessPhoneLiveStatus(memberId, companyId, reqBody)
 	if err != nil {
@@ -167,9 +167,9 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	file, err := c.FormFile("file")
 	if err != nil {

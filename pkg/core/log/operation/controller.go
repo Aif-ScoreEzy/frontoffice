@@ -23,7 +23,7 @@ type Controller interface {
 }
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	page := c.Query(constant.Page, "1")
 	size := c.Query(constant.Size, "10")
 	role := strings.ToLower(c.Query("role"))
@@ -57,7 +57,7 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	page := c.Query(constant.Page, "1")
 	size := c.Query(constant.Size, "10")
 	startDate := c.Query(constant.StartDate)

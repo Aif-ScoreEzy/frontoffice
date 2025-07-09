@@ -98,10 +98,10 @@ func GetJWTPayloadFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userId", userId)
-		c.Locals("companyId", companyId)
-		c.Locals("roleId", roleId)
-		c.Locals("apiKey", apiKey)
+		c.Locals(constant.UserId, userId)
+		c.Locals(constant.CompanyId, companyId)
+		c.Locals(constant.RoleId, roleId)
+		c.Locals(constant.APIKey, apiKey)
 
 		return c.Next()
 	}
@@ -144,8 +144,8 @@ func GetJWTPayloadPasswordResetFromCookie() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userId", userId)
-		c.Locals("companyId", companyId)
+		c.Locals(constant.UserId, userId)
+		c.Locals(constant.CompanyId, companyId)
 		c.Locals("tierLevel", tierLevel)
 
 		return c.Next()
@@ -188,9 +188,9 @@ func GetPayloadFromRefreshToken() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(resp)
 		}
 
-		c.Locals("userId", userId)
-		c.Locals("companyId", companyId)
-		c.Locals("roleId", roleId)
+		c.Locals(constant.UserId, userId)
+		c.Locals(constant.CompanyId, companyId)
+		c.Locals(constant.RoleId, roleId)
 
 		return c.Next()
 	}

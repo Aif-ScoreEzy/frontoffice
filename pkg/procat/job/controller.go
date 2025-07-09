@@ -41,9 +41,9 @@ func (ctrl *controller) GetJob(c *fiber.Ctx) error {
 		StartDate:   c.Query(constant.StartDate, ""),
 		EndDate:     c.Query(constant.EndDate, ""),
 		ProductSlug: productSlug,
-		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
-		TierLevel:   fmt.Sprintf("%v", c.Locals("roleId")),
+		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
 	result, err := ctrl.Svc.GetProCatJob(filter)
@@ -63,8 +63,8 @@ func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
 	}
 
 	filter := &logFilter{
-		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, ""),
 		Size:        c.Query(constant.Size, ""),
 		ProductSlug: productSlug,
@@ -94,8 +94,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	}
 
 	filter := &logFilter{
-		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
-		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
+		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, "1"),
 		Size:        c.Query(constant.Size, "10"),
 		ProductSlug: productSlug,
@@ -112,8 +112,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
-	memberId := c.Locals("userId").(uint)
-	companyId := c.Locals("companyId").(uint)
+	memberId := c.Locals(constant.UserId).(uint)
+	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -140,8 +140,8 @@ func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
-	memberId := c.Locals("userId").(uint)
-	companyId := c.Locals("companyId").(uint)
+	memberId := c.Locals(constant.UserId).(uint)
+	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)

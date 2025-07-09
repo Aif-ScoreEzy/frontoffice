@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
-	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,18 +23,13 @@ type Controller interface {
 }
 
 func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
-	req := c.Locals("request").(*multipleLoanRequest)
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
-	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
-	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
+	req := c.Locals(constant.Request).(*multipleLoanRequest)
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberIdStr := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyIdStr := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	slug := c.Params("product_slug")
 
-	productSlug, err := mapProductSlug(slug)
-	if err != nil {
-		return apperror.BadRequest("unsupported product slug")
-	}
-
-	multipleLoanRes, err := ctrl.svc.MultipleLoan(apiKey, productSlug, memberIdStr, companyIdStr, req)
+	multipleLoanRes, err := ctrl.svc.MultipleLoan(apiKey, slug, memberIdStr, companyIdStr, req)
 	if err != nil {
 		return err
 	}

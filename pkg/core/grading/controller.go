@@ -24,8 +24,8 @@ type Controller interface {
 }
 
 func (ctrl *controller) CreateGradings(c *fiber.Ctx) error {
-	req := c.Locals("request").(*CreateGradingsRequest)
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	req := c.Locals(constant.Request).(*CreateGradingsRequest)
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	var gradings []*Grading
 	for _, createGradingRequest := range req.CreateGradingsRequest {
@@ -53,7 +53,7 @@ func (ctrl *controller) CreateGradings(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetGradings(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	result, err := ctrl.Svc.GetGradings(companyId)
 	if err != nil {
@@ -70,8 +70,8 @@ func (ctrl *controller) GetGradings(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ReplaceGradings(c *fiber.Ctx) error {
-	req := c.Locals("request").(*CreateGradingsRequest)
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	req := c.Locals(constant.Request).(*CreateGradingsRequest)
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	err := ctrl.Svc.ReplaceAllGradingsSvc(req, companyId)
 	if err != nil {
@@ -94,8 +94,8 @@ func (ctrl *controller) ReplaceGradings(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ReplaceGradingsNew(c *fiber.Ctx) error {
-	req := c.Locals("request").(*CreateGradingsNewRequest)
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	req := c.Locals(constant.Request).(*CreateGradingsNewRequest)
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	err := ctrl.Svc.ReplaceAllGradingsNewSvc(req, companyId)
 	if err != nil {

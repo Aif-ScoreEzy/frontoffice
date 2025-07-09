@@ -2,6 +2,7 @@ package taxverificationdetail
 
 import (
 	"fmt"
+	"front-office/common/constant"
 	"front-office/helper"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,10 +24,10 @@ type Controller interface {
 }
 
 func (ctrl *controller) TaxVerificationDetail(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*taxVerificationRequest)
-	apiKey, _ := c.Locals("apiKey").(string)
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	reqBody := c.Locals(constant.Request).(*taxVerificationRequest)
+	apiKey, _ := c.Locals(constant.APIKey).(string)
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	result, err := ctrl.svc.CallTaxVerification(apiKey, memberId, companyId, reqBody)
 	if err != nil {

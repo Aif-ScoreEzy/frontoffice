@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"front-office/common/constant"
 	"front-office/helper"
 	"reflect"
 
@@ -24,7 +25,7 @@ func IsRequestValid(model interface{}) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(resp)
 		}
 
-		c.Locals("request", request)
+		c.Locals(constant.Request, request)
 
 		return c.Next()
 	}
