@@ -15,7 +15,8 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	service := NewService(repository, transactionRepo)
 	controller := NewController(service)
 
-	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJob)
-	apiGroup.Get("/:product_slug/jobs/:job_id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetProCatJobDetail)
-	apiGroup.Get("/:product_slug/jobs/:job_id/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportProCatJobDetail)
+	apiGroup.Get("/:product_slug/jobs", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJob)
+	apiGroup.Get("/:product_slug/jobs/:job_id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetail)
+	apiGroup.Get("/:product_slug/jobs/:job_id/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobDetail)
+	apiGroup.Get("/:product_slug/job-details", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
 }

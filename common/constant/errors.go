@@ -63,6 +63,8 @@ const (
 	InvalidCompanySession = "invalid company session"
 	MissingUserId         = "missing user id"
 	MissingAccessToken    = "no access token provided"
+	MissingStartDate      = "start_date is required"
+	MissingEndDate        = "end_date is required"
 
 	ErrMsgMarshalReqBody = "failed to marshal request body: %w"
 	ErrMsgHTTPReqFailed  = "HTTP request failed: %w"

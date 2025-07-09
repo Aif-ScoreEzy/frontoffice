@@ -49,7 +49,7 @@ func (svc *service) MultipleLoan(apiKey, productSlug, memberId, companyId string
 		return nil, apperror.NotFound("product not found")
 	}
 
-	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,

@@ -60,7 +60,7 @@ func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*Lo
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error) {
+func (repo *repository) CallScoreezyLogsByDateRangeAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/range", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

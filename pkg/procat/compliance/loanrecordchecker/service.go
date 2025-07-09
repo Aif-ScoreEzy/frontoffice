@@ -57,7 +57,7 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 		return nil, apperror.NotFound("product not found")
 	}
 
-	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
@@ -109,7 +109,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 
 	memberIdStr := strconv.Itoa(int(memberId))
 	companyIdStr := strconv.Itoa(int(companyId))
-	jobRes, err := svc.jobRepo.CallCreateProCatJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberIdStr,
 		CompanyId: companyIdStr,
@@ -212,7 +212,7 @@ func (svc *service) finalizeJob(jobId string) error {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}
 
-	if err := svc.jobRepo.CallUpdateJobAPI(jobId, map[string]interface{}{
+	if err := svc.jobRepo.CallUpdateJob(jobId, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
 		"end_at":        helper.TimePtr(time.Now()),

@@ -16,7 +16,7 @@ type Controller interface {
 	// scoreezy
 	GetLogScoreezy(c *fiber.Ctx) error
 	GetLogScoreezyByDate(c *fiber.Ctx) error
-	GetLogScoreezyByRangeDate(c *fiber.Ctx) error
+	GetLogScoreezyByDateRange(c *fiber.Ctx) error
 	GetLogScoreezyByMonth(c *fiber.Ctx) error
 
 	// product catalog

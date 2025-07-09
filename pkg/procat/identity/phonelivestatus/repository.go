@@ -38,7 +38,7 @@ type Repository interface {
 	CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
-	CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
+	CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error)
 	CallUpdateJob(jobId string, req *updateJobRequest) error
@@ -182,7 +182,7 @@ func (repo *repository) CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) (
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallGetJobDetailsByRangeDateAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
+func (repo *repository) CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/job-details-by-range-date`, repo.cfg.Env.AifcoreHost)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

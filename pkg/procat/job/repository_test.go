@@ -39,7 +39,7 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 	return repo, mockClient
 }
 
-func TestCallCreateProCatJobAPI(t *testing.T) {
+func TestCallCreateProCatJob(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
@@ -58,7 +58,7 @@ func TestCallCreateProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateProCatJobAPI(&CreateJobRequest{})
+		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -75,7 +75,7 @@ func TestCallCreateProCatJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallCreateProCatJobAPI(&CreateJobRequest{})
+		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -88,7 +88,7 @@ func TestCallCreateProCatJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallCreateProCatJobAPI(&CreateJobRequest{})
+		_, err := repo.CallCreateJobAPI(&CreateJobRequest{})
 		assert.Error(t, err)
 	})
 
@@ -98,7 +98,7 @@ func TestCallCreateProCatJobAPI(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		req := &CreateJobRequest{}
-		_, err := repo.CallCreateProCatJobAPI(req)
+		_, err := repo.CallCreateJobAPI(req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -113,14 +113,14 @@ func TestCallCreateProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateProCatJobAPI(&CreateJobRequest{})
+		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
 	})
 }
 
-func TestCallUpdateJobAPI(t *testing.T) {
+func TestCallUpdateJob(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
@@ -135,7 +135,7 @@ func TestCallUpdateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err = repo.CallUpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
+		err = repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -150,7 +150,7 @@ func TestCallUpdateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		err := repo.CallUpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
+		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -162,7 +162,7 @@ func TestCallUpdateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		err := repo.CallUpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
+		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 	})
@@ -172,7 +172,7 @@ func TestCallUpdateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		err := repo.CallUpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
+		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -187,7 +187,7 @@ func TestCallUpdateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err := repo.CallUpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
+		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
@@ -209,7 +209,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetProCatJobAPI(&logFilter{})
+		result, err := repo.CallGetJobsAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -222,7 +222,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetProCatJobAPI(&logFilter{})
+		_, err := repo.CallGetJobsAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -232,7 +232,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetProCatJobAPI(&logFilter{})
+		_, err := repo.CallGetJobsAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -247,7 +247,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetProCatJobAPI(&logFilter{})
+		result, err := repo.CallGetJobsAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -273,7 +273,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetProCatJobDetailAPI(&logFilter{})
+		result, err := repo.CallGetJobDetailAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -287,7 +287,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetProCatJobDetailAPI(&logFilter{})
+		_, err := repo.CallGetJobDetailAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -297,7 +297,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetProCatJobDetailAPI(&logFilter{})
+		_, err := repo.CallGetJobDetailAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -312,7 +312,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetProCatJobDetailAPI(&logFilter{})
+		result, err := repo.CallGetJobDetailAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)

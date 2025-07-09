@@ -15,7 +15,7 @@ func SetupInit(logAPI fiber.Router, cfg *config.Config, client httpclient.HTTPCl
 	logTransScoreezyAPI := logAPI.Group("scoreezy")
 	logTransScoreezyAPI.Get("/", controller.GetLogScoreezy)
 	logTransScoreezyAPI.Get("/by-date", controller.GetLogScoreezyByDate)
-	logTransScoreezyAPI.Get("/by-range-date", controller.GetLogScoreezyByRangeDate)
+	logTransScoreezyAPI.Get("/by-range-date", controller.GetLogScoreezyByDateRange)
 	logTransScoreezyAPI.Get("/by-month", controller.GetLogScoreezyByMonth)
 
 	// logTransProcatGroup := logAPI.Group("product_catalog")

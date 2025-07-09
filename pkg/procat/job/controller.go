@@ -20,12 +20,13 @@ type controller struct {
 }
 
 type Controller interface {
-	GetProCatJob(c *fiber.Ctx) error
-	GetProCatJobDetail(c *fiber.Ctx) error
-	ExportProCatJobDetail(c *fiber.Ctx) error
+	GetJob(c *fiber.Ctx) error
+	GetJobDetail(c *fiber.Ctx) error
+	GetJobDetails(c *fiber.Ctx) error
+	ExportJobDetail(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
+func (ctrl *controller) GetJob(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -52,7 +53,7 @@ func (ctrl *controller) GetProCatJob(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
+func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -63,10 +64,10 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 	filter := &logFilter{
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		Page:        c.Query("page", ""),
+		Size:        c.Query("size", ""),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
-		StartDate:   c.Query("start_date", ""),
-		EndDate:     c.Query("end_date", ""),
 	}
 
 	result, err := ctrl.Svc.GetProCatJobDetail(filter)
@@ -77,7 +78,39 @@ func (ctrl *controller) GetProCatJobDetail(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (ctrl *controller) ExportProCatJobDetail(c *fiber.Ctx) error {
+func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
+	slug := c.Params("product_slug")
+
+	productSlug, err := mapProductSlug(slug)
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	if startDate != "" && endDate == "" {
+		endDate = startDate
+	}
+
+	filter := &logFilter{
+		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
+		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
+		Page:        c.Query("page", ""),
+		Size:        c.Query("size", ""),
+		ProductSlug: productSlug,
+		StartDate:   startDate,
+		EndDate:     endDate,
+	}
+
+	result, err := ctrl.Svc.GetProCatJobDetails(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
 	memberID := c.Locals("userId").(uint)
 	companyID := c.Locals("companyId").(uint)
 	slug := c.Params("product_slug")

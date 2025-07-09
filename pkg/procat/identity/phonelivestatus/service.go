@@ -35,7 +35,7 @@ type Service interface {
 	CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error)
 	GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
-	GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
+	GetPhoneLiveStatusDetailsByDateRange(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error)
@@ -82,8 +82,8 @@ func (svc *service) GetAllPhoneLiveStatusDetails(filter *phoneLiveStatusFilter) 
 	return jobDetails, nil
 }
 
-func (svc *service) GetPhoneLiveStatusDetailsByRangeDate(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
-	jobDetail, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
+func (svc *service) GetPhoneLiveStatusDetailsByDateRange(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
+	jobDetail, err := svc.repo.CallGetJobDetailsByDateRangeAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
@@ -101,7 +101,7 @@ func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryR
 }
 
 func (svc *service) ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.Buffer) (string, error) {
-	data, err := svc.repo.CallGetJobDetailsByRangeDateAPI(filter)
+	data, err := svc.repo.CallGetJobDetailsByDateRangeAPI(filter)
 	if err != nil {
 		return "", apperror.MapRepoError(err, "failed to fetch job details")
 	}

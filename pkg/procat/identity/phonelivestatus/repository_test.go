@@ -317,7 +317,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 	})
 }
 
-func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
+func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
 			Success: true,
@@ -336,7 +336,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 		filter := &phoneLiveStatusFilter{
 			MemberId: constant.DummyMemberId,
 		}
-		result, err := repo.CallGetJobDetailsByRangeDateAPI(filter)
+		result, err := repo.CallGetJobDetailsByDateRangeAPI(filter)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -350,7 +350,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		_, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 	})
@@ -360,7 +360,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		_, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -375,7 +375,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		result, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)

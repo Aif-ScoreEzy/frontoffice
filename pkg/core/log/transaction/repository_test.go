@@ -153,7 +153,7 @@ package transaction
 // 	assert.NoError(t, err)
 // }
 
-// func TestFindAllTransactionLogsByRangeDate(t *testing.T) {
+// func TestFindAllTransactionLogsByDateRange(t *testing.T) {
 // 	// Mock server to simulate the external API
 // 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 // 		// Validate the request URL and method
@@ -187,7 +187,7 @@ package transaction
 // 	companyId := "1"
 // 	startDate := dummyDate
 // 	endDate := dummyDate
-// 	resp, err := repo.CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate)
+// 	resp, err := repo.CallScoreezyLogsByDateRangeAPI(companyId, startDate, endDate)
 
 // 	assert.NoError(t, err)
 // 	assert.NotNil(t, resp)
