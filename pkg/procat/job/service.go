@@ -29,8 +29,9 @@ type Service interface {
 	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
 	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
-	GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
 	ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
+	GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
 	FinalizeJob(jobIdStr string, transactionId string) error
 	FinalizeFailedJob(jobIdStr string) error
 }
@@ -95,9 +96,30 @@ func (svc *service) GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIRes
 }
 
 func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error) {
-	resp, err := svc.repo.CallGetJobDetailAPI(filter)
-	if err != nil {
-		return "", apperror.MapRepoError(err, "failed to fetch job details")
+	var allDetails []*logTransProductCatalog
+	page := 1
+	pageSize := 100
+
+	for {
+		filter.Page = helper.ConvertUintToString(uint(page))
+		filter.Size = helper.ConvertUintToString(uint(pageSize))
+
+		resp, err := svc.repo.CallGetJobDetailAPI(filter)
+		if err != nil {
+			return "", apperror.MapRepoError(err, "failed to fetch job details")
+		}
+
+		if resp.Data == nil || len(resp.Data.JobDetails) == 0 {
+			break
+		}
+
+		allDetails = append(allDetails, resp.Data.JobDetails...)
+
+		if len(resp.Data.JobDetails) < pageSize {
+			break
+		}
+
+		page++
 	}
 
 	headers := []string{}
@@ -109,7 +131,52 @@ func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (
 		mapper = mapLoanRecordCheckerRow
 	}
 
-	err = writeToCSV[*logTransProductCatalog](buf, headers, resp.Data.JobDetails, mapper)
+	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
+	if err != nil {
+		return "", apperror.Internal("failed to write CSV", err)
+	}
+
+	filename := formatCSVFileName("job_detail", filter.StartDate, filter.EndDate, filter.JobId)
+	return filename, nil
+}
+
+func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) (string, error) {
+	var allDetails []*logTransProductCatalog
+	page := 1
+	pageSize := 100
+
+	for {
+		filter.Page = helper.ConvertUintToString(uint(page))
+		filter.Size = helper.ConvertUintToString(uint(pageSize))
+
+		resp, err := svc.repo.CallGetJobDetailsAPI(filter)
+		if err != nil {
+			return "", apperror.MapRepoError(err, "failed to fetch job details")
+		}
+
+		if resp == nil || resp.Data == nil {
+			break
+		}
+
+		allDetails = append(allDetails, resp.Data.JobDetails...)
+
+		if len(resp.Data.JobDetails) < pageSize {
+			break
+		}
+
+		page++
+	}
+
+	headers := []string{}
+	var mapper func(*logTransProductCatalog) []string
+
+	switch filter.ProductSlug {
+	case constant.SlugLoanRecordChecker:
+		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
+		mapper = mapLoanRecordCheckerRow
+	}
+
+	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
 	if err != nil {
 		return "", apperror.Internal("failed to write CSV", err)
 	}

@@ -22,8 +22,9 @@ type controller struct {
 type Controller interface {
 	GetJob(c *fiber.Ctx) error
 	GetJobDetail(c *fiber.Ctx) error
-	GetJobDetails(c *fiber.Ctx) error
 	ExportJobDetail(c *fiber.Ctx) error
+	GetJobDetails(c *fiber.Ctx) error
+	ExportJobDetails(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetJob(c *fiber.Ctx) error {
@@ -95,8 +96,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	filter := &logFilter{
 		MemberId:    fmt.Sprintf("%v", c.Locals("userId")),
 		CompanyId:   fmt.Sprintf("%v", c.Locals("companyId")),
-		Page:        c.Query("page", ""),
-		Size:        c.Query("size", ""),
+		Page:        c.Query("page", "1"),
+		Size:        c.Query("size", "10"),
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,
@@ -111,8 +112,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
-	memberID := c.Locals("userId").(uint)
-	companyID := c.Locals("companyId").(uint)
+	memberId := c.Locals("userId").(uint)
+	companyId := c.Locals("companyId").(uint)
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -121,14 +122,49 @@ func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
 	}
 
 	filter := &logFilter{
-		MemberId:    strconv.FormatUint(uint64(memberID), 10),
-		CompanyId:   strconv.FormatUint(uint64(companyID), 10),
+		MemberId:    strconv.FormatUint(uint64(memberId), 10),
+		CompanyId:   strconv.FormatUint(uint64(companyId), 10),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
 	}
 
 	var buf bytes.Buffer
 	filename, err := ctrl.Svc.ExportJobDetailToCSV(filter, &buf)
+	if err != nil {
+		return err
+	}
+
+	c.Set("Content-Type", "text/csv")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
+}
+
+func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+	memberId := c.Locals("userId").(uint)
+	companyId := c.Locals("companyId").(uint)
+	slug := c.Params("product_slug")
+
+	productSlug, err := mapProductSlug(slug)
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	if startDate != "" && endDate == "" {
+		endDate = startDate
+	}
+
+	filter := &logFilter{
+		MemberId:    strconv.FormatUint(uint64(memberId), 10),
+		CompanyId:   strconv.FormatUint(uint64(companyId), 10),
+		ProductSlug: productSlug,
+		StartDate:   startDate,
+		EndDate:     endDate,
+	}
+
+	var buf bytes.Buffer
+	filename, err := ctrl.Svc.ExportJobDetailsToCSV(filter, &buf)
 	if err != nil {
 		return err
 	}

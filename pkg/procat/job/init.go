@@ -19,4 +19,5 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	apiGroup.Get("/:product_slug/jobs/:job_id", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetail)
 	apiGroup.Get("/:product_slug/jobs/:job_id/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobDetail)
 	apiGroup.Get("/:product_slug/job-details", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.GetJobDetails)
+	apiGroup.Get("/:product_slug/job-details/export", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.ExportJobDetails)
 }
