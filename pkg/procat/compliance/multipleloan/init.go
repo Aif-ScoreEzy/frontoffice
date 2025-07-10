@@ -23,4 +23,5 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	controller := NewController(service)
 
 	apiGroup.Post("/:product_slug/single-request", middleware.Auth(), middleware.IsRequestValid(multipleLoanRequest{}), middleware.GetJWTPayloadFromCookie(), controller.MultipleLoan)
+	apiGroup.Post("/:product_slug/bulk-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkMultipleLoan)
 }

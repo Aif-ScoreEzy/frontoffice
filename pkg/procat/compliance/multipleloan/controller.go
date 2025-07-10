@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,6 +22,7 @@ type controller struct {
 
 type Controller interface {
 	MultipleLoan(c *fiber.Ctx) error
+	BulkMultipleLoan(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
@@ -35,6 +38,36 @@ func (ctrl *controller) MultipleLoan(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(multipleLoanRes)
+}
+
+func (ctrl *controller) BulkMultipleLoan(c *fiber.Ctx) error {
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	slug := c.Params("product_slug")
+
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidCompanySession)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	err = ctrl.svc.BulkMultipleLoan(apiKey, slug, memberId, companyId, file)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"success",
+		nil,
+	))
 }
 
 var productSlugMap = map[string]string{

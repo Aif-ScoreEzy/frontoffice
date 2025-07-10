@@ -142,7 +142,18 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 		go func(loanCheckerReq *loanRecordCheckerRequest) {
 			defer wg.Done()
 
-			if err := svc.validateAndProcessLoanChecker(apiKey, jobIdStr, memberIdStr, companyIdStr, memberId, companyId, product.ProductId, product.ProductGroupId, jobRes.JobId, loanCheckerReq); err != nil {
+			if err := svc.processSingleLoanRecord(&loanCheckerContext{
+				APIKey:         apiKey,
+				JobIdStr:       jobIdStr,
+				MemberIdStr:    memberIdStr,
+				CompanyIdStr:   companyIdStr,
+				MemberId:       memberId,
+				CompanyId:      companyId,
+				ProductId:      product.ProductId,
+				ProductGroupId: product.ProductGroupId,
+				JobId:          jobRes.JobId,
+				Request:        loanCheckerReq,
+			}); err != nil {
 				errChan <- err
 			}
 		}(req)
@@ -164,28 +175,28 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 	return svc.finalizeJob(jobIdStr)
 }
 
-func (svc *service) validateAndProcessLoanChecker(apiKey, jobIdStr, memberIdStr, companyIdStr string, memberId, companyId, productId, productGroupId, jobId uint, req *loanRecordCheckerRequest) error {
-	if err := validator.ValidateStruct(req); err != nil {
+func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
+	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transactionRepo.CallCreateLogTransAPI(&transaction.LogTransProCatRequest{
-			MemberID:       memberId,
-			CompanyID:      companyId,
-			ProductID:      productId,
-			ProductGroupID: productGroupId,
-			JobID:          jobId,
+			MemberID:       params.MemberId,
+			CompanyID:      params.CompanyId,
+			ProductID:      params.ProductId,
+			ProductGroupID: params.ProductGroupId,
+			JobID:          params.JobId,
 			Message:        err.Error(),
 			Status:         http.StatusBadRequest,
 			Success:        false,
 			ResponseBody:   nil,
 			Data:           nil,
-			RequestBody:    req,
+			RequestBody:    params.Request,
 		})
 
 		return apperror.BadRequest(err.Error())
 	}
 
-	result, err := svc.repo.CallLoanRecordCheckerAPI(apiKey, jobIdStr, memberIdStr, companyIdStr, req)
+	result, err := svc.repo.CallLoanRecordCheckerAPI(params.APIKey, params.JobIdStr, params.MemberIdStr, params.CompanyIdStr, params.Request)
 	if err != nil {
-		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
+		if err := svc.jobService.FinalizeFailedJob(params.JobIdStr); err != nil {
 			return err
 		}
 
