@@ -192,7 +192,7 @@ func TestPasswordResetAPI(t *testing.T) {
 }
 
 func TestChangePasswordAPI(t *testing.T) {
-	changePasswordReq := &ChangePasswordRequest{
+	payload := &ChangePasswordRequest{
 		CurrentPassword:    constant.DummyPassword,
 		NewPassword:        constant.DummyPassword,
 		ConfirmNewPassword: constant.DummyPassword,
@@ -212,7 +212,7 @@ func TestChangePasswordAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err = repo.ChangePasswordAPI(constant.DummyMemberId, changePasswordReq)
+		err = repo.ChangePasswordAPI(constant.DummyMemberId, payload)
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -227,7 +227,7 @@ func TestChangePasswordAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		err := repo.ChangePasswordAPI(constant.DummyMemberId, changePasswordReq)
+		err := repo.ChangePasswordAPI(constant.DummyMemberId, payload)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
@@ -238,7 +238,7 @@ func TestChangePasswordAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		err := repo.ChangePasswordAPI(constant.DummyMemberId, changePasswordReq)
+		err := repo.ChangePasswordAPI(constant.DummyMemberId, payload)
 		assert.Error(t, err)
 	})
 
@@ -247,7 +247,7 @@ func TestChangePasswordAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		err := repo.ChangePasswordAPI(constant.DummyMemberId, changePasswordReq)
+		err := repo.ChangePasswordAPI(constant.DummyMemberId, payload)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -262,8 +262,97 @@ func TestChangePasswordAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err := repo.ChangePasswordAPI(constant.DummyMemberId, changePasswordReq)
+		err := repo.ChangePasswordAPI(constant.DummyMemberId, payload)
 		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestAuthMemberAPI(t *testing.T) {
+	payload := &userLoginRequest{
+		Email:    constant.DummyEmail,
+		Password: constant.DummyPassword,
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[*loginResponseData]{
+			Success: true,
+			Data: &loginResponseData{
+				MemberId: constant.DummyMemberIdUint,
+				Email:    constant.DummyEmail,
+			},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.AuthMemberAPI(payload)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, result.Email, payload.Email)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New(constant.ErrFailedMarshalReq)
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		result, err := repo.AuthMemberAPI(payload)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		result, err := repo.AuthMemberAPI(payload)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		result, err := repo.AuthMemberAPI(payload)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.AuthMemberAPI(payload)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
 		mockClient.AssertExpectations(t)
 	})
 }
