@@ -212,7 +212,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	err = svc.repo.PasswordResetAPI(data.MemberId, token, req)
+	err = svc.repo.PasswordResetAPI(strconv.Itoa(int(data.MemberId)), token, req)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to password reset")
 	}

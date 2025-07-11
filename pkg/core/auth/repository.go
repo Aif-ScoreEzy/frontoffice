@@ -36,7 +36,7 @@ type Repository interface {
 	// CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	VerifyMemberAPI(userId string, req *PasswordResetRequest) error
 	ChangePasswordAPI(userId string, req *ChangePasswordRequest) error
-	PasswordResetAPI(userId uint, token string, req *PasswordResetRequest) error
+	PasswordResetAPI(userId, token string, req *PasswordResetRequest) error
 	AuthMemberAPI(req *userLoginRequest) (*loginResponseData, error)
 }
 
@@ -116,7 +116,7 @@ func (repo *repository) VerifyMemberAPI(userId string, payload *PasswordResetReq
 	return nil
 }
 
-func (repo *repository) PasswordResetAPI(userId uint, token string, payload *PasswordResetRequest) error {
+func (repo *repository) PasswordResetAPI(userId, token string, payload *PasswordResetRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, userId, token)
 
 	bodyBytes, err := repo.marshalFn(payload)
