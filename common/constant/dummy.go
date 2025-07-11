@@ -9,6 +9,7 @@ const (
 	DummyJobId       = "job-id"
 	DummyJobDetailId = "job-detail-id"
 	DummyPhoneNumber = "phone-number"
+	DummyPassword    = "dummy-password"
 	DummyName        = "john doe"
 	DummyNIK         = "1234567890123456"
 )

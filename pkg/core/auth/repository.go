@@ -8,26 +8,36 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
 	// CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
 	// CreateMember(user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error)
-	CallVerifyMemberAPI(userId uint, req *PasswordResetRequest) error
-	CallChangePasswordAPI(userId string, req *ChangePasswordRequest) error
-	CallPasswordResetAPI(userId uint, token string, req *PasswordResetRequest) error
-	AuthMemberAifCore(req *userLoginRequest) (*loginResponseData, error)
+	VerifyMemberAPI(userId string, req *PasswordResetRequest) error
+	ChangePasswordAPI(userId string, req *ChangePasswordRequest) error
+	PasswordResetAPI(userId uint, token string, req *PasswordResetRequest) error
+	AuthMemberAPI(req *userLoginRequest) (*loginResponseData, error)
 }
 
 // func (repo *repository) CreateAdmin(company *company.MstCompany, user *member.MstMember, activationToken *activationtoken.MstActivationToken) (*member.MstMember, error) {
@@ -77,10 +87,10 @@ type Repository interface {
 // 	return user, nil
 // }
 
-func (repo *repository) CallVerifyMemberAPI(userId uint, reqBody *PasswordResetRequest) error {
+func (repo *repository) VerifyMemberAPI(userId string, payload *PasswordResetRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, userId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -106,10 +116,10 @@ func (repo *repository) CallVerifyMemberAPI(userId uint, reqBody *PasswordResetR
 	return nil
 }
 
-func (repo *repository) CallPasswordResetAPI(userId uint, token string, reqBody *PasswordResetRequest) error {
+func (repo *repository) PasswordResetAPI(userId uint, token string, payload *PasswordResetRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, userId, token)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -135,10 +145,10 @@ func (repo *repository) CallPasswordResetAPI(userId uint, token string, reqBody 
 	return nil
 }
 
-func (repo *repository) CallChangePasswordAPI(userId string, reqBody *ChangePasswordRequest) error {
+func (repo *repository) ChangePasswordAPI(userId string, payload *ChangePasswordRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/change-password`, repo.cfg.Env.AifcoreHost, userId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -164,10 +174,10 @@ func (repo *repository) CallChangePasswordAPI(userId string, reqBody *ChangePass
 	return nil
 }
 
-func (repo *repository) AuthMemberAifCore(reqBody *userLoginRequest) (*loginResponseData, error) {
+func (repo *repository) AuthMemberAPI(payload *userLoginRequest) (*loginResponseData, error) {
 	url := fmt.Sprintf("%s/api/middleware/auth-member-login", repo.cfg.Env.AifcoreHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}

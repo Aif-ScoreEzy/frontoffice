@@ -175,7 +175,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	if err := svc.repo.CallVerifyMemberAPI(activationData.MemberId, req); err != nil {
+	if err := svc.repo.VerifyMemberAPI(userId, req); err != nil {
 		return apperror.MapRepoError(err, "failed to verify member")
 	}
 
@@ -212,7 +212,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	err = svc.repo.CallPasswordResetAPI(data.MemberId, token, req)
+	err = svc.repo.PasswordResetAPI(data.MemberId, token, req)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to password reset")
 	}
@@ -379,7 +379,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 }
 
 func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error) {
-	user, err := svc.repo.AuthMemberAifCore(req)
+	user, err := svc.repo.AuthMemberAPI(req)
 	if err != nil {
 		var apiErr *apperror.ExternalAPIError
 		if errors.As(err, &apiErr) {
@@ -471,7 +471,7 @@ func (svc *service) ChangePassword(userId string, reqBody *ChangePasswordRequest
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	if err := svc.repo.CallChangePasswordAPI(userId, reqBody); err != nil {
+	if err := svc.repo.ChangePasswordAPI(userId, reqBody); err != nil {
 		var apiErr *apperror.ExternalAPIError
 		if errors.As(err, &apiErr) {
 			return apperror.MapChangePasswordError(apiErr)
