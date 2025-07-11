@@ -127,7 +127,7 @@ type Service interface {
 // }
 
 func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error {
-	activationData, err := svc.activationRepo.CallGetActivationTokenAPI(token)
+	activationData, err := svc.activationRepo.GetActivationTokenAPI(token)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to retrieve activation token")
 	}
@@ -246,7 +246,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	err = svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
+	err = svc.activationRepo.CreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: activationToken,
 	})
 	if err != nil {
@@ -308,7 +308,7 @@ func (svc *service) RequestActivation(email string) error {
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
+	if err := svc.activationRepo.CreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: token,
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to create activation")

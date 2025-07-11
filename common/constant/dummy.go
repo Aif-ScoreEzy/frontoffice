@@ -2,6 +2,8 @@ package constant
 
 const (
 	DummyAPIKey      = "test-api-key"
+	DummyId          = "dummy-id"
+	DummyToken       = "dummy-token"
 	DummyMemberId    = "member-id"
 	DummyCompanyId   = "company-id"
 	DummyJobId       = "job-id"
