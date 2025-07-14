@@ -357,7 +357,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.passwordResetRepo.CallCreatePasswordResetTokenAPI(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
+	if err := svc.passwordResetRepo.CreatePasswordResetTokenAPI(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
 		Token: token,
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to create password reset token")

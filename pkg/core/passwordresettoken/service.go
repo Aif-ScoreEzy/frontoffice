@@ -48,7 +48,7 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 	}
 
 	userIdStr := helper.ConvertUintToString(userId)
-	err = svc.Repo.CallCreatePasswordResetTokenAPI(userIdStr, req)
+	err = svc.Repo.CreatePasswordResetTokenAPI(userIdStr, req)
 	if err != nil {
 		return "", apperror.MapRepoError(err, "failed to create password reset token")
 	}

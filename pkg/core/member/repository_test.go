@@ -43,7 +43,7 @@ func TestAddMemberAPI(t *testing.T) {
 	addMemberReq := &RegisterMemberRequest{}
 
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[any]{
+		mockData := model.AifcoreAPIResponse[*registerResponseData]{
 			Success: true,
 			Data: &registerResponseData{
 				MemberId: constant.DummyMemberIdUint,

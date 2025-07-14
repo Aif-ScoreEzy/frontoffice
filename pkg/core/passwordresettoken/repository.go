@@ -8,20 +8,30 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallCreatePasswordResetTokenAPI(userId string, reqBody *CreatePasswordResetTokenRequest) error
+	CreatePasswordResetTokenAPI(userId string, payload *CreatePasswordResetTokenRequest) error
 	CallGetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error)
 	CallDeletePasswordResetTokenAPI(id string) error
 }
@@ -50,10 +60,10 @@ func (repo *repository) CallGetPasswordResetTokenAPI(token string) (*MstPassword
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallCreatePasswordResetTokenAPI(userId string, reqBody *CreatePasswordResetTokenRequest) error {
+func (repo *repository) CreatePasswordResetTokenAPI(userId string, payload *CreatePasswordResetTokenRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/password-reset-tokens`, repo.cfg.Env.AifcoreHost, userId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
