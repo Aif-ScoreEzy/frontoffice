@@ -6,7 +6,7 @@ import (
 )
 
 func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsAPI()
+	logs, err := svc.repo.GetLogsScoreezyAPI()
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
@@ -24,7 +24,7 @@ func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
 }
 
 func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByDateAPI(companyId, date)
+	logs, err := svc.repo.GetLogsScoreezyByDateAPI(companyId, date)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
