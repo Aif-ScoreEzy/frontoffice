@@ -38,7 +38,7 @@ type Service interface {
 }
 
 func (svc *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
-	member, err := svc.repo.CallGetMemberAPI(query)
+	member, err := svc.repo.GetMemberAPI(query)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get member")
 	}
@@ -65,7 +65,7 @@ func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Me
 		filter.RoleID = fmt.Sprintf("%v", roles[0].RoleId)
 	}
 
-	users, meta, err := svc.repo.CallGetMemberListAPI(filter)
+	users, meta, err := svc.repo.GetMemberListAPI(filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -74,7 +74,7 @@ func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Me
 }
 
 func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *UpdateProfileRequest) (*userUpdateResponse, error) {
-	user, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: userId})
+	user, err := svc.repo.GetMemberAPI(&FindUserQuery{Id: userId})
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
@@ -95,7 +95,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 			return nil, apperror.Unauthorized("you are not allowed to update email")
 		}
 
-		existing, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Email: *req.Email})
+		existing, err := svc.repo.GetMemberAPI(&FindUserQuery{Email: *req.Email})
 		if err != nil {
 			return nil, apperror.MapRepoError(err, "failed to check existing email")
 		}
@@ -140,7 +140,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 }
 
 func (svc *service) UploadProfileImage(userId string, filename *string) (*userUpdateResponse, error) {
-	user, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: userId})
+	user, err := svc.repo.GetMemberAPI(&FindUserQuery{Id: userId})
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
@@ -179,7 +179,7 @@ func (svc *service) UploadProfileImage(userId string, filename *string) (*userUp
 }
 
 func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, companyId, memberId string, req *UpdateUserRequest) error {
-	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
+	member, err := svc.repo.GetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
 	if err != nil {
 		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}
@@ -204,7 +204,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 			return apperror.Unauthorized("you are not allowed to update email")
 		}
 
-		existing, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Email: *req.Email})
+		existing, err := svc.repo.GetMemberAPI(&FindUserQuery{Email: *req.Email})
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to check existing email")
 		}
@@ -267,7 +267,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 }
 
 func (svc *service) DeleteMemberById(memberId, companyId string) error {
-	member, err := svc.repo.CallGetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
+	member, err := svc.repo.GetMemberAPI(&FindUserQuery{Id: memberId, CompanyId: companyId})
 	if err != nil {
 		return apperror.MapRepoError(err, constant.FailedFetchMember)
 	}

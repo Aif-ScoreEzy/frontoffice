@@ -134,7 +134,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 
 	userId := fmt.Sprintf("%d", activationData.MemberId)
 
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {
@@ -281,7 +281,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 }
 
 func (svc *service) RequestActivation(email string) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
@@ -331,7 +331,7 @@ func (svc *service) RequestActivation(email string) error {
 }
 
 func (svc *service) RequestPasswordReset(email string) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
@@ -456,7 +456,7 @@ func (svc *service) Logout(userId, companyId uint) error {
 }
 
 func (svc *service) ChangePassword(userId string, reqBody *ChangePasswordRequest) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {

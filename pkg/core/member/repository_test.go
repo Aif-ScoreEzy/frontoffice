@@ -107,3 +107,139 @@ func TestAddMemberAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestGetMemberAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[*MstMember]{
+			Success: true,
+			Data:    &MstMember{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetMemberAPI(&FindUserQuery{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.GetMemberAPI(&FindUserQuery{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.GetMemberAPI(&FindUserQuery{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetMemberAPI(&FindUserQuery{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestGetMemberListAPI(t *testing.T) {
+	filter := &MemberFilter{
+		CompanyID: constant.CompanyId,
+	}
+
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[[]*MstMember]{
+			Success: true,
+			Data:    []*MstMember{},
+			Meta:    &model.Meta{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, meta, err := repo.GetMemberListAPI(filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.NotNil(t, meta)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		result, meta, err := repo.GetMemberListAPI(filter)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Nil(t, meta)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		result, meta, err := repo.GetMemberListAPI(filter)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Nil(t, meta)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, meta, err := repo.GetMemberListAPI(filter)
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Nil(t, meta)
+		mockClient.AssertExpectations(t)
+	})
+}

@@ -150,7 +150,7 @@ func (svc *service) UpdateJobDetail(jobId, jobDetailId uint, reqBody *updateJobD
 }
 
 func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *phoneLiveStatusRequest) error {
-	member, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	member, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Id:        memberId,
 		CompanyId: companyId,
 	})

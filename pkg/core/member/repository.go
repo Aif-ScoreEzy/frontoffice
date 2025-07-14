@@ -34,8 +34,8 @@ type repository struct {
 
 type Repository interface {
 	AddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
-	CallGetMemberAPI(query *FindUserQuery) (*MstMember, error)
-	CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
+	GetMemberAPI(query *FindUserQuery) (*MstMember, error)
+	GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	CallUpdateMemberAPI(id string, req map[string]interface{}) error
 	CallDeleteMemberAPI(id string) error
 }
@@ -73,7 +73,7 @@ func (repo *repository) AddMemberAPI(reqBody *RegisterMemberRequest) (*registerR
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, error) {
+func (repo *repository) GetMemberAPI(query *FindUserQuery) (*MstMember, error) {
 	url := fmt.Sprintf(`%v/api/core/member/by`, repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -105,7 +105,7 @@ func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, erro
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
+func (repo *repository) GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
 	url := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.cfg.Env.AifcoreHost, filter.CompanyID)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
