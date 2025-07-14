@@ -9,28 +9,38 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"mime/multipart"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallAddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
+	AddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
 	CallGetMemberAPI(query *FindUserQuery) (*MstMember, error)
 	CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	CallUpdateMemberAPI(id string, req map[string]interface{}) error
 	CallDeleteMemberAPI(id string) error
 }
 
-func (repo *repository) CallAddMemberAPI(reqBody *RegisterMemberRequest) (*registerResponseData, error) {
+func (repo *repository) AddMemberAPI(reqBody *RegisterMemberRequest) (*registerResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/member/addmember", repo.cfg.Env.AifcoreHost)
 
 	var bodyBytes bytes.Buffer

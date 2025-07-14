@@ -229,7 +229,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 }
 
 func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequest) error {
-	user, err := svc.memberRepo.CallAddMemberAPI(req)
+	user, err := svc.memberRepo.AddMemberAPI(req)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to register member")
 	}
