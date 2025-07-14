@@ -177,7 +177,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 
 func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 	if err := validator.ValidateStruct(params.Request); err != nil {
-		_ = svc.transactionRepo.CallCreateLogTransAPI(&transaction.LogTransProCatRequest{
+		_ = svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
 			CompanyID:      params.CompanyId,
 			ProductID:      params.ProductId,
@@ -208,7 +208,7 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 		return apperror.Internal("failed to process loan record checker", err)
 	}
 
-	if err := svc.transactionRepo.CallUpdateLogTransAPI(result.TransactionId, map[string]interface{}{
+	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
 		"success": helper.BoolPtr(true),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update transaction job")
@@ -218,7 +218,7 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 }
 
 func (svc *service) finalizeJob(jobId string) error {
-	count, err := svc.transactionRepo.CallProcessedLogCount(jobId)
+	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobId)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}

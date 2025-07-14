@@ -8,7 +8,7 @@ import (
 )
 
 func SetupInit(logAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	repository := NewRepository(cfg, client)
+	repository := NewRepository(cfg, client, nil)
 	service := NewService(repository)
 	controller := NewController(service)
 

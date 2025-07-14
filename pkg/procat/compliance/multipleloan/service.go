@@ -201,7 +201,7 @@ func (svc *service) BulkMultipleLoan(apiKey, slug string, memberId, companyId ui
 
 func (svc *service) processMultipleLoan(params *multipleLoanContext) error {
 	if err := validator.ValidateStruct(params.Request); err != nil {
-		_ = svc.transactionRepo.CallCreateLogTransAPI(&transaction.LogTransProCatRequest{
+		_ = svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
 			CompanyID:      params.CompanyId,
 			ProductID:      params.ProductId,
@@ -243,7 +243,7 @@ func (svc *service) processMultipleLoan(params *multipleLoanContext) error {
 		return apperror.Internal("failed to process multiple loan", err)
 	}
 
-	if err := svc.transactionRepo.CallUpdateLogTransAPI(result.TransactionId, map[string]interface{}{
+	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
 		"success": helper.BoolPtr(true),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update transaction job")
@@ -253,7 +253,7 @@ func (svc *service) processMultipleLoan(params *multipleLoanContext) error {
 }
 
 func (svc *service) finalizeJob(jobId string) error {
-	count, err := svc.transactionRepo.CallProcessedLogCount(jobId)
+	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobId)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}

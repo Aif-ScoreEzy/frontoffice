@@ -17,4 +17,5 @@ const (
 
 	DummyMemberIdUint  = 1
 	DummyCompanyIdUint = 1
+	DummyCount         = 12
 )

@@ -186,13 +186,13 @@ func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) 
 }
 
 func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
-	if err := svc.transactionRepo.CallUpdateLogTransAPI(transactionId, map[string]interface{}{
+	if err := svc.transactionRepo.UpdateLogTransAPI(transactionId, map[string]interface{}{
 		"success": helper.BoolPtr(true),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update transaction log")
 	}
 
-	count, err := svc.transactionRepo.CallProcessedLogCount(jobIdStr)
+	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobIdStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get success count")
 	}
@@ -209,7 +209,7 @@ func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
 }
 
 func (svc *service) FinalizeFailedJob(jobIdStr string) error {
-	count, err := svc.transactionRepo.CallProcessedLogCount(jobIdStr)
+	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobIdStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}

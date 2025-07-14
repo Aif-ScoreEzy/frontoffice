@@ -11,7 +11,7 @@ import (
 
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repository := NewRepository(cfg, client, nil)
-	transactionRepo := transaction.NewRepository(cfg, client)
+	transactionRepo := transaction.NewRepository(cfg, client, nil)
 	service := NewService(repository, transactionRepo)
 	controller := NewController(service)
 

@@ -1,10 +1,9 @@
-package operation
+package transaction
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/common/model"
@@ -40,13 +39,11 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 	return repo, mockClient
 }
 
-func TestGetLogsOperationAPI(t *testing.T) {
-	filter := LogOperationFilter{
-		CompanyId: constant.DummyCompanyId,
-	}
+func TestGetLogTransByJobIdAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[any]{
+		mockData := model.AifcoreAPIResponse[[]*LogTransProductCatalog]{
 			Success: true,
+			Data:    []*LogTransProductCatalog{},
 		}
 		body, err := json.Marshal(mockData)
 		require.NoError(t, err)
@@ -58,7 +55,7 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetLogTransByJobIdAPI(constant.DummyJobId, constant.DummyCompanyId)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -71,7 +68,7 @@ func TestGetLogsOperationAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetLogTransByJobIdAPI(constant.DummyJobId, constant.DummyCompanyId)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -82,7 +79,7 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetLogTransByJobIdAPI(constant.DummyJobId, constant.DummyCompanyId)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -98,7 +95,7 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetLogTransByJobIdAPI(constant.DummyJobId, constant.DummyCompanyId)
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -106,13 +103,13 @@ func TestGetLogsOperationAPI(t *testing.T) {
 	})
 }
 
-func TestGetLogsByRangeAPI(t *testing.T) {
-	filter := LogRangeFilter{
-		CompanyId: constant.DummyCompanyId,
-	}
+func TestProcessedLogCountAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[any]{
+		mockData := model.AifcoreAPIResponse[*getProcessedCountResp]{
 			Success: true,
+			Data: &getProcessedCountResp{
+				ProcessedCount: uint(constant.DummyCount),
+			},
 		}
 		body, err := json.Marshal(mockData)
 		require.NoError(t, err)
@@ -124,12 +121,11 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsByRangeAPI(&filter)
-
-		fmt.Println("***", result.Data)
+		result, err := repo.ProcessedLogCountAPI(constant.DummyJobId)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
+		assert.Equal(t, uint(constant.DummyCount), uint(result.ProcessedCount))
 		mockClient.AssertExpectations(t)
 	})
 
@@ -139,7 +135,7 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		result, err := repo.GetLogsByRangeAPI(&filter)
+		result, err := repo.ProcessedLogCountAPI(constant.DummyJobId)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -150,7 +146,7 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		result, err := repo.GetLogsByRangeAPI(&filter)
+		result, err := repo.ProcessedLogCountAPI(constant.DummyJobId)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -166,7 +162,7 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsByRangeAPI(&filter)
+		result, err := repo.ProcessedLogCountAPI(constant.DummyJobId)
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -174,15 +170,11 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 	})
 }
 
-func TestAddLogOperation(t *testing.T) {
-	addLogReq := &AddLogRequest{
-		MemberId:  constant.DummyMemberIdUint,
-		CompanyId: constant.DummyMemberIdUint,
-		Action:    constant.DummyAction,
-	}
+func TestCreateLogTransAPI(t *testing.T) {
+	addLogReq := &LogTransProCatRequest{}
 
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[*any]{
+		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 		}
 		body, err := json.Marshal(mockData)
@@ -195,7 +187,7 @@ func TestAddLogOperation(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err = repo.AddLogOperation(addLogReq)
+		err = repo.CreateLogTransAPI(addLogReq)
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -210,7 +202,7 @@ func TestAddLogOperation(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		err := repo.AddLogOperation(addLogReq)
+		err := repo.CreateLogTransAPI(addLogReq)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -222,7 +214,7 @@ func TestAddLogOperation(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		err := repo.AddLogOperation(addLogReq)
+		err := repo.CreateLogTransAPI(addLogReq)
 
 		assert.Error(t, err)
 	})
@@ -232,7 +224,7 @@ func TestAddLogOperation(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		err := repo.AddLogOperation(addLogReq)
+		err := repo.CreateLogTransAPI(addLogReq)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -247,7 +239,7 @@ func TestAddLogOperation(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err := repo.AddLogOperation(addLogReq)
+		err := repo.CreateLogTransAPI(addLogReq)
 
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
