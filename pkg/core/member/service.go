@@ -51,7 +51,7 @@ func (svc *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
 
 func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
 	if filter.RoleName != "" {
-		roles, err := svc.roleRepo.CallGetRolesAPI(role.RoleFilter{
+		roles, err := svc.roleRepo.GetRolesAPI(role.RoleFilter{
 			Name: filter.RoleName,
 		})
 		if err != nil {
@@ -219,7 +219,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 	}
 
 	if req.RoleId != nil {
-		role, err := svc.roleRepo.CallGetRoleAPI(*req.RoleId)
+		role, err := svc.roleRepo.GetRoleByIdAPI(*req.RoleId)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to fetch role")
 		}

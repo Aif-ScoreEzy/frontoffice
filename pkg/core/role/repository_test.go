@@ -1,10 +1,9 @@
-package operation
+package role
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/common/model"
@@ -35,18 +34,18 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 
 	repo := NewRepository(&config.Config{
 		Env: &config.Environment{AifcoreHost: constant.MockHost},
-	}, mockClient, nil)
+	}, mockClient)
 
 	return repo, mockClient
 }
 
-func TestGetLogsOperationAPI(t *testing.T) {
-	filter := LogOperationFilter{
-		CompanyId: constant.DummyCompanyId,
-	}
+func TestGetRoleByIdAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[any]{
+		mockData := model.AifcoreAPIResponse[*MstRole]{
 			Success: true,
+			Data: &MstRole{
+				RoleId: constant.DummyIdInt,
+			},
 		}
 		body, err := json.Marshal(mockData)
 		require.NoError(t, err)
@@ -58,7 +57,74 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetRoleByIdAPI(constant.DummyId)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, uint(constant.DummyIdInt), result.RoleId)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient)
+
+		result, err := repo.GetRoleByIdAPI(constant.DummyId)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		result, err := repo.GetRoleByIdAPI(constant.DummyId)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetRoleByIdAPI(constant.DummyId)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestGetRolesAPI(t *testing.T) {
+	filter := RoleFilter{}
+
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[[]*MstRole]{
+			Success: true,
+			Data:    []*MstRole{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetRolesAPI(filter)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -69,9 +135,9 @@ func TestGetLogsOperationAPI(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
-		}, mockClient, nil)
+		}, mockClient)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetRolesAPI(filter)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -82,7 +148,7 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
+		result, err := repo.GetRolesAPI(filter)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -98,158 +164,10 @@ func TestGetLogsOperationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetLogsOperationAPI(&filter)
-
-		assert.Nil(t, result)
-		assert.Error(t, err)
-		mockClient.AssertExpectations(t)
-	})
-}
-
-func TestGetLogsByRangeAPI(t *testing.T) {
-	filter := LogRangeFilter{
-		CompanyId: constant.DummyCompanyId,
-	}
-	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[any]{
-			Success: true,
-		}
-		body, err := json.Marshal(mockData)
-		require.NoError(t, err)
-
-		resp := &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-		}
-
-		repo, mockClient := setupMockRepo(t, resp, nil)
-
-		result, err := repo.GetLogsByRangeAPI(&filter)
-
-		fmt.Println("***", result.Data)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		mockClient.AssertExpectations(t)
-	})
-
-	t.Run("NewRequestError", func(t *testing.T) {
-		mockClient := new(MockClient)
-		repo := NewRepository(&config.Config{
-			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
-		}, mockClient, nil)
-
-		result, err := repo.GetLogsByRangeAPI(&filter)
+		result, err := repo.GetRolesAPI(filter)
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
-	})
-
-	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New(constant.ErrHTTPReqFailed)
-
-		repo, mockClient := setupMockRepo(t, nil, expectedErr)
-
-		result, err := repo.GetLogsByRangeAPI(&filter)
-
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
-		mockClient.AssertExpectations(t)
-	})
-
-	t.Run("ParseError", func(t *testing.T) {
-		resp := &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-		}
-
-		repo, mockClient := setupMockRepo(t, resp, nil)
-
-		result, err := repo.GetLogsByRangeAPI(&filter)
-
-		assert.Nil(t, result)
-		assert.Error(t, err)
-		mockClient.AssertExpectations(t)
-	})
-}
-
-func TestAddLogOperation(t *testing.T) {
-	addLogReq := &AddLogRequest{
-		MemberId:  constant.DummyIdInt,
-		CompanyId: constant.DummyIdInt,
-		Action:    constant.DummyAction,
-	}
-
-	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[*any]{
-			Success: true,
-		}
-		body, err := json.Marshal(mockData)
-		require.NoError(t, err)
-
-		resp := &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-		}
-
-		repo, mockClient := setupMockRepo(t, resp, nil)
-
-		err = repo.AddLogOperation(addLogReq)
-
-		assert.NoError(t, err)
-		mockClient.AssertExpectations(t)
-	})
-
-	t.Run("MarshalError", func(t *testing.T) {
-		fakeMarshal := func(v any) ([]byte, error) {
-			return nil, errors.New(constant.ErrFailedMarshalReq)
-		}
-
-		repo := NewRepository(&config.Config{
-			Env: &config.Environment{AifcoreHost: constant.MockHost},
-		}, &MockClient{}, fakeMarshal)
-
-		err := repo.AddLogOperation(addLogReq)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
-	})
-
-	t.Run("NewRequestError", func(t *testing.T) {
-		mockClient := new(MockClient)
-		repo := NewRepository(&config.Config{
-			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
-		}, mockClient, nil)
-
-		err := repo.AddLogOperation(addLogReq)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("HTTPRequestError", func(t *testing.T) {
-		expectedErr := errors.New(constant.ErrHTTPReqFailed)
-
-		repo, mockClient := setupMockRepo(t, nil, expectedErr)
-
-		err := repo.AddLogOperation(addLogReq)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
-		mockClient.AssertExpectations(t)
-	})
-
-	t.Run("ParseError", func(t *testing.T) {
-		resp := &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
-		}
-
-		repo, mockClient := setupMockRepo(t, resp, nil)
-
-		err := repo.AddLogOperation(addLogReq)
-
-		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
 	})
 }

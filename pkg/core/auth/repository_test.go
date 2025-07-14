@@ -278,7 +278,7 @@ func TestAuthMemberAPI(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[*loginResponseData]{
 			Success: true,
 			Data: &loginResponseData{
-				MemberId: constant.DummyMemberIdUint,
+				MemberId: constant.DummyIdInt,
 				Email:    constant.DummyEmail,
 			},
 		}

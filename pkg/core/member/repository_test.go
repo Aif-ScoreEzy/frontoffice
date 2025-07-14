@@ -46,7 +46,7 @@ func TestAddMemberAPI(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[*registerResponseData]{
 			Success: true,
 			Data: &registerResponseData{
-				MemberId: constant.DummyMemberIdUint,
+				MemberId: constant.DummyIdInt,
 			},
 		}
 		body, err := json.Marshal(mockData)
@@ -63,7 +63,7 @@ func TestAddMemberAPI(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, uint(constant.DummyMemberIdUint), result.MemberId)
+		assert.Equal(t, uint(constant.DummyIdInt), result.MemberId)
 		mockClient.AssertExpectations(t)
 	})
 

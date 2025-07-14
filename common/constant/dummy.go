@@ -18,7 +18,6 @@ const (
 	DummyDate          = "2025-01-01"
 	DummyMonth         = "12"
 
-	DummyMemberIdUint  = 1
-	DummyCompanyIdUint = 1
-	DummyCount         = 12
+	DummyIdInt = 1
+	DummyCount = 12
 )
