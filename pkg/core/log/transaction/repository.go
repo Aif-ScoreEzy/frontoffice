@@ -29,7 +29,7 @@ type Repository interface {
 	// scoreezy
 	GetLogsScoreezyAPI() ([]*LogTransScoreezy, error)
 	GetLogsScoreezyByDateAPI(companyId, date string) ([]*LogTransScoreezy, error)
-	CallScoreezyLogsByDateRangeAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error)
+	GetLogsScoreezyByDateRangeAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error)
 	CallScoreezyLogsByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error)
 
 	// product catalog

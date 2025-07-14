@@ -42,7 +42,7 @@ func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLo
 }
 
 func (svc *service) GetScoreezyLogsByDateRange(startDate, endDate, companyId, page string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByDateRangeAPI(companyId, startDate, endDate)
+	logs, err := svc.repo.GetLogsScoreezyByDateRangeAPI(companyId, startDate, endDate)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
