@@ -3,7 +3,6 @@ package transaction
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
@@ -98,10 +97,10 @@ func (repo *repository) GetLogTransByJobIdAPI(jobId, companyId string) ([]*LogTr
 	return apiResp.Data, nil
 }
 
-func (repo *repository) UpdateLogTransAPI(transId string, reqBody map[string]interface{}) error {
+func (repo *repository) UpdateLogTransAPI(transId string, payload map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/product-catalog/%s", repo.cfg.Env.AifcoreHost, transId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
