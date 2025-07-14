@@ -39,7 +39,7 @@ type Service interface {
 }
 
 func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
-	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugTaxVerificationDetail)
+	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxVerificationDetail)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
 	}

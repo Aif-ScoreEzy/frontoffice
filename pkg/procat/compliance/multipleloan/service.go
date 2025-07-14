@@ -56,7 +56,7 @@ func (svc *service) MultipleLoan(apiKey, slug, memberId, companyId string, reqBo
 		return nil, apperror.BadRequest("unsupported product slug")
 	}
 
-	product, err := svc.productRepo.CallGetProductBySlug(productSlug)
+	product, err := svc.productRepo.GetProductAPI(productSlug)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
 	}
@@ -113,7 +113,7 @@ func (svc *service) BulkMultipleLoan(apiKey, slug string, memberId, companyId ui
 		return apperror.BadRequest("unsupported product slug")
 	}
 
-	product, err := svc.productRepo.CallGetProductBySlug(productSlug)
+	product, err := svc.productRepo.GetProductAPI(productSlug)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to fetch product")
 	}

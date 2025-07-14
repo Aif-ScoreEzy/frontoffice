@@ -19,7 +19,7 @@ type Service interface {
 }
 
 func (svc *service) GetProductBySlug(slug string) (*productResponseData, error) {
-	product, err := svc.repo.CallGetProductBySlug(slug)
+	product, err := svc.repo.GetProductAPI(slug)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
 	}

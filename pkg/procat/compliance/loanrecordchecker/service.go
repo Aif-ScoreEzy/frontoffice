@@ -49,7 +49,7 @@ type Service interface {
 }
 
 func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
-	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugLoanRecordChecker)
+	product, err := svc.productRepo.GetProductAPI(constant.SlugLoanRecordChecker)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch product")
 	}
@@ -90,7 +90,7 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 }
 
 func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error {
-	product, err := svc.productRepo.CallGetProductBySlug(constant.SlugLoanRecordChecker)
+	product, err := svc.productRepo.GetProductAPI(constant.SlugLoanRecordChecker)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to fetch product")
 	}

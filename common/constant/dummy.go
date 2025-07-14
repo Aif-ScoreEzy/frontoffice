@@ -11,6 +11,7 @@ const (
 	DummyTransactionId = "transaction-id"
 	DummyPhoneNumber   = "phone-number"
 	DummyPassword      = "dummy-password"
+	DummyProduct       = "dummy-product"
 	DummyName          = "john doe"
 	DummyEmail         = "johndoe@example.com"
 	DummyNIK           = "1234567890123456"
