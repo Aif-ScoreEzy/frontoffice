@@ -33,7 +33,7 @@ type repository struct {
 type Repository interface {
 	CreatePasswordResetTokenAPI(userId string, payload *CreatePasswordResetTokenRequest) error
 	GetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error)
-	CallDeletePasswordResetTokenAPI(id string) error
+	DeletePasswordResetTokenAPI(id string) error
 }
 
 func (repo *repository) GetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error) {
@@ -89,7 +89,7 @@ func (repo *repository) CreatePasswordResetTokenAPI(userId string, payload *Crea
 	return nil
 }
 
-func (repo *repository) CallDeletePasswordResetTokenAPI(id string) error {
+func (repo *repository) DeletePasswordResetTokenAPI(id string) error {
 	url := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, id)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)

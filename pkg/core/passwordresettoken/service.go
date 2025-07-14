@@ -58,7 +58,7 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 
 func (svc *service) DeletePasswordResetToken(id uint) error {
 	idStr := strconv.Itoa(int(id))
-	err := svc.Repo.CallDeletePasswordResetTokenAPI(idStr)
+	err := svc.Repo.DeletePasswordResetTokenAPI(idStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to delete password reset token")
 	}

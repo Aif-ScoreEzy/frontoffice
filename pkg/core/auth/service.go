@@ -197,7 +197,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 
 	elapsedMinutes := time.Since(data.CreatedAt).Minutes()
 	if elapsedMinutes > float64(minutesToExpired) {
-		if err := svc.passwordResetRepo.CallDeletePasswordResetTokenAPI(idStr); err != nil {
+		if err := svc.passwordResetRepo.DeletePasswordResetTokenAPI(idStr); err != nil {
 			return apperror.MapRepoError(err, "failed to delete password reset token")
 		}
 
