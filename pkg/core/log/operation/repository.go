@@ -9,25 +9,35 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallGetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error)
-	CallGetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error)
+	GetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error)
+	GetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error)
 	AddLogOperation(req *AddLogRequest) error
 }
 
-func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error) {
+func (repo *repository) GetLogsOperationAPI(filter *LogOperationFilter) (*model.AifcoreAPIResponse[any], error) {
 	url := fmt.Sprintf("%s/api/core/logging/operation/list/%s", repo.cfg.Env.AifcoreHost, filter.CompanyId)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -61,7 +71,7 @@ func (repo *repository) CallGetLogsOperationAPI(filter *LogOperationFilter) (*mo
 	return apiResp, nil
 }
 
-func (repo *repository) CallGetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error) {
+func (repo *repository) GetLogsByRangeAPI(filter *LogRangeFilter) (*model.AifcoreAPIResponse[any], error) {
 	url := fmt.Sprintf("%s/api/core/logging/operation/range", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

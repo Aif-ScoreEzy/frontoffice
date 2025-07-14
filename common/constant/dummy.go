@@ -13,6 +13,8 @@ const (
 	DummyName        = "john doe"
 	DummyEmail       = "johndoe@example.com"
 	DummyNIK         = "1234567890123456"
+	DummyAction      = "dummy-action"
 
-	DummyMemberIdUint = 1
+	DummyMemberIdUint  = 1
+	DummyCompanyIdUint = 1
 )

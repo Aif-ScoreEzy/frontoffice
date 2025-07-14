@@ -19,7 +19,7 @@ func SetupInit(authAPI fiber.Router, cfg *config.Config, client httpclient.HTTPC
 	roleRepo := role.NewRepository(cfg, client)
 	activationTokenRepo := activationtoken.NewRepository(cfg, client, nil)
 	passwordResetRepo := passwordresettoken.NewRepository(cfg, client)
-	logOperationRepo := operation.NewRepository(cfg, client)
+	logOperationRepo := operation.NewRepository(cfg, client, nil)
 
 	service := NewService(cfg, repo, memberRepo, roleRepo, logOperationRepo, activationTokenRepo, passwordResetRepo)
 	serviceUser := member.NewService(memberRepo, roleRepo, logOperationRepo)

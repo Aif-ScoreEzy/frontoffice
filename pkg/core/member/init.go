@@ -13,7 +13,7 @@ import (
 func SetupInit(userAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repo := NewRepository(cfg, client)
 	roleRepo := role.NewRepository(cfg, client)
-	logOperationRepo := operation.NewRepository(cfg, client)
+	logOperationRepo := operation.NewRepository(cfg, client, nil)
 
 	serviceRole := role.NewService(roleRepo)
 	service := NewService(repo, roleRepo, logOperationRepo)
