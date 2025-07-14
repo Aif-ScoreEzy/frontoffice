@@ -60,7 +60,7 @@ func (svc *service) GetScoreezyLogsByDateRange(startDate, endDate, companyId, pa
 }
 
 func (svc *service) GetScoreezyLogsByMonth(companyId, month string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByMonthAPI(companyId, month)
+	logs, err := svc.repo.GetLogsScoreezyByMonthAPI(companyId, month)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}

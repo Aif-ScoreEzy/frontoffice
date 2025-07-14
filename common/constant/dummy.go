@@ -16,6 +16,7 @@ const (
 	DummyNIK           = "1234567890123456"
 	DummyAction        = "dummy-action"
 	DummyDate          = "2025-01-01"
+	DummyMonth         = "12"
 
 	DummyMemberIdUint  = 1
 	DummyCompanyIdUint = 1

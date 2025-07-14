@@ -90,7 +90,7 @@ func (repo *repository) GetLogsScoreezyByDateRangeAPI(companyId, startDate, endD
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallScoreezyLogsByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/month", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
