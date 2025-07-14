@@ -103,10 +103,10 @@ func (repo *repository) GetLogsByRangeAPI(filter *LogRangeFilter) (*model.Aifcor
 	return apiResp, nil
 }
 
-func (repo *repository) AddLogOperation(reqBody *AddLogRequest) error {
+func (repo *repository) AddLogOperation(payload *AddLogRequest) error {
 	url := fmt.Sprintf("%s/api/core/logging/operation", repo.cfg.Env.AifcoreHost)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
