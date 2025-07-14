@@ -99,3 +99,67 @@ func TestCreatePasswordResetTokenAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestGetPasswordResetTokenAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[*MstPasswordResetToken]{
+			Success: true,
+			Data:    &MstPasswordResetToken{},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetPasswordResetTokenAPI(constant.DummyToken)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		result, err := repo.GetPasswordResetTokenAPI(constant.DummyToken)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		result, err := repo.GetPasswordResetTokenAPI(constant.DummyToken)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetPasswordResetTokenAPI(constant.DummyToken)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		mockClient.AssertExpectations(t)
+	})
+}

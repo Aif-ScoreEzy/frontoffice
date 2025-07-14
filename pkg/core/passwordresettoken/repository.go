@@ -32,11 +32,11 @@ type repository struct {
 
 type Repository interface {
 	CreatePasswordResetTokenAPI(userId string, payload *CreatePasswordResetTokenRequest) error
-	CallGetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error)
+	GetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error)
 	CallDeletePasswordResetTokenAPI(id string) error
 }
 
-func (repo *repository) CallGetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error) {
+func (repo *repository) GetPasswordResetTokenAPI(token string) (*MstPasswordResetToken, error) {
 	url := fmt.Sprintf(`%v/api/core/member/password-reset-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

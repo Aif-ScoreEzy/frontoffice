@@ -183,7 +183,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 }
 
 func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error {
-	data, err := svc.passwordResetRepo.CallGetPasswordResetTokenAPI(token)
+	data, err := svc.passwordResetRepo.GetPasswordResetTokenAPI(token)
 	if err != nil {
 		return apperror.Forbidden(constant.InvalidPasswordResetLink)
 	}

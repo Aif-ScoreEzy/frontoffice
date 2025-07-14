@@ -23,7 +23,7 @@ type Service interface {
 }
 
 func (svc *service) GetPasswordResetToken(token string) (*MstPasswordResetToken, error) {
-	data, err := svc.Repo.CallGetPasswordResetTokenAPI(token)
+	data, err := svc.Repo.GetPasswordResetTokenAPI(token)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get password reset token")
 	}
