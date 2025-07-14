@@ -43,7 +43,7 @@ func TestAddMemberAPI(t *testing.T) {
 	addMemberReq := &RegisterMemberRequest{}
 
 	t.Run("Success", func(t *testing.T) {
-		mockData := model.AifcoreAPIResponse[*registerResponseData]{
+		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 			Data: &registerResponseData{
 				MemberId: constant.DummyMemberIdUint,
@@ -240,6 +240,68 @@ func TestGetMemberListAPI(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assert.Nil(t, meta)
+		mockClient.AssertExpectations(t)
+	})
+}
+
+func TestUpdateMemberAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+			Data: &registerResponseData{
+				MemberId: constant.DummyMemberIdUint,
+			},
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err = repo.UpdateMemberAPI(constant.DummyMemberId, map[string]interface{}{})
+
+		assert.NoError(t, err)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		err := repo.UpdateMemberAPI(constant.DummyMemberId, map[string]interface{}{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		err := repo.UpdateMemberAPI(constant.DummyMemberId, map[string]interface{}{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err := repo.UpdateMemberAPI(constant.DummyMemberId, map[string]interface{}{})
+
+		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
 	})
 }

@@ -110,7 +110,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 
 	updateFields["updated_at"] = time.Now()
 
-	if err := svc.repo.CallUpdateMemberAPI(userId, updateFields); err != nil {
+	if err := svc.repo.UpdateMemberAPI(userId, updateFields); err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
@@ -156,7 +156,7 @@ func (svc *service) UploadProfileImage(userId string, filename *string) (*userUp
 
 	updateFields["updated_at"] = time.Now()
 
-	if err := svc.repo.CallUpdateMemberAPI(userId, updateFields); err != nil {
+	if err := svc.repo.UpdateMemberAPI(userId, updateFields); err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
@@ -243,7 +243,7 @@ func (svc *service) UpdateMemberById(currentUserId, currentUserRoleId uint, comp
 
 	updateFields["updated_at"] = time.Now()
 
-	if err := svc.repo.CallUpdateMemberAPI(memberId, updateFields); err != nil {
+	if err := svc.repo.UpdateMemberAPI(memberId, updateFields); err != nil {
 		return apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 

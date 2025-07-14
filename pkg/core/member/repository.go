@@ -36,20 +36,20 @@ type Repository interface {
 	AddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
 	GetMemberAPI(query *FindUserQuery) (*MstMember, error)
 	GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
-	CallUpdateMemberAPI(id string, req map[string]interface{}) error
+	UpdateMemberAPI(id string, req map[string]interface{}) error
 	CallDeleteMemberAPI(id string) error
 }
 
-func (repo *repository) AddMemberAPI(reqBody *RegisterMemberRequest) (*registerResponseData, error) {
+func (repo *repository) AddMemberAPI(payload *RegisterMemberRequest) (*registerResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/member/addmember", repo.cfg.Env.AifcoreHost)
 
 	var bodyBytes bytes.Buffer
 	writer := multipart.NewWriter(&bodyBytes)
 
-	writer.WriteField("name", reqBody.Name)
-	writer.WriteField("email", reqBody.Email)
-	writer.WriteField("key", reqBody.Key)
-	writer.WriteField("companyid", fmt.Sprintf("%d", reqBody.CompanyId))
+	writer.WriteField("name", payload.Name)
+	writer.WriteField("email", payload.Email)
+	writer.WriteField("key", payload.Key)
+	writer.WriteField("companyid", fmt.Sprintf("%d", payload.CompanyId))
 	writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, url, &bodyBytes)
@@ -139,10 +139,10 @@ func (repo *repository) GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *m
 	return apiResp.Data, apiResp.Meta, nil
 }
 
-func (repo *repository) CallUpdateMemberAPI(id string, reqBody map[string]interface{}) error {
+func (repo *repository) UpdateMemberAPI(id string, payload map[string]interface{}) error {
 	url := fmt.Sprintf(`%v/api/core/member/updateprofile/%v`, repo.cfg.Env.AifcoreHost, id)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}

@@ -159,7 +159,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 			"updated_at":  time.Now(),
 		}
 
-		err := svc.memberRepo.CallUpdateMemberAPI(userId, updateFields)
+		err := svc.memberRepo.UpdateMemberAPI(userId, updateFields)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to update member after token expired")
 		}
@@ -260,7 +260,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 			"updated_at":  time.Now(),
 		}
 
-		err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields)
+		err := svc.memberRepo.UpdateMemberAPI(userIdStr, updateFields)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to update member after email failure")
 		}
@@ -323,7 +323,7 @@ func (svc *service) RequestActivation(email string) error {
 		"updated_at":  time.Now(),
 	}
 
-	if err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields); err != nil {
+	if err := svc.memberRepo.UpdateMemberAPI(userIdStr, updateFields); err != nil {
 		return apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
