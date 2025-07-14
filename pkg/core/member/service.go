@@ -275,7 +275,7 @@ func (svc *service) DeleteMemberById(memberId, companyId string) error {
 		return apperror.NotFound(constant.UserNotFound)
 	}
 
-	if err := svc.repo.CallDeleteMemberAPI(memberId); err != nil {
+	if err := svc.repo.DeleteMemberAPI(memberId); err != nil {
 		return apperror.MapRepoError(err, "failed to delete member")
 	}
 

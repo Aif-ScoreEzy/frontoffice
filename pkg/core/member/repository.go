@@ -37,7 +37,7 @@ type Repository interface {
 	GetMemberAPI(query *FindUserQuery) (*MstMember, error)
 	GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
 	UpdateMemberAPI(id string, req map[string]interface{}) error
-	CallDeleteMemberAPI(id string) error
+	DeleteMemberAPI(id string) error
 }
 
 func (repo *repository) AddMemberAPI(payload *RegisterMemberRequest) (*registerResponseData, error) {
@@ -168,7 +168,7 @@ func (repo *repository) UpdateMemberAPI(id string, payload map[string]interface{
 	return nil
 }
 
-func (repo *repository) CallDeleteMemberAPI(id string) error {
+func (repo *repository) DeleteMemberAPI(id string) error {
 	url := fmt.Sprintf(`%v/api/core/member/deletemember/%v`, repo.cfg.Env.AifcoreHost, id)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
