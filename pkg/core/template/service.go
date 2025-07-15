@@ -47,6 +47,8 @@ func getCategoryDescription(category string) string {
 		return "Loan record checker template"
 	case constant.MultipleLoanTemplates:
 		return "Multiple loan template"
+	case constant.TaxComplianceStatusTemplates:
+		return "Tax compliance status template"
 	default:
 		return "Common template"
 	}
