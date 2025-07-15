@@ -34,10 +34,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
+	LoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
 }
 
-func (repo *repository) CallLoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
+func (repo *repository) LoanRecordCheckerAPI(apiKey, jobId, memberId, companyId string, payload *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
 	url := fmt.Sprintf("%s/product/compliance/loan-record-checker", repo.cfg.Env.ProductCatalogHost)
 
 	bodyBytes, err := repo.marshalFn(payload)

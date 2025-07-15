@@ -34,19 +34,19 @@ type repository struct {
 }
 
 type Repository interface {
-	CallCreateJobAPI(payload *createJobRequest) (*createJobRespData, error)
+	CreateJobAPI(payload *createJobRequest) (*createJobRespData, error)
 	CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
-	CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
+	GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
 	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
 	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
 	CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error)
-	CallUpdateJob(jobId string, req *updateJobRequest) error
+	UpdateJobAPI(jobId string, req *updateJobRequest) error
 	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) error
 	CallPhoneLiveStatusAPI(apiKey string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
 }
 
-func (repo *repository) CallCreateJobAPI(payload *createJobRequest) (*createJobRespData, error) {
+func (repo *repository) CreateJobAPI(payload *createJobRequest) (*createJobRespData, error) {
 	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
 
 	bodyBytes, err := repo.marshalFn(payload)
@@ -117,7 +117,7 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilt
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallGetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
+func (repo *repository) GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details`, repo.cfg.Env.AifcoreHost, filter.JobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -279,7 +279,7 @@ func (repo *repository) CallGetProcessedCountAPI(jobId string) (*getSuccessCount
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallUpdateJob(jobId string, payload *updateJobRequest) error {
+func (repo *repository) UpdateJobAPI(jobId string, payload *updateJobRequest) error {
 	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, jobId)
 
 	bodyBytes, err := repo.marshalFn(payload)

@@ -58,7 +58,7 @@ func TestCallCreateProCatJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
+		result, err := repo.CreateJobAPI(&CreateJobRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -75,7 +75,7 @@ func TestCallCreateProCatJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
+		result, err := repo.CreateJobAPI(&CreateJobRequest{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -88,7 +88,7 @@ func TestCallCreateProCatJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallCreateJobAPI(&CreateJobRequest{})
+		_, err := repo.CreateJobAPI(&CreateJobRequest{})
 		assert.Error(t, err)
 	})
 
@@ -98,7 +98,7 @@ func TestCallCreateProCatJob(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		req := &CreateJobRequest{}
-		_, err := repo.CallCreateJobAPI(req)
+		_, err := repo.CreateJobAPI(req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -113,7 +113,7 @@ func TestCallCreateProCatJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(&CreateJobRequest{})
+		result, err := repo.CreateJobAPI(&CreateJobRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
@@ -135,7 +135,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err = repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
+		err = repo.UpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -150,7 +150,7 @@ func TestCallUpdateJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -162,7 +162,7 @@ func TestCallUpdateJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 	})
@@ -172,7 +172,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -187,7 +187,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, map[string]interface{}{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, map[string]interface{}{})
 
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
@@ -209,7 +209,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobsAPI(&logFilter{})
+		result, err := repo.GetJobsAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -222,7 +222,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobsAPI(&logFilter{})
+		_, err := repo.GetJobsAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -232,7 +232,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobsAPI(&logFilter{})
+		_, err := repo.GetJobsAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -247,7 +247,7 @@ func TestCallGetProCatJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobsAPI(&logFilter{})
+		result, err := repo.GetJobsAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -273,7 +273,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailAPI(&logFilter{})
+		result, err := repo.GetJobDetailAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -287,7 +287,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobDetailAPI(&logFilter{})
+		_, err := repo.GetJobDetailAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -297,7 +297,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobDetailAPI(&logFilter{})
+		_, err := repo.GetJobDetailAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -312,7 +312,7 @@ func TestCallGetProCatJobDetailAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailAPI(&logFilter{})
+		result, err := repo.GetJobDetailAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -338,7 +338,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailsAPI(&logFilter{})
+		result, err := repo.GetJobDetailsAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -352,7 +352,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobDetailsAPI(&logFilter{})
+		_, err := repo.GetJobDetailsAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -362,7 +362,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobDetailsAPI(&logFilter{})
+		_, err := repo.GetJobDetailsAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -377,7 +377,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailsAPI(&logFilter{})
+		result, err := repo.GetJobDetailsAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)

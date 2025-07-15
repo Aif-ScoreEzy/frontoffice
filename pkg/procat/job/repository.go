@@ -34,14 +34,14 @@ type repository struct {
 }
 
 type Repository interface {
-	CallCreateJobAPI(payload *CreateJobRequest) (*createJobRespData, error)
-	CallUpdateJob(jobId string, req map[string]interface{}) error
-	CallGetJobsAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
-	CallGetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
-	CallGetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	CreateJobAPI(payload *CreateJobRequest) (*createJobRespData, error)
+	UpdateJobAPI(jobId string, req map[string]interface{}) error
+	GetJobsAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
 }
 
-func (repo *repository) CallCreateJobAPI(payload *CreateJobRequest) (*createJobRespData, error) {
+func (repo *repository) CreateJobAPI(payload *CreateJobRequest) (*createJobRespData, error) {
 	url := fmt.Sprintf("%s/api/core/product/jobs", repo.cfg.Env.AifcoreHost)
 
 	bodyBytes, err := repo.marshalFn(payload)
@@ -75,7 +75,7 @@ func (repo *repository) CallCreateJobAPI(payload *CreateJobRequest) (*createJobR
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallUpdateJob(jobId string, payload map[string]interface{}) error {
+func (repo *repository) UpdateJobAPI(jobId string, payload map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/core/product/jobs/%s", repo.cfg.Env.AifcoreHost, jobId)
 
 	bodyBytes, err := repo.marshalFn(payload)
@@ -107,7 +107,7 @@ func (repo *repository) CallUpdateJob(jobId string, payload map[string]interface
 	return nil
 }
 
-func (repo *repository) CallGetJobsAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
+func (repo *repository) GetJobsAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
 	url := fmt.Sprintf("%s/api/core/product/%s/jobs", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -144,7 +144,7 @@ func (repo *repository) CallGetJobsAPI(filter *logFilter) (*model.AifcoreAPIResp
 	return apiResp, nil
 }
 
-func (repo *repository) CallGetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
+func (repo *repository) GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
 	url := fmt.Sprintf("%s/api/core/product/%s/jobs/%s", repo.cfg.Env.AifcoreHost, filter.ProductSlug, filter.JobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -178,7 +178,7 @@ func (repo *repository) CallGetJobDetailAPI(filter *logFilter) (*model.AifcoreAP
 	return apiResp, nil
 }
 
-func (repo *repository) CallGetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
+func (repo *repository) GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
 	url := fmt.Sprintf("%s/api/core/product/%s/job-details", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

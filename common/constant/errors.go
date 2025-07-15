@@ -45,6 +45,7 @@ const (
 	HeaderTemplateNotValid = "header template is not valid"
 	ErrorReadingCSVRecords = "error reading CSV records"
 	ErrorUploadDataCSV     = "error upload data CSV file"
+	FailedParseCSV         = "failed to parse csv"
 
 	//parameter settings
 	ParamSettingIsNotSet = "parameter settings is not set"
@@ -54,11 +55,15 @@ const (
 	InvalidStatusValue = "invalid value for 'status'"
 	SendEmailFailed    = "send email failed"
 
+	ProductNotFound = "product not found"
+
 	ErrFailedMarshalReq   = "failed to marshal request body"
 	ErrHTTPReqFailed      = "failed to make HTTP request"
 	FailedFetchMember     = "failed to fetch member"
 	FailedUpdateMember    = "failed to update member"
 	FailedFetchLogs       = "failed to fetch logs"
+	FailedFetchProduct    = "failed to fetch product"
+	FailedCreateJob       = "failed to create job"
 	InvalidUserSession    = "invalid user session"
 	InvalidCompanySession = "invalid company session"
 	MissingUserId         = "missing user id"

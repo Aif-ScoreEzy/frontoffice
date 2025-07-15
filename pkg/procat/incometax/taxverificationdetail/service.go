@@ -41,20 +41,20 @@ type Service interface {
 func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
 	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxVerificationDetail)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch product")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
 	if product.ProductId == 0 {
-		return nil, apperror.NotFound("product not found")
+		return nil, apperror.NotFound(constant.ProductNotFound)
 	}
 
-	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
 		Total:     1,
 	})
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to create job")
+		return nil, apperror.MapRepoError(err, constant.FailedCreateJob)
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 

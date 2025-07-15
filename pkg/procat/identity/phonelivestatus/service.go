@@ -47,7 +47,7 @@ type Service interface {
 }
 
 func (svc *service) CreateJob(memberId, companyId string, reqBody *createJobRequest) (*createJobRespData, error) {
-	job, err := svc.repo.CallCreateJobAPI(reqBody)
+	job, err := svc.repo.CreateJobAPI(reqBody)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.ErrCreatePhoneLiveJob)
 	}
@@ -65,7 +65,7 @@ func (svc *service) GetPhoneLiveStatusJob(filter *phoneLiveStatusFilter) (*jobLi
 }
 
 func (svc *service) GetPhoneLiveStatusDetailsSummary(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
-	jobDetails, err := svc.repo.CallGetJobDetailsAPI(filter)
+	jobDetails, err := svc.repo.GetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
@@ -132,7 +132,7 @@ func (svc *service) ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.B
 
 func (svc *service) UpdateJob(jobId uint, reqBody *updateJobRequest) error {
 	jobIdStr := strconv.FormatUint(uint64(jobId), 10)
-	if err := svc.repo.CallUpdateJob(jobIdStr, reqBody); err != nil {
+	if err := svc.repo.UpdateJobAPI(jobIdStr, reqBody); err != nil {
 		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 	}
 
@@ -161,7 +161,7 @@ func (svc *service) ProcessPhoneLiveStatus(memberId, companyId string, reqBody *
 		return apperror.NotFound(constant.UserNotFound)
 	}
 
-	job, err := svc.repo.CallCreateJobAPI(&createJobRequest{
+	job, err := svc.repo.CreateJobAPI(&createJobRequest{
 		MemberId:                memberId,
 		CompanyId:               companyId,
 		PhoneLiveStatusRequests: []*phoneLiveStatusRequest{reqBody},
@@ -207,7 +207,7 @@ func (svc *service) BulkProcessPhoneLiveStatus(apiKey, memberId, companyId strin
 
 	records, err := helper.ParseCSVFile(file, []string{"phone_number"})
 	if err != nil {
-		return apperror.Internal("failed to parse csv", err)
+		return apperror.Internal(constant.FailedParseCSV, err)
 	}
 
 	var phoneReqs []*phoneLiveStatusRequest
@@ -217,7 +217,7 @@ func (svc *service) BulkProcessPhoneLiveStatus(apiKey, memberId, companyId strin
 		})
 	}
 
-	job, err := svc.repo.CallCreateJobAPI(&createJobRequest{
+	job, err := svc.repo.CreateJobAPI(&createJobRequest{
 		MemberId:                memberId,
 		CompanyId:               companyId,
 		PhoneLiveStatusRequests: phoneReqs,
@@ -307,7 +307,7 @@ func formatCSVFileName(base, startDate, endDate string) string {
 
 func (svc *service) validateSingleRequest(jobId, jobDetailId string, reqBody *phoneLiveStatusRequest) error {
 	if errValidation := validator.ValidateStruct(reqBody); errValidation != nil {
-		if err := svc.repo.CallUpdateJob(jobId, &updateJobRequest{
+		if err := svc.repo.UpdateJobAPI(jobId, &updateJobRequest{
 			Status:       helper.StringPtr(constant.JobStatusDone),
 			SuccessCount: helper.IntPtr(1),
 			EndAt:        helper.TimePtr(time.Now()),
@@ -417,7 +417,7 @@ func (svc *service) finalizeJob(jobId string) error {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}
 
-	if err := svc.repo.CallUpdateJob(jobId, &updateJobRequest{
+	if err := svc.repo.UpdateJobAPI(jobId, &updateJobRequest{
 		Status:       helper.StringPtr(constant.JobStatusDone),
 		SuccessCount: helper.IntPtr(int(count.SuccessCount)),
 		EndAt:        helper.TimePtr(time.Now()),

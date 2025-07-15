@@ -56,7 +56,7 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -75,7 +75,7 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -87,7 +87,7 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		_, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Error(t, err)
 	})
 
@@ -97,7 +97,7 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		req := &loanRecordCheckerRequest{}
-		_, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
+		_, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -112,7 +112,7 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallLoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

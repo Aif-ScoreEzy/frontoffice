@@ -37,9 +37,9 @@ type Service interface {
 }
 
 func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobRespData, error) {
-	result, err := svc.repo.CallCreateJobAPI(req)
+	result, err := svc.repo.CreateJobAPI(req)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to create job")
+		return nil, apperror.MapRepoError(err, constant.FailedCreateJob)
 	}
 
 	return result, nil
@@ -60,7 +60,7 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 		data["end_at"] = *req.EndAt
 	}
 
-	err := svc.repo.CallUpdateJob(jobId, data)
+	err := svc.repo.UpdateJobAPI(jobId, data)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to update job")
 	}
@@ -69,7 +69,7 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 }
 
 func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
-	result, err := svc.repo.CallGetJobsAPI(filter)
+	result, err := svc.repo.GetJobsAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch jobs")
 	}
@@ -78,7 +78,7 @@ func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[a
 }
 
 func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
-	result, err := svc.repo.CallGetJobDetailAPI(filter)
+	result, err := svc.repo.GetJobDetailAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
@@ -87,7 +87,7 @@ func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResp
 }
 
 func (svc *service) GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
-	result, err := svc.repo.CallGetJobDetailsAPI(filter)
+	result, err := svc.repo.GetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
@@ -104,7 +104,7 @@ func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (
 		filter.Page = helper.ConvertUintToString(uint(page))
 		filter.Size = helper.ConvertUintToString(uint(pageSize))
 
-		resp, err := svc.repo.CallGetJobDetailAPI(filter)
+		resp, err := svc.repo.GetJobDetailAPI(filter)
 		if err != nil {
 			return "", apperror.MapRepoError(err, "failed to fetch job details")
 		}
@@ -149,7 +149,7 @@ func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) 
 		filter.Page = helper.ConvertUintToString(uint(page))
 		filter.Size = helper.ConvertUintToString(uint(pageSize))
 
-		resp, err := svc.repo.CallGetJobDetailsAPI(filter)
+		resp, err := svc.repo.GetJobDetailsAPI(filter)
 		if err != nil {
 			return "", apperror.MapRepoError(err, "failed to fetch job details")
 		}
@@ -197,7 +197,7 @@ func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
 		return apperror.MapRepoError(err, "failed to get success count")
 	}
 
-	if err := svc.repo.CallUpdateJob(jobIdStr, map[string]interface{}{
+	if err := svc.repo.UpdateJobAPI(jobIdStr, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
 		"end_at":        helper.TimePtr(time.Now()),
@@ -214,7 +214,7 @@ func (svc *service) FinalizeFailedJob(jobIdStr string) error {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}
 
-	if err := svc.repo.CallUpdateJob(jobIdStr, map[string]interface{}{
+	if err := svc.repo.UpdateJobAPI(jobIdStr, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusFailed),
 		"end_at":        helper.TimePtr(time.Now()),

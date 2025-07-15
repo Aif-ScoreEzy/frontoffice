@@ -58,20 +58,20 @@ func (svc *service) MultipleLoan(apiKey, slug, memberId, companyId string, reqBo
 
 	product, err := svc.productRepo.GetProductAPI(productSlug)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch product")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
 	if product.ProductId == 0 {
-		return nil, apperror.NotFound("product not found")
+		return nil, apperror.NotFound(constant.ProductNotFound)
 	}
 
-	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberId,
 		CompanyId: companyId,
 		Total:     1,
 	})
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to create job")
+		return nil, apperror.MapRepoError(err, constant.FailedCreateJob)
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
@@ -115,10 +115,10 @@ func (svc *service) BulkMultipleLoan(apiKey, slug string, memberId, companyId ui
 
 	product, err := svc.productRepo.GetProductAPI(productSlug)
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to fetch product")
+		return apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
 	if product.ProductId == 0 {
-		return apperror.NotFound("product not found")
+		return apperror.NotFound(constant.ProductNotFound)
 	}
 
 	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
@@ -127,19 +127,19 @@ func (svc *service) BulkMultipleLoan(apiKey, slug string, memberId, companyId ui
 
 	records, err := helper.ParseCSVFile(file, []string{"nik", "phone_number"})
 	if err != nil {
-		return apperror.Internal("failed to parse csv", err)
+		return apperror.Internal(constant.FailedParseCSV, err)
 	}
 
 	memberIdStr := strconv.Itoa(int(memberId))
 	companyIdStr := strconv.Itoa(int(companyId))
-	jobRes, err := svc.jobRepo.CallCreateJobAPI(&job.CreateJobRequest{
+	jobRes, err := svc.jobRepo.CreateJobAPI(&job.CreateJobRequest{
 		ProductId: product.ProductId,
 		MemberId:  memberIdStr,
 		CompanyId: companyIdStr,
 		Total:     len(records) - 1,
 	})
 	if err != nil {
-		return apperror.MapRepoError(err, "failed to create job")
+		return apperror.MapRepoError(err, constant.FailedCreateJob)
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
@@ -258,7 +258,7 @@ func (svc *service) finalizeJob(jobId string) error {
 		return apperror.MapRepoError(err, "failed to get processed count request")
 	}
 
-	if err := svc.jobRepo.CallUpdateJob(jobId, map[string]interface{}{
+	if err := svc.jobRepo.UpdateJobAPI(jobId, map[string]interface{}{
 		"success_count": helper.IntPtr(int(count.ProcessedCount)),
 		"status":        helper.StringPtr(constant.JobStatusDone),
 		"end_at":        helper.TimePtr(time.Now()),
