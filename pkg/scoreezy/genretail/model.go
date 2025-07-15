@@ -56,24 +56,24 @@ type UploadScoringReturnError struct {
 }
 
 type BulkSearch struct {
-	Id                   uint             `gorm:"primarykey;autoIncrement" json:"id"`
-	UploadId             string           `gorm:"not null" json:"upload_id"`
-	TransactionId        string           `gorm:"not null" json:"transaction_id"`
-	Name                 string           `gorm:"not null" json:"name"`
-	IdCardNo             string           `gorm:"not null" json:"id_card_no"`
-	PhoneNo              string           `gorm:"not null" json:"phone_no"`
-	LoanNo               string           `gorm:"not null" json:"loan_no"`
-	ProbabilityToDefault float64          `gorm:"not null" json:"probability_to_default"`
-	Grade                string           `gorm:"not null" json:"grade"`
-	Date                 string           `gorm:"not null" json:"date"`
-	Type                 string           `gorm:"not null" json:"type"`
-	UserId               string           `gorm:"not null" json:"user_id"`
-	User                 member.MstMember `gorm:"foreignKey:UserId" json:"user"`
-	CompanyId            string           `json:"company_id"`
-	Company              company.Company  `gorm:"foreignKey:CompanyId" json:"company"`
-	CreatedAt            time.Time        `json:"-"`
-	UpdatedAt            time.Time        `json:"-"`
-	DeletedAt            gorm.DeletedAt   `gorm:"index" json:"-"`
+	Id                   uint               `gorm:"primarykey;autoIncrement" json:"id"`
+	UploadId             string             `gorm:"not null" json:"upload_id"`
+	TransactionId        string             `gorm:"not null" json:"transaction_id"`
+	Name                 string             `gorm:"not null" json:"name"`
+	IdCardNo             string             `gorm:"not null" json:"id_card_no"`
+	PhoneNo              string             `gorm:"not null" json:"phone_no"`
+	LoanNo               string             `gorm:"not null" json:"loan_no"`
+	ProbabilityToDefault float64            `gorm:"not null" json:"probability_to_default"`
+	Grade                string             `gorm:"not null" json:"grade"`
+	Date                 string             `gorm:"not null" json:"date"`
+	Type                 string             `gorm:"not null" json:"type"`
+	UserId               string             `gorm:"not null" json:"user_id"`
+	User                 member.MstMember   `gorm:"foreignKey:UserId" json:"user"`
+	CompanyId            string             `json:"company_id"`
+	Company              company.MstCompany `gorm:"foreignKey:CompanyId" json:"company"`
+	CreatedAt            time.Time          `json:"-"`
+	UpdatedAt            time.Time          `json:"-"`
+	DeletedAt            gorm.DeletedAt     `gorm:"index" json:"-"`
 }
 
 type BulkSearchRequest struct {
