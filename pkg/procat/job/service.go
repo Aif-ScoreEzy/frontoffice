@@ -176,8 +176,8 @@ func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) 
 		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
 		mapper = mapLoanRecordCheckerRow
 	case constant.SlugMultipleLoan7Days, constant.SlugMultipleLoan30Days, constant.SlugMultipleLoan90Days:
-		headers = []string{"Name", "NIK", "Phone Number", "Query Count", "Status", "Description"}
-		mapper = mapLoanRecordCheckerRow
+		headers = []string{"NIK", "Phone Number", "Query Count", "Status", "Description"}
+		mapper = mapMultipleLoanRow
 	}
 
 	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
@@ -288,7 +288,6 @@ func mapMultipleLoanRow(d *logTransProductCatalog) []string {
 	}
 
 	return []string{
-		*d.Input.Name,
 		*d.Input.NIK,
 		*d.Input.PhoneNumber,
 		strconv.Itoa(queryCount),
