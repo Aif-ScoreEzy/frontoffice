@@ -8,4 +8,5 @@ const (
 	LoanRecordCheckerTemplates   = "loanrecordchecker"
 	MultipleLoanTemplates        = "multipleloan"
 	TaxComplianceStatusTemplates = "taxcompliancestatus"
+	TaxScoreTemplates            = "taxscore"
 )
