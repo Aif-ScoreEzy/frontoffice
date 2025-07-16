@@ -19,14 +19,23 @@ type logTransProductCatalog struct {
 }
 
 type logTransData struct {
-	Remarks string `json:"remarks"`
-	Status  string `json:"status"`
+	Remarks          *string `json:"remarks,omitempty"`
+	Status           *string `json:"status,omitempty"`
+	QueryCount       *int    `json:"query_count,omitempty"`
+	Nama             *string `json:"nama,omitempty"`
+	Score            *string `json:"score,omitempty"`
+	Alamat           *string `json:"alamat,omitempty"`
+	NPWP             *string `json:"npwp,omitempty"`
+	NPWPVerification *string `json:"npwp_verification,omitempty"`
+	TaxCompliance    *string `json:"tax_compliance,omitempty"`
 }
 
 type logTransInput struct {
-	Name        string `json:"name"`
-	NIK         string `json:"nik"`
-	PhoneNumber string `json:"phone_number"`
+	Name        *string `json:"name,omitempty"`
+	NIK         *string `json:"nik,omitempty"`
+	PhoneNumber *string `json:"phone_number,omitempty"`
+	NPWP        *string `json:"npwp,omitempty"`
+	NPWPOrNIK   *string `json:"npwp_or_nik,omitempty"`
 }
 
 type jobDetailResponse struct {
