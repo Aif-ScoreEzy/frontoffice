@@ -14,12 +14,12 @@ import (
 )
 
 func SetupInit(authAPI fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
-	repo := NewRepository(cfg, client)
-	memberRepo := member.NewRepository(cfg, client)
+	repo := NewRepository(cfg, client, nil)
+	memberRepo := member.NewRepository(cfg, client, nil)
 	roleRepo := role.NewRepository(cfg, client)
-	activationTokenRepo := activationtoken.NewRepository(cfg, client)
-	passwordResetRepo := passwordresettoken.NewRepository(cfg, client)
-	logOperationRepo := operation.NewRepository(cfg, client)
+	activationTokenRepo := activationtoken.NewRepository(cfg, client, nil)
+	passwordResetRepo := passwordresettoken.NewRepository(cfg, client, nil)
+	logOperationRepo := operation.NewRepository(cfg, client, nil)
 
 	service := NewService(cfg, repo, memberRepo, roleRepo, logOperationRepo, activationTokenRepo, passwordResetRepo)
 	serviceUser := member.NewService(memberRepo, roleRepo, logOperationRepo)

@@ -6,7 +6,7 @@ import (
 )
 
 func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsAPI()
+	logs, err := svc.repo.GetLogsScoreezyAPI()
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
@@ -24,7 +24,7 @@ func (svc *service) GetScoreezyLogs() ([]*scoreezyLogResponse, error) {
 }
 
 func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByDateAPI(companyId, date)
+	logs, err := svc.repo.GetLogsScoreezyByDateAPI(companyId, date)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
@@ -41,8 +41,8 @@ func (svc *service) GetScoreezyLogsByDate(companyId, date string) ([]*scoreezyLo
 	return result, nil
 }
 
-func (svc *service) GetScoreezyLogsByRangeDate(startDate, endDate, companyId, page string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate)
+func (svc *service) GetScoreezyLogsByDateRange(startDate, endDate, companyId, page string) ([]*scoreezyLogResponse, error) {
+	logs, err := svc.repo.GetLogsScoreezyByDateRangeAPI(companyId, startDate, endDate)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}
@@ -60,7 +60,7 @@ func (svc *service) GetScoreezyLogsByRangeDate(startDate, endDate, companyId, pa
 }
 
 func (svc *service) GetScoreezyLogsByMonth(companyId, month string) ([]*scoreezyLogResponse, error) {
-	logs, err := svc.repo.CallScoreezyLogsByMonthAPI(companyId, month)
+	logs, err := svc.repo.GetLogsScoreezyByMonthAPI(companyId, month)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchLogs)
 	}

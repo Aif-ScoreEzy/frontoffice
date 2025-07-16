@@ -34,10 +34,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error)
+	TaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error)
 }
 
-func (repo *repository) CallTaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
+func (repo *repository) TaxVerificationAPI(apiKey, jobId string, reqBody *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
 	url := fmt.Sprintf("%s/product/incometax/tax-verification-detail", repo.cfg.Env.ProductCatalogHost)
 
 	bodyBytes, err := repo.marshalFn(reqBody)

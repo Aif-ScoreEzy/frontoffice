@@ -58,7 +58,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(&createJobRequest{})
+		result, err := repo.CreateJobAPI(&createJobRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -74,7 +74,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallCreateJobAPI(&createJobRequest{})
+		result, err := repo.CreateJobAPI(&createJobRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -86,7 +86,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallCreateJobAPI(&createJobRequest{})
+		_, err := repo.CreateJobAPI(&createJobRequest{})
 
 		assert.Error(t, err)
 	})
@@ -96,7 +96,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallCreateJobAPI(&createJobRequest{})
+		_, err := repo.CreateJobAPI(&createJobRequest{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -111,7 +111,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallCreateJobAPI(&createJobRequest{})
+		result, err := repo.CreateJobAPI(&createJobRequest{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -204,7 +204,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 		filter := &phoneLiveStatusFilter{
 			JobId: "100",
 		}
-		result, err := repo.CallGetJobDetailsAPI(filter)
+		result, err := repo.GetJobDetailsAPI(filter)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -218,7 +218,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+		_, err := repo.GetJobDetailsAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 	})
@@ -228,7 +228,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+		_, err := repo.GetJobDetailsAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -243,7 +243,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailsAPI(&phoneLiveStatusFilter{})
+		result, err := repo.GetJobDetailsAPI(&phoneLiveStatusFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -317,7 +317,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 	})
 }
 
-func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
+func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
 			Success: true,
@@ -336,7 +336,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 		filter := &phoneLiveStatusFilter{
 			MemberId: constant.DummyMemberId,
 		}
-		result, err := repo.CallGetJobDetailsByRangeDateAPI(filter)
+		result, err := repo.CallGetJobDetailsByDateRangeAPI(filter)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -350,7 +350,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		_, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 	})
@@ -360,7 +360,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		_, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -375,7 +375,7 @@ func TestCallGetJobDetailsByRangeDateAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallGetJobDetailsByRangeDateAPI(&phoneLiveStatusFilter{})
+		result, err := repo.CallGetJobDetailsByDateRangeAPI(&phoneLiveStatusFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)
@@ -535,7 +535,7 @@ func TestCallUpdateJob(t *testing.T) {
 		req := &updateJobRequest{
 			Status: &successStatus,
 		}
-		err = repo.CallUpdateJob(constant.DummyJobId, req)
+		err = repo.UpdateJobAPI(constant.DummyJobId, req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, &successStatus, req.Status)
@@ -551,7 +551,7 @@ func TestCallUpdateJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -563,7 +563,7 @@ func TestCallUpdateJob(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
 	})
@@ -573,7 +573,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -588,7 +588,7 @@ func TestCallUpdateJob(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		err := repo.CallUpdateJob(constant.DummyJobId, &updateJobRequest{})
+		err := repo.UpdateJobAPI(constant.DummyJobId, &updateJobRequest{})
 
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

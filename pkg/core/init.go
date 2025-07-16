@@ -4,12 +4,10 @@ import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
 	"front-office/pkg/core/auth"
-	"front-office/pkg/core/company"
 	"front-office/pkg/core/grading"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/member"
-	"front-office/pkg/core/permission"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/template"
 	"front-office/pkg/procat"
@@ -28,12 +26,6 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 
 	roleGroup := routeGroup.Group("roles")
 	role.SetupInit(roleGroup, cfg, client)
-
-	permissionGroup := routeGroup.Group("permissions")
-	permission.SetupInit(permissionGroup)
-
-	companyGroup := routeGroup.Group("companies")
-	company.SetupInit(companyGroup)
 
 	gradingGroup := routeGroup.Group("gradings")
 	grading.SetupInit(gradingGroup, cfg)

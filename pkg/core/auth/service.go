@@ -127,14 +127,14 @@ type Service interface {
 // }
 
 func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error {
-	activationData, err := svc.activationRepo.CallGetActivationTokenAPI(token)
+	activationData, err := svc.activationRepo.GetActivationTokenAPI(token)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to retrieve activation token")
 	}
 
 	userId := fmt.Sprintf("%d", activationData.MemberId)
 
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {
@@ -159,7 +159,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 			"updated_at":  time.Now(),
 		}
 
-		err := svc.memberRepo.CallUpdateMemberAPI(userId, updateFields)
+		err := svc.memberRepo.UpdateMemberAPI(userId, updateFields)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to update member after token expired")
 		}
@@ -175,7 +175,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	if err := svc.repo.CallVerifyMemberAPI(activationData.MemberId, req); err != nil {
+	if err := svc.repo.VerifyMemberAPI(userId, req); err != nil {
 		return apperror.MapRepoError(err, "failed to verify member")
 	}
 
@@ -183,7 +183,7 @@ func (svc *service) VerifyMember(token string, req *PasswordResetRequest) error 
 }
 
 func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error {
-	data, err := svc.passwordResetRepo.CallGetPasswordResetTokenAPI(token)
+	data, err := svc.passwordResetRepo.GetPasswordResetTokenAPI(token)
 	if err != nil {
 		return apperror.Forbidden(constant.InvalidPasswordResetLink)
 	}
@@ -197,7 +197,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 
 	elapsedMinutes := time.Since(data.CreatedAt).Minutes()
 	if elapsedMinutes > float64(minutesToExpired) {
-		if err := svc.passwordResetRepo.CallDeletePasswordResetTokenAPI(idStr); err != nil {
+		if err := svc.passwordResetRepo.DeletePasswordResetTokenAPI(idStr); err != nil {
 			return apperror.MapRepoError(err, "failed to delete password reset token")
 		}
 
@@ -212,7 +212,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	err = svc.repo.CallPasswordResetAPI(data.MemberId, token, req)
+	err = svc.repo.PasswordResetAPI(strconv.Itoa(int(data.MemberId)), token, req)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to password reset")
 	}
@@ -229,7 +229,7 @@ func (svc *service) PasswordReset(token string, req *PasswordResetRequest) error
 }
 
 func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequest) error {
-	user, err := svc.memberRepo.CallAddMemberAPI(req)
+	user, err := svc.memberRepo.AddMemberAPI(req)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to register member")
 	}
@@ -246,7 +246,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	err = svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
+	err = svc.activationRepo.CreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: activationToken,
 	})
 	if err != nil {
@@ -260,7 +260,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 			"updated_at":  time.Now(),
 		}
 
-		err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields)
+		err := svc.memberRepo.UpdateMemberAPI(userIdStr, updateFields)
 		if err != nil {
 			return apperror.MapRepoError(err, "failed to update member after email failure")
 		}
@@ -281,7 +281,7 @@ func (svc *service) AddMember(currentUserId uint, req *member.RegisterMemberRequ
 }
 
 func (svc *service) RequestActivation(email string) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
@@ -308,7 +308,7 @@ func (svc *service) RequestActivation(email string) error {
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.activationRepo.CallCreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
+	if err := svc.activationRepo.CreateActivationTokenAPI(userIdStr, &activationtoken.CreateActivationTokenRequest{
 		Token: token,
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to create activation")
@@ -323,7 +323,7 @@ func (svc *service) RequestActivation(email string) error {
 		"updated_at":  time.Now(),
 	}
 
-	if err := svc.memberRepo.CallUpdateMemberAPI(userIdStr, updateFields); err != nil {
+	if err := svc.memberRepo.UpdateMemberAPI(userIdStr, updateFields); err != nil {
 		return apperror.MapRepoError(err, constant.FailedUpdateMember)
 	}
 
@@ -331,7 +331,7 @@ func (svc *service) RequestActivation(email string) error {
 }
 
 func (svc *service) RequestPasswordReset(email string) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Email: email,
 	})
 	if err != nil {
@@ -357,7 +357,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 
 	userIdStr := helper.ConvertUintToString(user.MemberId)
 
-	if err := svc.passwordResetRepo.CallCreatePasswordResetTokenAPI(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
+	if err := svc.passwordResetRepo.CreatePasswordResetTokenAPI(userIdStr, &passwordresettoken.CreatePasswordResetTokenRequest{
 		Token: token,
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to create password reset token")
@@ -379,7 +379,7 @@ func (svc *service) RequestPasswordReset(email string) error {
 }
 
 func (svc *service) LoginMember(req *userLoginRequest) (accessToken, refreshToken string, loginResp *loginResponse, err error) {
-	user, err := svc.repo.AuthMemberAifCore(req)
+	user, err := svc.repo.AuthMemberAPI(req)
 	if err != nil {
 		var apiErr *apperror.ExternalAPIError
 		if errors.As(err, &apiErr) {
@@ -456,7 +456,7 @@ func (svc *service) Logout(userId, companyId uint) error {
 }
 
 func (svc *service) ChangePassword(userId string, reqBody *ChangePasswordRequest) error {
-	user, err := svc.memberRepo.CallGetMemberAPI(&member.FindUserQuery{
+	user, err := svc.memberRepo.GetMemberAPI(&member.FindUserQuery{
 		Id: userId,
 	})
 	if err != nil {
@@ -471,7 +471,7 @@ func (svc *service) ChangePassword(userId string, reqBody *ChangePasswordRequest
 		return apperror.BadRequest(constant.ConfirmPasswordMismatch)
 	}
 
-	if err := svc.repo.CallChangePasswordAPI(userId, reqBody); err != nil {
+	if err := svc.repo.ChangePasswordAPI(userId, reqBody); err != nil {
 		var apiErr *apperror.ExternalAPIError
 		if errors.As(err, &apiErr) {
 			return apperror.MapChangePasswordError(apiErr)

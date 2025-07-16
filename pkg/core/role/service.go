@@ -18,7 +18,7 @@ type Service interface {
 }
 
 func (s *service) GetRoles(filter RoleFilter) ([]*MstRole, error) {
-	roles, err := s.Repo.CallGetRolesAPI(filter)
+	roles, err := s.Repo.GetRolesAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch roles")
 	}
@@ -32,7 +32,7 @@ func (s *service) GetRoles(filter RoleFilter) ([]*MstRole, error) {
 }
 
 func (s *service) GetRoleById(id string) (*MstRole, error) {
-	role, err := s.Repo.CallGetRoleAPI(id)
+	role, err := s.Repo.GetRoleByIdAPI(id)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch role")
 	}

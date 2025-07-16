@@ -23,7 +23,7 @@ type Service interface {
 }
 
 func (svc *service) GetPasswordResetToken(token string) (*MstPasswordResetToken, error) {
-	data, err := svc.Repo.CallGetPasswordResetTokenAPI(token)
+	data, err := svc.Repo.GetPasswordResetTokenAPI(token)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get password reset token")
 	}
@@ -48,7 +48,7 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 	}
 
 	userIdStr := helper.ConvertUintToString(userId)
-	err = svc.Repo.CallCreatePasswordResetTokenAPI(userIdStr, req)
+	err = svc.Repo.CreatePasswordResetTokenAPI(userIdStr, req)
 	if err != nil {
 		return "", apperror.MapRepoError(err, "failed to create password reset token")
 	}
@@ -58,7 +58,7 @@ func (svc *service) CreatePasswordResetToken(userId, companyId, roleId uint) (st
 
 func (svc *service) DeletePasswordResetToken(id uint) error {
 	idStr := strconv.Itoa(int(id))
-	err := svc.Repo.CallDeletePasswordResetTokenAPI(idStr)
+	err := svc.Repo.DeletePasswordResetTokenAPI(idStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to delete password reset token")
 	}

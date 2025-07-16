@@ -74,11 +74,11 @@ func (ctrl *controller) GetById(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	filter := &MemberFilter{
 		CompanyID: companyId,
-		Page:      c.Query("page", "1"),
+		Page:      c.Query(constant.Page, "1"),
 		Limit:     c.Query("limit", "10"),
 		Keyword:   c.Query("keyword", ""),
 		RoleName:  c.Query("role", ""),
@@ -102,10 +102,10 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
-	req := c.Locals("request").(*UpdateProfileRequest)
+	req := c.Locals(constant.Request).(*UpdateProfileRequest)
 
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
-	roleId, err := helper.InterfaceToUint(c.Locals("roleId"))
+	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	roleId, err := helper.InterfaceToUint(c.Locals(constant.RoleId))
 	if err != nil {
 		return apperror.Unauthorized("invalid role id session")
 	}
@@ -122,7 +122,7 @@ func (ctrl *controller) UpdateProfile(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
 	filename := fmt.Sprintf("%v", c.Locals("filename"))
 
 	resp, err := ctrl.svc.UploadProfileImage(userId, &filename)
@@ -137,21 +137,21 @@ func (ctrl *controller) UploadProfileImage(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UpdateMemberById(c *fiber.Ctx) error {
-	req := c.Locals("request").(*UpdateUserRequest)
+	req := c.Locals(constant.Request).(*UpdateUserRequest)
 
 	memberId := c.Params("id")
 	if memberId == "" {
 		return apperror.BadRequest(constant.MissingUserId)
 	}
 
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
-	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized("invalid user id session")
 	}
 
-	roleId, err := helper.InterfaceToUint(c.Locals("roleId"))
+	roleId, err := helper.InterfaceToUint(c.Locals(constant.RoleId))
 	if err != nil {
 		return apperror.Unauthorized("invalid role id session")
 	}
@@ -173,7 +173,7 @@ func (ctrl *controller) DeleteById(c *fiber.Ctx) error {
 		return apperror.BadRequest(constant.MissingUserId)
 	}
 
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	if err := ctrl.svc.DeleteMemberById(id, companyId); err != nil {
 		return err

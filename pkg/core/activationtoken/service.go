@@ -12,12 +12,12 @@ import (
 )
 
 func NewService(repo Repository, cfg *config.Config) Service {
-	return &service{Repo: repo, Cfg: cfg}
+	return &service{repo, cfg}
 }
 
 type service struct {
-	Repo Repository
-	Cfg  *config.Config
+	repo Repository
+	cfg  *config.Config
 }
 
 type Service interface {
@@ -27,8 +27,8 @@ type Service interface {
 }
 
 func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (string, error) {
-	secret := svc.Cfg.Env.JwtSecretKey
-	minutesToExpired, err := strconv.Atoi(svc.Cfg.Env.JwtActivationExpiresMinutes)
+	secret := svc.cfg.Env.JwtSecretKey
+	minutesToExpired, err := strconv.Atoi(svc.cfg.Env.JwtActivationExpiresMinutes)
 	if err != nil {
 		return "", apperror.Internal("invalid activation expiry config", err)
 	}
@@ -43,7 +43,7 @@ func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (str
 	}
 
 	memberIdStr := helper.ConvertUintToString(memberId)
-	err = svc.Repo.CallCreateActivationTokenAPI(memberIdStr, req)
+	err = svc.repo.CreateActivationTokenAPI(memberIdStr, req)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func (svc *service) CreateActivationToken(memberId, companyId, roleId uint) (str
 }
 
 func (svc *service) ValidateActivationToken(authHeader string) (string, uint, error) {
-	secret := svc.Cfg.Env.JwtSecretKey
+	secret := svc.cfg.Env.JwtSecretKey
 
 	bearerToken := strings.Split(authHeader, " ")
 	if len(bearerToken) != 2 {
@@ -75,7 +75,7 @@ func (svc *service) ValidateActivationToken(authHeader string) (string, uint, er
 }
 
 func (svc *service) GetActivationToken(token string) (*MstActivationToken, error) {
-	activationToken, err := svc.Repo.CallGetActivationTokenAPI(token)
+	activationToken, err := svc.repo.GetActivationTokenAPI(token)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get activation token")
 	}

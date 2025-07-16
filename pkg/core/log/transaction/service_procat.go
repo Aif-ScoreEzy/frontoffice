@@ -5,7 +5,7 @@ import (
 )
 
 func (svc *service) GetProcessedLogCount(jobId string) (*getProcessedCountResp, error) {
-	result, err := svc.repo.CallProcessedLogCount(jobId)
+	result, err := svc.repo.ProcessedLogCountAPI(jobId)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get success count")
 	}
@@ -20,7 +20,7 @@ func (svc *service) UpdateLogProCat(transId string, req *UpdateTransRequest) err
 		data["success"] = *req.Success
 	}
 
-	err := svc.repo.CallUpdateLogTransAPI(transId, data)
+	err := svc.repo.UpdateLogTransAPI(transId, data)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to update log")
 	}

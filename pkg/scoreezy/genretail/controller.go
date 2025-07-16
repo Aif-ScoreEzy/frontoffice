@@ -41,17 +41,17 @@ type Controller interface {
 }
 
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
-	req := c.Locals("request").(*GenRetailRequest)
+	req := c.Locals(constant.Request).(*GenRetailRequest)
 	apiKey := c.Get(constant.XAPIKey)
-	companyId := c.Locals("companyId")
+	companyId := c.Locals(constant.CompanyId)
 
-	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	companyIdUint, err := helper.InterfaceToUint(c.Locals("companyId"))
+	companyIdUint, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
@@ -119,8 +119,8 @@ func (ctrl *controller) DownloadCSV(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	tempType := fmt.Sprintf("%v", c.Locals("tempType"))
 	apiKey := c.Get(constant.XAPIKey)
@@ -219,8 +219,8 @@ func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetBulkSearch(c *fiber.Ctx) error {
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	tierLevel, _ := strconv.ParseUint(fmt.Sprintf("%v", c.Locals("tierLevel")), 10, 64)
 	// find user loggin detail
 

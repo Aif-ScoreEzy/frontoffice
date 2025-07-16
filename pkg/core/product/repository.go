@@ -24,10 +24,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallGetProductBySlug(slug string) (*productResponseData, error)
+	GetProductAPI(slug string) (*productResponseData, error)
 }
 
-func (repo *repository) CallGetProductBySlug(slug string) (*productResponseData, error) {
+func (repo *repository) GetProductAPI(slug string) (*productResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/product/slug/%s", repo.cfg.Env.AifcoreHost, slug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -3,7 +3,6 @@ package transaction
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
@@ -11,10 +10,10 @@ import (
 	"time"
 )
 
-func (repo *repository) CallCreateLogTransAPI(payload *LogTransProCatRequest) error {
+func (repo *repository) CreateLogTransAPI(payload *LogTransProCatRequest) error {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/product-catalog", repo.cfg.Env.AifcoreHost)
 
-	bodyBytes, err := json.Marshal(payload)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -35,7 +34,7 @@ func (repo *repository) CallCreateLogTransAPI(payload *LogTransProCatRequest) er
 	}
 	defer resp.Body.Close()
 
-	_, err = helper.ParseAifcoreAPIResponse[*any](resp)
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
 	if err != nil {
 		return err
 	}
@@ -43,7 +42,7 @@ func (repo *repository) CallCreateLogTransAPI(payload *LogTransProCatRequest) er
 	return nil
 }
 
-func (repo *repository) CallProcessedLogCount(jobId string) (*getProcessedCountResp, error) {
+func (repo *repository) ProcessedLogCountAPI(jobId string) (*getProcessedCountResp, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/product-catalog/%s/processed_count", repo.cfg.Env.AifcoreHost, jobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -70,7 +69,7 @@ func (repo *repository) CallProcessedLogCount(jobId string) (*getProcessedCountR
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetLogTransByJobAPI(jobId, companyId string) ([]*LogTransProductCatalog, error) {
+func (repo *repository) GetLogTransByJobIdAPI(jobId, companyId string) ([]*LogTransProductCatalog, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/product-catalog/%s", repo.cfg.Env.AifcoreHost, jobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -98,10 +97,10 @@ func (repo *repository) CallGetLogTransByJobAPI(jobId, companyId string) ([]*Log
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallUpdateLogTransAPI(transId string, reqBody map[string]interface{}) error {
+func (repo *repository) UpdateLogTransAPI(transId string, payload map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/product-catalog/%s", repo.cfg.Env.AifcoreHost, transId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}

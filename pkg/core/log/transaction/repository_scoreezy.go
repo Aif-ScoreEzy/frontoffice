@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (repo *repository) CallScoreezyLogsAPI() ([]*LogTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyAPI() ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -31,7 +31,7 @@ func (repo *repository) CallScoreezyLogsAPI() ([]*LogTransScoreezy, error) {
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*LogTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyByDateAPI(companyId, date string) ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/by", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -60,7 +60,7 @@ func (repo *repository) CallScoreezyLogsByDateAPI(companyId, date string) ([]*Lo
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyByDateRangeAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/range", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -90,7 +90,7 @@ func (repo *repository) CallScoreezyLogsByRangeDateAPI(companyId, startDate, end
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallScoreezyLogsByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyByMonthAPI(companyId, month string) ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/month", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
