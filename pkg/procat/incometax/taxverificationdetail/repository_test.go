@@ -59,7 +59,7 @@ func TestCallTaxVerificationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
+		result, err := repo.TaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -79,7 +79,7 @@ func TestCallTaxVerificationAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallTaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
+		result, err := repo.TaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -91,7 +91,7 @@ func TestCallTaxVerificationAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallTaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
+		_, err := repo.TaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
 		assert.Error(t, err)
 	})
 
@@ -101,7 +101,7 @@ func TestCallTaxVerificationAPI(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		req := &taxVerificationRequest{}
-		_, err := repo.CallTaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, req)
+		_, err := repo.TaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -116,7 +116,7 @@ func TestCallTaxVerificationAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
+		result, err := repo.TaxVerificationAPI(constant.DummyAPIKey, constant.DummyJobId, &taxVerificationRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
