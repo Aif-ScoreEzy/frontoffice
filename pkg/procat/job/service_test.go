@@ -11,15 +11,8 @@ func TestMapLoanRecordCheckerRow(t *testing.T) {
 	t.Run("should map all fields correctly", func(t *testing.T) {
 		message := "Succeed"
 		result := mapLoanRecordCheckerRow(&logTransProductCatalog{
-			Input: &logTransInput{
-				Name:        constant.DummyName,
-				NIK:         constant.DummyNIK,
-				PhoneNumber: constant.DummyPhoneNumber,
-			},
-			Data: &logTransData{
-				Remarks: "-",
-				Status:  "",
-			},
+			Input:   &logTransInput{},
+			Data:    &logTransData{},
 			Message: &message,
 		})
 

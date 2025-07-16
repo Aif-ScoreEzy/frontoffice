@@ -9,6 +9,7 @@ import (
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
+	"strconv"
 	"time"
 )
 
@@ -174,6 +175,9 @@ func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) 
 	case constant.SlugLoanRecordChecker:
 		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
 		mapper = mapLoanRecordCheckerRow
+	case constant.SlugMultipleLoan7Days, constant.SlugMultipleLoan30Days, constant.SlugMultipleLoan90Days:
+		headers = []string{"Name", "NIK", "Phone Number", "Query Count", "Status", "Description"}
+		mapper = mapLoanRecordCheckerRow
 	}
 
 	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
@@ -258,16 +262,36 @@ func mapLoanRecordCheckerRow(d *logTransProductCatalog) []string {
 	remarks := ""
 	status := ""
 	if d.Data != nil {
-		remarks = d.Data.Remarks
-		status = d.Data.Status
+		remarks = *d.Data.Remarks
+		status = *d.Data.Status
 	}
 
 	return []string{
-		d.Input.Name,
-		d.Input.NIK,
-		d.Input.PhoneNumber,
+		*d.Input.Name,
+		*d.Input.NIK,
+		*d.Input.PhoneNumber,
 		remarks,
 		status,
+		desc,
+	}
+}
+
+func mapMultipleLoanRow(d *logTransProductCatalog) []string {
+	desc := ""
+	if d.Message != nil {
+		desc = *d.Message
+	}
+
+	queryCount := 0
+	if d.Data != nil {
+		queryCount = *d.Data.QueryCount
+	}
+
+	return []string{
+		*d.Input.Name,
+		*d.Input.NIK,
+		*d.Input.PhoneNumber,
+		strconv.Itoa(queryCount),
 		desc,
 	}
 }
