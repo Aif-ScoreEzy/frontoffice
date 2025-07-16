@@ -67,7 +67,13 @@ func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, requ
 		return nil, apperror.MapRepoError(err, "failed to process tax score")
 	}
 
-	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
+		"success": helper.BoolPtr(true),
+	}); err != nil {
+		return nil, apperror.MapRepoError(err, "failed to update transaction log")
+	}
+
+	if err := svc.jobService.FinalizeJob(jobIdStr); err != nil {
 		return nil, err
 	}
 

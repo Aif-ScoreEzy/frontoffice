@@ -32,7 +32,7 @@ type Service interface {
 	ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
 	GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
 	ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
-	FinalizeJob(jobIdStr string, transactionId string) error
+	FinalizeJob(jobIdStr string) error
 	FinalizeFailedJob(jobIdStr string) error
 }
 
@@ -185,13 +185,7 @@ func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) 
 	return filename, nil
 }
 
-func (svc *service) FinalizeJob(jobIdStr string, transactionId string) error {
-	if err := svc.transactionRepo.UpdateLogTransAPI(transactionId, map[string]interface{}{
-		"success": helper.BoolPtr(true),
-	}); err != nil {
-		return apperror.MapRepoError(err, "failed to update transaction log")
-	}
-
+func (svc *service) FinalizeJob(jobIdStr string) error {
 	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobIdStr)
 	if err != nil {
 		return apperror.MapRepoError(err, "failed to get success count")

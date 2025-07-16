@@ -82,7 +82,13 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 		return nil, apperror.Internal("failed to process loan record checker", err)
 	}
 
-	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
+		"success": helper.BoolPtr(true),
+	}); err != nil {
+		return nil, apperror.MapRepoError(err, "failed to update transaction log")
+	}
+
+	if err := svc.jobService.FinalizeJob(jobIdStr); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +178,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 		logger.Error().Err(err).Msg("error during bulk loan record checker processing")
 	}
 
-	return svc.finalizeJob(jobIdStr)
+	return svc.jobService.FinalizeJob(jobIdStr)
 }
 
 func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
@@ -212,23 +218,6 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 		"success": helper.BoolPtr(true),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update log transaction")
-	}
-
-	return nil
-}
-
-func (svc *service) finalizeJob(jobId string) error {
-	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobId)
-	if err != nil {
-		return apperror.MapRepoError(err, "failed to get processed count request")
-	}
-
-	if err := svc.jobRepo.UpdateJobAPI(jobId, map[string]interface{}{
-		"success_count": helper.IntPtr(int(count.ProcessedCount)),
-		"status":        helper.StringPtr(constant.JobStatusDone),
-		"end_at":        helper.TimePtr(time.Now()),
-	}); err != nil {
-		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package taxcompliancestatus
 
 import (
-	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
@@ -77,7 +76,13 @@ func (svc *service) TaxComplianceStatus(apiKey, memberId, companyId string, reqB
 		return nil, apperror.MapRepoError(err, "failed to process tax compliance status")
 	}
 
-	if err := svc.jobService.FinalizeJob(jobIdStr, result.TransactionId); err != nil {
+	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
+		"success": helper.BoolPtr(true),
+	}); err != nil {
+		return nil, apperror.MapRepoError(err, "failed to update transaction log")
+	}
+
+	if err := svc.jobService.FinalizeJob(jobIdStr); err != nil {
 		return nil, err
 	}
 
@@ -168,11 +173,10 @@ func (svc *service) BulkTaxComplianceStatus(apiKey string, memberId, companyId u
 		log.Error().Err(err).Msg("error during bulk tax compliance status prrocessing")
 	}
 
-	return svc.finalizeJob(jobIdStr)
+	return svc.jobService.FinalizeJob(jobIdStr)
 }
 
 func (svc *service) processTaxComplianceStatus(params *taxComplianceContext) error {
-	fmt.Println("here")
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
@@ -203,11 +207,6 @@ func (svc *service) processTaxComplianceStatus(params *taxComplianceContext) err
 			return err
 		}
 
-		// var apiErr *apperror.ExternalAPIError
-		// if errors.As(err, &apiErr) {
-
-		// }
-
 		return apperror.Internal("failed to process tax compliance status", err)
 	}
 
@@ -215,23 +214,6 @@ func (svc *service) processTaxComplianceStatus(params *taxComplianceContext) err
 		"success": helper.BoolPtr(true),
 	}); err != nil {
 		return apperror.MapRepoError(err, "failed to update log transaction")
-	}
-
-	return nil
-}
-
-func (svc *service) finalizeJob(jobId string) error {
-	count, err := svc.transactionRepo.ProcessedLogCountAPI(jobId)
-	if err != nil {
-		return apperror.MapRepoError(err, "failed to get processed count request")
-	}
-
-	if err := svc.jobRepo.UpdateJobAPI(jobId, map[string]interface{}{
-		"success_count": helper.IntPtr(int(count.ProcessedCount)),
-		"status":        helper.StringPtr(constant.JobStatusDone),
-		"end_at":        helper.TimePtr(time.Now()),
-	}); err != nil {
-		return apperror.MapRepoError(err, constant.ErrMsgUpdatePhoneLiveJob)
 	}
 
 	return nil
