@@ -51,6 +51,8 @@ func getCategoryDescription(category string) string {
 		return "Tax compliance status template"
 	case constant.TaxScoreTemplates:
 		return "Tax score template"
+	case constant.TaxVerificationTemplates:
+		return "Tax verification detail template"
 	default:
 		return "Common template"
 	}

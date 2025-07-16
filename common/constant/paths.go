@@ -9,4 +9,5 @@ const (
 	MultipleLoanTemplates        = "multipleloan"
 	TaxComplianceStatusTemplates = "taxcompliancestatus"
 	TaxScoreTemplates            = "taxscore"
+	TaxVerificationTemplates     = "taxverificationdetail"
 )
