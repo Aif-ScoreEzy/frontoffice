@@ -21,10 +21,10 @@ type controller struct {
 
 type Controller interface {
 	GetJob(c *fiber.Ctx) error
-	GetJobDetail(c *fiber.Ctx) error
-	ExportJobDetail(c *fiber.Ctx) error
 	GetJobDetails(c *fiber.Ctx) error
 	ExportJobDetails(c *fiber.Ctx) error
+	GetJobDetailsByDateRange(c *fiber.Ctx) error
+	ExportJobDetailsByDateRange(c *fiber.Ctx) error
 }
 
 func (ctrl *controller) GetJob(c *fiber.Ctx) error {
@@ -46,7 +46,7 @@ func (ctrl *controller) GetJob(c *fiber.Ctx) error {
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 	}
 
-	result, err := ctrl.Svc.GetProCatJob(filter)
+	result, err := ctrl.Svc.GetJob(filter)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (ctrl *controller) GetJob(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
+func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -71,7 +71,7 @@ func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
 		JobId:       c.Params("job_id"),
 	}
 
-	result, err := ctrl.Svc.GetProCatJobDetail(filter)
+	result, err := ctrl.Svc.GetJobDetails(filter)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (ctrl *controller) GetJobDetail(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
+func (ctrl *controller) GetJobDetailsByDateRange(c *fiber.Ctx) error {
 	slug := c.Params("product_slug")
 
 	productSlug, err := mapProductSlug(slug)
@@ -103,7 +103,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		EndDate:     endDate,
 	}
 
-	result, err := ctrl.Svc.GetProCatJobDetails(filter)
+	result, err := ctrl.Svc.GetJobDetailsByDateRange(filter)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
+func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	memberId := c.Locals(constant.UserId).(uint)
 	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
@@ -129,7 +129,7 @@ func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
 	}
 
 	var buf bytes.Buffer
-	filename, err := ctrl.Svc.ExportJobDetailToCSV(filter, &buf)
+	filename, err := ctrl.Svc.ExportJobDetails(filter, &buf)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (ctrl *controller) ExportJobDetail(c *fiber.Ctx) error {
 	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
-func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+func (ctrl *controller) ExportJobDetailsByDateRange(c *fiber.Ctx) error {
 	memberId := c.Locals(constant.UserId).(uint)
 	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
@@ -164,7 +164,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	}
 
 	var buf bytes.Buffer
-	filename, err := ctrl.Svc.ExportJobDetailsToCSV(filter, &buf)
+	filename, err := ctrl.Svc.ExportJobDetailsByDateRange(filter, &buf)
 	if err != nil {
 		return err
 	}

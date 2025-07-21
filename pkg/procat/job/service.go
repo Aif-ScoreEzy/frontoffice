@@ -26,18 +26,18 @@ type service struct {
 }
 
 type Service interface {
-	CreateProCatJob(req *CreateJobRequest) (*createJobRespData, error)
+	CreateJob(req *CreateJobRequest) (*createJobRespData, error)
 	UpdateJobAPI(jobId string, req *UpdateJobRequest) error
-	GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
-	GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
-	ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
-	GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
-	ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) (string, error)
+	GetJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
+	GetJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	ExportJobDetails(filter *logFilter, buf *bytes.Buffer) (string, error)
+	GetJobDetailsByDateRange(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	ExportJobDetailsByDateRange(filter *logFilter, buf *bytes.Buffer) (string, error)
 	FinalizeJob(jobIdStr string) error
 	FinalizeFailedJob(jobIdStr string) error
 }
 
-func (svc *service) CreateProCatJob(req *CreateJobRequest) (*createJobRespData, error) {
+func (svc *service) CreateJob(req *CreateJobRequest) (*createJobRespData, error) {
 	result, err := svc.repo.CreateJobAPI(req)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedCreateJob)
@@ -69,7 +69,7 @@ func (svc *service) UpdateJobAPI(jobId string, req *UpdateJobRequest) error {
 	return nil
 }
 
-func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
+func (svc *service) GetJob(filter *logFilter) (*model.AifcoreAPIResponse[any], error) {
 	result, err := svc.repo.GetJobsAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch jobs")
@@ -78,7 +78,7 @@ func (svc *service) GetProCatJob(filter *logFilter) (*model.AifcoreAPIResponse[a
 	return result, nil
 }
 
-func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
+func (svc *service) GetJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
 	result, err := svc.repo.GetJobDetailAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
@@ -87,7 +87,7 @@ func (svc *service) GetProCatJobDetail(filter *logFilter) (*model.AifcoreAPIResp
 	return result, nil
 }
 
-func (svc *service) GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
+func (svc *service) GetJobDetailsByDateRange(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
 	result, err := svc.repo.GetJobDetailsAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
@@ -96,7 +96,19 @@ func (svc *service) GetProCatJobDetails(filter *logFilter) (*model.AifcoreAPIRes
 	return result, nil
 }
 
-func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (string, error) {
+func (svc *service) ExportJobDetails(filter *logFilter, buf *bytes.Buffer) (string, error) {
+	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailAPI)
+}
+
+func (svc *service) ExportJobDetailsByDateRange(filter *logFilter, buf *bytes.Buffer) (string, error) {
+	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailsAPI)
+}
+
+func (svc *service) exportJobDetailsToCSV(
+	filter *logFilter,
+	buf *bytes.Buffer,
+	fetchFunc func(*logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error),
+) (string, error) {
 	var allDetails []*logTransProductCatalog
 	page := 1
 	pageSize := 100
@@ -105,7 +117,7 @@ func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (
 		filter.Page = helper.ConvertUintToString(uint(page))
 		filter.Size = helper.ConvertUintToString(uint(pageSize))
 
-		resp, err := svc.repo.GetJobDetailAPI(filter)
+		resp, err := fetchFunc(filter)
 		if err != nil {
 			return "", apperror.MapRepoError(err, "failed to fetch job details")
 		}
@@ -128,59 +140,14 @@ func (svc *service) ExportJobDetailToCSV(filter *logFilter, buf *bytes.Buffer) (
 
 	switch filter.ProductSlug {
 	case constant.SlugLoanRecordChecker:
-		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
+		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Data Status", "Status", "Description"}
 		mapper = mapLoanRecordCheckerRow
 	case constant.SlugMultipleLoan7Days, constant.SlugMultipleLoan30Days, constant.SlugMultipleLoan90Days:
 		headers = []string{"NIK", "Phone Number", "Query Count", "Status", "Description"}
 		mapper = mapMultipleLoanRow
-	}
-
-	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
-	if err != nil {
-		return "", apperror.Internal("failed to write CSV", err)
-	}
-
-	filename := formatCSVFileName("job_detail", filter.StartDate, filter.EndDate, filter.JobId)
-	return filename, nil
-}
-
-func (svc *service) ExportJobDetailsToCSV(filter *logFilter, buf *bytes.Buffer) (string, error) {
-	var allDetails []*logTransProductCatalog
-	page := 1
-	pageSize := 100
-
-	for {
-		filter.Page = helper.ConvertUintToString(uint(page))
-		filter.Size = helper.ConvertUintToString(uint(pageSize))
-
-		resp, err := svc.repo.GetJobDetailsAPI(filter)
-		if err != nil {
-			return "", apperror.MapRepoError(err, "failed to fetch job details")
-		}
-
-		if resp == nil || resp.Data == nil {
-			break
-		}
-
-		allDetails = append(allDetails, resp.Data.JobDetails...)
-
-		if len(resp.Data.JobDetails) < pageSize {
-			break
-		}
-
-		page++
-	}
-
-	headers := []string{}
-	var mapper func(*logTransProductCatalog) []string
-
-	switch filter.ProductSlug {
-	case constant.SlugLoanRecordChecker:
-		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Status", "Description"}
-		mapper = mapLoanRecordCheckerRow
-	case constant.SlugMultipleLoan7Days, constant.SlugMultipleLoan30Days, constant.SlugMultipleLoan90Days:
-		headers = []string{"NIK", "Phone Number", "Query Count", "Status", "Description"}
-		mapper = mapMultipleLoanRow
+	case constant.SlugTaxComplianceStatus:
+		headers = []string{"NPWP", "Nama", "Alamat", "Data Status", "Status", "Description"}
+		mapper = mapTaxComplianceRow
 	}
 
 	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
@@ -275,6 +242,7 @@ func mapLoanRecordCheckerRow(d *logTransProductCatalog) []string {
 		*d.Input.PhoneNumber,
 		remarks,
 		status,
+		d.Status,
 		desc,
 	}
 }
@@ -294,6 +262,32 @@ func mapMultipleLoanRow(d *logTransProductCatalog) []string {
 		*d.Input.NIK,
 		*d.Input.PhoneNumber,
 		strconv.Itoa(queryCount),
+		d.Status,
+		desc,
+	}
+}
+
+func mapTaxComplianceRow(d *logTransProductCatalog) []string {
+	desc := ""
+	if d.Message != nil {
+		desc = *d.Message
+	}
+
+	nama := ""
+	alamat := ""
+	status := ""
+
+	if d.Data != nil {
+		nama = *d.Data.Nama
+		alamat = *d.Data.Alamat
+		status = *d.Data.Status
+	}
+
+	return []string{
+		*d.Input.NPWP,
+		nama,
+		alamat,
+		status,
 		d.Status,
 		desc,
 	}
