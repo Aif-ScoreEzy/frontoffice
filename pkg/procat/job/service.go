@@ -148,6 +148,9 @@ func (svc *service) exportJobDetailsToCSV(
 	case constant.SlugTaxComplianceStatus:
 		headers = []string{"NPWP", "Nama", "Alamat", "Data Status", "Status", "Description"}
 		mapper = mapTaxComplianceRow
+	case constant.SlugTaxScore:
+		headers = []string{"NPWP", "Nama", "Alamat", "Data Status", "Score", "Status", "Description"}
+		mapper = mapTaxScoreRow
 	}
 
 	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
@@ -288,6 +291,35 @@ func mapTaxComplianceRow(d *logTransProductCatalog) []string {
 		nama,
 		alamat,
 		status,
+		d.Status,
+		desc,
+	}
+}
+
+func mapTaxScoreRow(d *logTransProductCatalog) []string {
+	desc := ""
+	if d.Message != nil {
+		desc = *d.Message
+	}
+
+	nama := ""
+	alamat := ""
+	status := ""
+	score := ""
+
+	if d.Data != nil {
+		nama = *d.Data.Nama
+		alamat = *d.Data.Alamat
+		status = *d.Data.Status
+		score = *d.Data.Score
+	}
+
+	return []string{
+		*d.Input.NPWP,
+		nama,
+		alamat,
+		status,
+		score,
 		d.Status,
 		desc,
 	}
