@@ -102,7 +102,7 @@ func (svc *service) BulkTaxVerification(apiKey string, memberId, companyId uint,
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"npwp"})
+	records, err := helper.ParseCSVFile(file, []string{"npwp_or_nik"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
