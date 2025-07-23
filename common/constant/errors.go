@@ -5,6 +5,7 @@ const (
 	DataAlreadyExist     = "data already exists"
 	DataNotFound         = "data not found"
 	FileSizeIsTooLarge   = "file size should not exceed 200 KB"
+	FailedToUploadImage  = "failed to upload image"
 	InvalidDateFormat    = "invalid date format"
 	InvalidRequestFormat = "invalid request format"
 	RecordNotFound       = "record not found"
