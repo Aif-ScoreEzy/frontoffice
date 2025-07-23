@@ -9,37 +9,47 @@ import (
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"mime/multipart"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallAddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
-	CallGetMemberAPI(query *FindUserQuery) (*MstMember, error)
-	CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
-	CallUpdateMemberAPI(id string, req map[string]interface{}) error
-	CallDeleteMemberAPI(id string) error
+	AddMemberAPI(req *RegisterMemberRequest) (*registerResponseData, error)
+	GetMemberAPI(query *FindUserQuery) (*MstMember, error)
+	GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error)
+	UpdateMemberAPI(id string, req map[string]interface{}) error
+	DeleteMemberAPI(id string) error
 }
 
-func (repo *repository) CallAddMemberAPI(reqBody *RegisterMemberRequest) (*registerResponseData, error) {
+func (repo *repository) AddMemberAPI(payload *RegisterMemberRequest) (*registerResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/member/addmember", repo.cfg.Env.AifcoreHost)
 
 	var bodyBytes bytes.Buffer
 	writer := multipart.NewWriter(&bodyBytes)
 
-	writer.WriteField("name", reqBody.Name)
-	writer.WriteField("email", reqBody.Email)
-	writer.WriteField("key", reqBody.Key)
-	writer.WriteField("companyid", fmt.Sprintf("%d", reqBody.CompanyId))
+	writer.WriteField("name", payload.Name)
+	writer.WriteField("email", payload.Email)
+	writer.WriteField("key", payload.Key)
+	writer.WriteField("companyid", fmt.Sprintf("%d", payload.CompanyId))
 	writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, url, &bodyBytes)
@@ -63,7 +73,7 @@ func (repo *repository) CallAddMemberAPI(reqBody *RegisterMemberRequest) (*regis
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, error) {
+func (repo *repository) GetMemberAPI(query *FindUserQuery) (*MstMember, error) {
 	url := fmt.Sprintf(`%v/api/core/member/by`, repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -95,7 +105,7 @@ func (repo *repository) CallGetMemberAPI(query *FindUserQuery) (*MstMember, erro
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
+func (repo *repository) GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
 	url := fmt.Sprintf(`%v/api/core/member/listbycompany/%v`, repo.cfg.Env.AifcoreHost, filter.CompanyID)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -106,13 +116,13 @@ func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := req.URL.Query()
-	q.Add("page", filter.Page)
-	q.Add("size", filter.Limit)
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Limit)
 	q.Add("keyword", filter.Keyword)
 	q.Add("status", filter.Status)
 	q.Add("role_id", filter.RoleID)
-	q.Add("start_date", filter.StartDate)
-	q.Add("end_date", filter.EndDate)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -129,10 +139,10 @@ func (repo *repository) CallGetMemberListAPI(filter *MemberFilter) ([]*MstMember
 	return apiResp.Data, apiResp.Meta, nil
 }
 
-func (repo *repository) CallUpdateMemberAPI(id string, reqBody map[string]interface{}) error {
+func (repo *repository) UpdateMemberAPI(id string, payload map[string]interface{}) error {
 	url := fmt.Sprintf(`%v/api/core/member/updateprofile/%v`, repo.cfg.Env.AifcoreHost, id)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
@@ -158,7 +168,7 @@ func (repo *repository) CallUpdateMemberAPI(id string, reqBody map[string]interf
 	return nil
 }
 
-func (repo *repository) CallDeleteMemberAPI(id string) error {
+func (repo *repository) DeleteMemberAPI(id string) error {
 	url := fmt.Sprintf(`%v/api/core/member/deletemember/%v`, repo.cfg.Env.AifcoreHost, id)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)

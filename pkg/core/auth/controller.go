@@ -57,17 +57,17 @@ type Controller interface {
 }
 
 func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*member.RegisterMemberRequest)
+	reqBody, ok := c.Locals(constant.Request).(*member.RegisterMemberRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	currentUserId, err := helper.InterfaceToUint(c.Locals("userId"))
+	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
@@ -86,7 +86,7 @@ func (ctrl *controller) RegisterMember(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*PasswordResetRequest)
+	reqBody, ok := c.Locals(constant.Request).(*PasswordResetRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
@@ -107,12 +107,12 @@ func (ctrl *controller) VerifyUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Logout(c *fiber.Ctx) error {
-	memberId, err := helper.InterfaceToUint(c.Locals("userId"))
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
@@ -149,12 +149,12 @@ func (ctrl *controller) RequestActivation(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*ChangePasswordRequest)
+	reqBody, ok := c.Locals(constant.Request).(*ChangePasswordRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	userId := fmt.Sprintf("%v", c.Locals("userId"))
+	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
 
 	if err := ctrl.svc.ChangePassword(userId, reqBody); err != nil {
 		return err
@@ -167,12 +167,12 @@ func (ctrl *controller) ChangePassword(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
-	memberId, err := helper.InterfaceToUint(c.Locals("userId"))
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
@@ -182,7 +182,7 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 		return apperror.Unauthorized("invalid tier level session")
 	}
 
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
 
 	accessToken, err := ctrl.svc.RefreshAccessToken(memberId, companyId, roleId, apiKey)
 	if err != nil {
@@ -200,7 +200,7 @@ func (ctrl *controller) RefreshAccessToken(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Login(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*userLoginRequest)
+	reqBody, ok := c.Locals(constant.Request).(*userLoginRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
@@ -227,7 +227,7 @@ func (ctrl *controller) Login(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*RequestPasswordResetRequest)
+	reqBody, ok := c.Locals(constant.Request).(*RequestPasswordResetRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
@@ -243,7 +243,7 @@ func (ctrl *controller) RequestPasswordReset(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) PasswordReset(c *fiber.Ctx) error {
-	reqBody, ok := c.Locals("request").(*PasswordResetRequest)
+	reqBody, ok := c.Locals(constant.Request).(*PasswordResetRequest)
 	if !ok {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}

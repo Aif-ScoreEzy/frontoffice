@@ -34,10 +34,10 @@ type repository struct {
 }
 
 type Repository interface {
-	CallTaxScoreAPI(apiKey, jobId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error)
+	TaxScoreAPI(apiKey, jobId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error)
 }
 
-func (repo *repository) CallTaxScoreAPI(apiKey, jobId string, reqBody *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error) {
+func (repo *repository) TaxScoreAPI(apiKey, jobId string, reqBody *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error) {
 	url := fmt.Sprintf("%s/product/incometax/tax-score", repo.cfg.Env.ProductCatalogHost)
 
 	bodyBytes, err := repo.marshalFn(reqBody)

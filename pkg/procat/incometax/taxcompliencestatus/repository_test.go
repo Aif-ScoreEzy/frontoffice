@@ -59,7 +59,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.TaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -79,7 +79,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.TaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -91,7 +91,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		_, err := repo.TaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
 		assert.Error(t, err)
 	})
 
@@ -101,7 +101,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
 		req := &taxComplianceStatusRequest{}
-		_, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, req)
+		_, err := repo.TaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, req)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -116,7 +116,7 @@ func TestCallTaxComplianceStatusAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.CallTaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
+		result, err := repo.TaxComplianceStatusAPI(constant.DummyAPIKey, constant.DummyJobId, &taxComplianceStatusRequest{})
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

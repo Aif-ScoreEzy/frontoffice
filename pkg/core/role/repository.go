@@ -19,11 +19,11 @@ type repository struct {
 }
 
 type Repository interface {
-	CallGetRolesAPI(filter RoleFilter) ([]*MstRole, error)
-	CallGetRoleAPI(id string) (*MstRole, error)
+	GetRolesAPI(filter RoleFilter) ([]*MstRole, error)
+	GetRoleByIdAPI(id string) (*MstRole, error)
 }
 
-func (repo *repository) CallGetRoleAPI(id string) (*MstRole, error) {
+func (repo *repository) GetRoleByIdAPI(id string) (*MstRole, error) {
 	url := fmt.Sprintf(`%v/api/core/role/%v`, repo.cfg.Env.AifcoreHost, id)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -47,7 +47,7 @@ func (repo *repository) CallGetRoleAPI(id string) (*MstRole, error) {
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetRolesAPI(filter RoleFilter) ([]*MstRole, error) {
+func (repo *repository) GetRolesAPI(filter RoleFilter) ([]*MstRole, error) {
 	url := fmt.Sprintf(`%v/api/core/role`, repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

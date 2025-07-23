@@ -8,24 +8,34 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/httpclient"
+	"front-office/internal/jsonutil"
 	"net/http"
 )
 
-func NewRepository(cfg *config.Config, client httpclient.HTTPClient) Repository {
-	return &repository{cfg, client}
+func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
+	if marshalFn == nil {
+		marshalFn = json.Marshal
+	}
+
+	return &repository{
+		cfg:       cfg,
+		client:    client,
+		marshalFn: marshalFn,
+	}
 }
 
 type repository struct {
-	cfg    *config.Config
-	client httpclient.HTTPClient
+	cfg       *config.Config
+	client    httpclient.HTTPClient
+	marshalFn jsonutil.Marshaller
 }
 
 type Repository interface {
-	CallGetActivationTokenAPI(token string) (*MstActivationToken, error)
-	CallCreateActivationTokenAPI(memberId string, req *CreateActivationTokenRequest) error
+	GetActivationTokenAPI(token string) (*MstActivationToken, error)
+	CreateActivationTokenAPI(memberId string, req *CreateActivationTokenRequest) error
 }
 
-func (repo *repository) CallGetActivationTokenAPI(token string) (*MstActivationToken, error) {
+func (repo *repository) GetActivationTokenAPI(token string) (*MstActivationToken, error) {
 	url := fmt.Sprintf(`%v/api/core/member/activation-tokens/%v`, repo.cfg.Env.AifcoreHost, token)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -49,10 +59,10 @@ func (repo *repository) CallGetActivationTokenAPI(token string) (*MstActivationT
 	return apiResp.Data, nil
 }
 
-func (repo *repository) CallCreateActivationTokenAPI(memberId string, reqBody *CreateActivationTokenRequest) error {
+func (repo *repository) CreateActivationTokenAPI(memberId string, payload *CreateActivationTokenRequest) error {
 	url := fmt.Sprintf(`%v/api/core/member/%v/activation-tokens`, repo.cfg.Env.AifcoreHost, memberId)
 
-	bodyBytes, err := json.Marshal(reqBody)
+	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}

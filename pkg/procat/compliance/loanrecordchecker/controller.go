@@ -25,10 +25,10 @@ type Controller interface {
 }
 
 func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*loanRecordCheckerRequest)
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
-	memberIdStr := fmt.Sprintf("%v", c.Locals("userId"))
-	companyIdStr := fmt.Sprintf("%v", c.Locals("companyId"))
+	reqBody := c.Locals(constant.Request).(*loanRecordCheckerRequest)
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberIdStr := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyIdStr := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	result, err := ctrl.svc.LoanRecordChecker(apiKey, memberIdStr, companyIdStr, reqBody)
 	if err != nil {
@@ -39,14 +39,14 @@ func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
 
-	memberId, err := helper.InterfaceToUint(c.Locals("userId"))
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyId, err := helper.InterfaceToUint(c.Locals("companyId"))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}

@@ -1,6 +1,7 @@
 package product
 
 import (
+	"front-office/common/constant"
 	"front-office/internal/apperror"
 )
 
@@ -19,12 +20,12 @@ type Service interface {
 }
 
 func (svc *service) GetProductBySlug(slug string) (*productResponseData, error) {
-	product, err := svc.repo.CallGetProductBySlug(slug)
+	product, err := svc.repo.GetProductAPI(slug)
 	if err != nil {
-		return nil, apperror.MapRepoError(err, "failed to fetch product")
+		return nil, apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
 	if product.ProductId == 0 {
-		return nil, apperror.NotFound("product not found")
+		return nil, apperror.NotFound(constant.ProductNotFound)
 	}
 
 	return product, err

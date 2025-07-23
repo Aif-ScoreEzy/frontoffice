@@ -4,6 +4,48 @@ import (
 	"time"
 )
 
+type logTransProductCatalog struct {
+	MemberID        uint           `json:"member_id"`
+	CompanyID       uint           `json:"company_id"`
+	JobID           uint           `json:"job_id"`
+	ProductID       uint           `json:"product_id"`
+	Status          string         `json:"status"`
+	Message         *string        `json:"message"`
+	Input           *logTransInput `json:"input"`
+	Data            *logTransData  `json:"data"`
+	PricingStrategy string         `json:"pricing_strategy"`
+	TransactionId   string         `json:"transaction_id"`
+	DateTime        string         `json:"datetime"`
+}
+
+type logTransData struct {
+	Remarks          *string `json:"remarks,omitempty"`
+	Status           *string `json:"status,omitempty"`
+	QueryCount       *int    `json:"query_count,omitempty"`
+	Nama             *string `json:"nama,omitempty"`
+	Score            *string `json:"score,omitempty"`
+	Alamat           *string `json:"alamat,omitempty"`
+	NPWP             *string `json:"npwp,omitempty"`
+	NPWPVerification *string `json:"npwp_verification,omitempty"`
+	TaxCompliance    *string `json:"tax_compliance,omitempty"`
+}
+
+type logTransInput struct {
+	Name        *string `json:"name,omitempty"`
+	NIK         *string `json:"nik,omitempty"`
+	PhoneNumber *string `json:"phone_number,omitempty"`
+	NPWP        *string `json:"npwp,omitempty"`
+	NPWPOrNIK   *string `json:"npwp_or_nik,omitempty"`
+}
+
+type jobDetailResponse struct {
+	TotalData                  int64                     `json:"total_data"`
+	TotalDataPercentageSuccess int64                     `json:"total_data_percentage_success"`
+	TotalDataPercentageFail    int64                     `json:"total_data_percentage_fail"`
+	TotalDataPercentageError   int64                     `json:"total_data_percentage_error"`
+	JobDetails                 []*logTransProductCatalog `json:"job_details"`
+}
+
 type CreateJobRequest struct {
 	ProductId uint   `json:"product_id" validate:"required~Field product id is required"`
 	MemberId  string `json:"member_id" validate:"required~Field member id is required"`
@@ -17,7 +59,7 @@ type UpdateJobRequest struct {
 	EndAt        *time.Time `json:"end_at"`
 }
 
-type createJobDataResponse struct {
+type createJobRespData struct {
 	JobId uint `json:"id"`
 }
 

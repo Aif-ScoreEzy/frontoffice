@@ -23,14 +23,14 @@ type Controller interface {
 }
 
 func (ctrl *controller) GetList(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
-	page := c.Query("page", "1")
-	size := c.Query("size", "10")
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+	page := c.Query(constant.Page, "1")
+	size := c.Query(constant.Size, "10")
 	role := strings.ToLower(c.Query("role"))
 	eventQuery := c.Query("event")
 	name := strings.ToLower(c.Query("name", ""))
-	startDate := c.Query("start_date")
-	endDate := c.Query("end_date")
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query(constant.EndDate)
 
 	mappedEvent, valid := mapEventKeyword(eventQuery)
 	if eventQuery != "" && !valid {
@@ -57,11 +57,11 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetListByRange(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
-	page := c.Query("page", "1")
-	size := c.Query("size", "10")
-	startDate := c.Query("start_date")
-	endDate := c.Query(("end_date"))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+	page := c.Query(constant.Page, "1")
+	size := c.Query(constant.Size, "10")
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query((constant.EndDate))
 
 	if startDate == "" || endDate == "" {
 		return apperror.BadRequest("start_date and end_date are required")

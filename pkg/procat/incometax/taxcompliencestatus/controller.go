@@ -2,6 +2,9 @@ package taxcompliancestatus
 
 import (
 	"fmt"
+	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/apperror"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,19 +21,49 @@ type controller struct {
 }
 
 type Controller interface {
-	TaxComplianceStatus(c *fiber.Ctx) error
+	SingleSearch(c *fiber.Ctx) error
+	BulkSearch(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) TaxComplianceStatus(c *fiber.Ctx) error {
-	reqBody := c.Locals("request").(*taxComplianceStatusRequest)
-	apiKey := fmt.Sprintf("%v", c.Locals("apiKey"))
-	memberId := fmt.Sprintf("%v", c.Locals("userId"))
-	companyId := fmt.Sprintf("%v", c.Locals("companyId"))
+func (ctrl *controller) SingleSearch(c *fiber.Ctx) error {
+	reqBody := c.Locals(constant.Request).(*taxComplianceStatusRequest)
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
-	result, err := ctrl.svc.CallTaxCompliance(apiKey, memberId, companyId, reqBody)
+	result, err := ctrl.svc.TaxComplianceStatus(apiKey, memberId, companyId, reqBody)
 	if err != nil {
 		return err
 	}
 
 	return c.Status(result.StatusCode).JSON(result)
+}
+
+func (ctrl *controller) BulkSearch(c *fiber.Ctx) error {
+	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidCompanySession)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	err = ctrl.svc.BulkTaxComplianceStatus(apiKey, memberId, companyId, file)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"success",
+		nil,
+	))
 }

@@ -14,8 +14,8 @@ import (
 func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTPClient) {
 	repo := NewRepository(cfg, client, nil)
 	productRepo := product.NewRepository(cfg, client)
-	jobRepo := job.NewRepository(cfg, client)
-	transactionRepo := transaction.NewRepository(cfg, client)
+	jobRepo := job.NewRepository(cfg, client, nil)
+	transactionRepo := transaction.NewRepository(cfg, client, nil)
 
 	jobService := job.NewService(jobRepo, transactionRepo)
 	service := NewService(repo, productRepo, jobRepo, transactionRepo, jobService)
@@ -23,5 +23,6 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	controller := NewController(service)
 
 	taxComplianceGroup := apiGroup.Group("tax-verification-detail")
-	taxComplianceGroup.Post("/", middleware.Auth(), middleware.IsRequestValid(taxVerificationRequest{}), middleware.GetJWTPayloadFromCookie(), controller.TaxVerificationDetail)
+	taxComplianceGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(taxVerificationRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
+	taxComplianceGroup.Post("/bulk-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
 }
