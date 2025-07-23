@@ -1,12 +1,16 @@
 package template
 
 type DownloadRequest struct {
-	Category string `query:"category"` // Enum validation
+	Product  string `query:"product"`
 	Filename string `query:"filename"`
 }
 
+type Templates struct {
+	Templates []TemplateInfo `json:"templates"`
+}
+
 type TemplateInfo struct {
-	Category    string
-	Files       []string
-	Description string
+	Product     string   `json:"product"`
+	Files       []string `json:"files"`
+	Description string   `json:"description"`
 }
