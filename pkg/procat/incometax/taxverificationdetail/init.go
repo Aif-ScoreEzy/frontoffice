@@ -23,6 +23,6 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	controller := NewController(service)
 
 	taxComplianceGroup := apiGroup.Group("tax-verification-detail")
-	taxComplianceGroup.Post("/single-search", middleware.Auth(), middleware.IsRequestValid(taxVerificationRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
-	taxComplianceGroup.Post("/bulk-search", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
+	taxComplianceGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(taxVerificationRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
+	taxComplianceGroup.Post("/bulk-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
 }

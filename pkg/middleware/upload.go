@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
+	"front-office/internal/apperror"
 	"os"
 	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func FileUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userId := c.Locals(constant.UserId)
+		userId := fmt.Sprintf("%v", c.Locals(constant.UserId))
 
 		file, err := c.FormFile("image")
 		if err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+			return apperror.BadRequest(err.Error())
 		}
 
 		validExtensions := []string{".jpg", ".jpeg", ".png"}
@@ -31,28 +32,25 @@ func FileUpload() fiber.Handler {
 		}
 
 		if !valid {
-			statusCode, resp := helper.GetError(constant.InvalidImageFile)
-			return c.Status(statusCode).JSON(resp)
+			return apperror.BadRequest(constant.InvalidImageFile)
 		}
 
 		if file.Size > 200*1024 {
-			statusCode, resp := helper.GetError(constant.FileSizeIsTooLarge)
-			return c.Status(statusCode).JSON(resp)
+			return apperror.BadRequest(constant.FileSizeIsTooLarge)
 		}
 
-		filename := fmt.Sprintf("%d%s", userId, ext)
+		pattern := fmt.Sprintf("./storage/uploads/profile/%s_*", userId)
+		oldFiles, _ := filepath.Glob(pattern)
+		for _, oldFile := range oldFiles {
+			_ = os.Remove(oldFile)
+		}
+
+		id := uuid.NewString()
+		filename := fmt.Sprintf("%s_%s%s", userId, id, ext)
 		filePath := fmt.Sprintf("./storage/uploads/profile/%s", filename)
 
-		if _, err := os.Stat(filePath); err == nil {
-			if err := os.Remove(filePath); err != nil {
-				statusCode, resp := helper.GetError(err.Error())
-				return c.Status(statusCode).JSON(resp)
-			}
-		}
-
 		if err := c.SaveFile(file, filePath); err != nil {
-			statusCode, resp := helper.GetError(err.Error())
-			return c.Status(statusCode).JSON(resp)
+			return apperror.Internal(constant.FailedToUploadImage, err)
 		}
 
 		c.Locals("filename", filename)
@@ -63,9 +61,6 @@ func FileUpload() fiber.Handler {
 
 func DocUpload() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userId := c.Locals(constant.UserId)
-		fmt.Println("userId: ", userId)
-
 		// get the file upload and type information
 		file, err := c.FormFile("file")
 		tempType := c.FormValue("tempType")

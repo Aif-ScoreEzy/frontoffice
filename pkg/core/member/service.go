@@ -88,6 +88,7 @@ func (svc *service) UpdateProfile(userId string, currentUserRoleId uint, req *Up
 
 	if req.Name != nil {
 		updateFields["name"] = *req.Name
+		user.Name = *req.Name
 	}
 
 	if req.Email != nil {
