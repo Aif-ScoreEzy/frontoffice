@@ -35,7 +35,8 @@ func FileUpload() fiber.Handler {
 			return apperror.BadRequest(constant.InvalidImageFile)
 		}
 
-		if file.Size > 200*1024 {
+		const maxSize = 200 * 1024 // 200kb
+		if file.Size >= maxSize {
 			return apperror.BadRequest(constant.FileSizeIsTooLarge)
 		}
 

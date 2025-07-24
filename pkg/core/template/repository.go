@@ -27,7 +27,7 @@ func (r *repository) GetTemplatePath(category, filename string) (string, error) 
 }
 
 func (r *repository) GetAvailableTemplates() (map[string][]string, error) {
-	categories := []string{
+	products := []string{
 		constant.PhoneLiveTemplates,
 		constant.LoanRecordCheckerTemplates,
 		constant.MultipleLoanTemplates,
@@ -38,7 +38,7 @@ func (r *repository) GetAvailableTemplates() (map[string][]string, error) {
 
 	result := make(map[string][]string)
 
-	for _, category := range categories {
+	for _, category := range products {
 		files, err := os.ReadDir(filepath.Join(constant.TemplateBaseDir, category))
 		if err != nil {
 			return nil, err

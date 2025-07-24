@@ -58,7 +58,7 @@ type LogTransProCatRequest struct {
 	ProductID       uint          `json:"product_id"`
 	ProductGroupID  uint          `json:"product_group_id"`
 	RequestBody     any           `json:"request_body" swaggertype:"object"`
-	ResponseBody    any           `json:"response_body" swaggertype:"object"`
+	ResponseBody    *ResponseBody `json:"response_body" swaggertype:"object"`
 	Data            any           `json:"data" swaggertype:"object"`
 	Status          int           `json:"status"`
 	Success         bool          `json:"success"` // true or false
@@ -68,6 +68,13 @@ type LogTransProCatRequest struct {
 	Duration        time.Duration `json:"duration" format:"duration" example:"2h30m"`
 	RequestTime     time.Time     `json:"request_time" format:"date-time"`
 	ResponseTime    time.Time     `json:"response_time" format:"date-time"`
+}
+
+type ResponseBody struct {
+	Data            any    `json:"data"`
+	TransactionId   string `json:"transaction_id"`
+	PricingStrategy string `json:"pricing_strategy"`
+	DateTime        string `json:"datetime"`
 }
 
 type scoreezyLogResponse struct {

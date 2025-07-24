@@ -192,9 +192,11 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 			Message:        err.Error(),
 			Status:         http.StatusBadRequest,
 			Success:        false,
-			ResponseBody:   nil,
-			Data:           nil,
-			RequestBody:    params.Request,
+			ResponseBody: &transaction.ResponseBody{
+				DateTime: time.Now().Format(constant.FormatDateAndTime),
+			},
+			Data:        nil,
+			RequestBody: params.Request,
 		})
 
 		return apperror.BadRequest(err.Error())
