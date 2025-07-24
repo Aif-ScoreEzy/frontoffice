@@ -187,9 +187,11 @@ func (svc *service) processTaxComplianceStatus(params *taxComplianceContext) err
 			Success:        false,
 			Message:        err.Error(),
 			Status:         http.StatusBadRequest,
-			ResponseBody:   nil,
-			Data:           nil,
-			RequestBody:    params.Request,
+			ResponseBody: &transaction.ResponseBody{
+				DateTime: time.Now().Format(constant.FormatDateAndTime),
+			},
+			Data:        nil,
+			RequestBody: params.Request,
 		})
 
 		return apperror.BadRequest(err.Error())

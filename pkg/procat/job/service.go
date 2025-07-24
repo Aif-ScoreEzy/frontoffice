@@ -97,17 +97,18 @@ func (svc *service) GetJobDetailsByDateRange(filter *logFilter) (*model.AifcoreA
 }
 
 func (svc *service) ExportJobDetails(filter *logFilter, buf *bytes.Buffer) (string, error) {
-	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailAPI)
+	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailAPI, false)
 }
 
 func (svc *service) ExportJobDetailsByDateRange(filter *logFilter, buf *bytes.Buffer) (string, error) {
-	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailsAPI)
+	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailsAPI, true)
 }
 
 func (svc *service) exportJobDetailsToCSV(
 	filter *logFilter,
 	buf *bytes.Buffer,
 	fetchFunc func(*logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error),
+	includeDate bool,
 ) (string, error) {
 	var allDetails []*logTransProductCatalog
 	page := 1
@@ -154,6 +155,11 @@ func (svc *service) exportJobDetailsToCSV(
 	case constant.SlugTaxVerificationDetail:
 		headers = []string{"NPWP Or NIK", "Nama", "Alamat", "NPWP", "NPWP Verification", "Data Status", "Tax Compliance", "Status", "Description"}
 		mapper = mapTaxVerificationRow
+	}
+
+	if includeDate {
+		headers = append([]string{"Date"}, headers...)
+		mapper = withDateColumn(mapper)
 	}
 
 	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
@@ -227,6 +233,17 @@ func formatCSVFileName(base, startDate, endDate, jobId string) string {
 	}
 
 	return fmt.Sprintf("%s_%s.csv", base, startDate)
+}
+
+type rowMapper func(*logTransProductCatalog) []string
+
+func withDateColumn(mapper rowMapper) rowMapper {
+	return func(d *logTransProductCatalog) []string {
+		row := mapper(d)
+		date := d.DateTime
+
+		return append([]string{date}, row...)
+	}
 }
 
 func mapLoanRecordCheckerRow(d *logTransProductCatalog) []string {

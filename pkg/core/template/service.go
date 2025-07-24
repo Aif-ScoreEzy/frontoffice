@@ -5,7 +5,7 @@ import (
 )
 
 type Service interface {
-	ListTemplates() ([]TemplateInfo, error)
+	ListTemplates() (*Templates, error)
 	DownloadTemplate(req DownloadRequest) (string, error)
 }
 
@@ -17,30 +17,35 @@ func NewService(repo Repository) Service {
 	return &service{Repo: repo}
 }
 func (s *service) DownloadTemplate(req DownloadRequest) (string, error) {
-	return s.Repo.GetTemplatePath(req.Category, req.Filename)
+	return s.Repo.GetTemplatePath(req.Product, req.Filename)
 }
 
-func (s *service) ListTemplates() ([]TemplateInfo, error) {
-	templates, err := s.Repo.GetAvailableTemplates()
+func (s *service) ListTemplates() (*Templates, error) {
+	availableTemplates, err := s.Repo.GetAvailableTemplates()
 	if err != nil {
 		return nil, err
 	}
 
-	var result []TemplateInfo
-	for category, files := range templates {
-		desc := getCategoryDescription(category)
-		result = append(result, TemplateInfo{
-			Category:    category,
+	var templates []TemplateInfo
+	for product, files := range availableTemplates {
+		desc := getTemplateDescription(product)
+
+		templates = append(templates, TemplateInfo{
+			Product:     product,
 			Files:       files,
 			Description: desc,
 		})
 	}
 
+	result := &Templates{
+		Templates: templates,
+	}
+
 	return result, nil
 }
 
-func getCategoryDescription(category string) string {
-	switch category {
+func getTemplateDescription(product string) string {
+	switch product {
 	case constant.PhoneLiveTemplates:
 		return "Phone live status template"
 	case constant.LoanRecordCheckerTemplates:
