@@ -237,48 +237,32 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 	}
 
 	var (
-		mappedDetails  []*mstPhoneLiveStatusJobDetail
-		subsActive     int64
-		devReachable   int64
-		devUnreachable int64
-		devUnavailable int64
+		mappedDetails []*mstPhoneLiveStatusJobDetail
 	)
+
+	metrics, err := svc.repo.GetJobMetricsAPI(filter)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, constant.ErrFetchJobMetrics)
+	}
 
 	for _, raw := range data.JobDetails {
 		mapped, err := mapToJobDetail(raw)
-
 		if err != nil {
 			continue
 		}
 
-		switch strings.ToLower(mapped.SubscriberStatus) {
-		case "active":
-			subsActive++
-		}
-
-		switch strings.ToLower(mapped.DeviceStatus) {
-		case "reachable":
-			devReachable++
-		case "unreachable":
-			devUnreachable++
-		case "unavailable":
-			devUnavailable++
-		}
-
 		mappedDetails = append(mappedDetails, mapped)
 	}
-
-	fmt.Println("disini")
 
 	result := &jobDetailsDTO{
 		TotalData:                  data.TotalData,
 		TotalDataPercentageSuccess: data.TotalDataPercentageSuccess,
 		TotalDataPercentageFail:    data.TotalDataPercentageFail,
 		TotalDataPercentageError:   data.TotalDataPercentageError,
-		SubsActive:                 subsActive,
-		DevReachable:               devReachable,
-		DevUnreachable:             devUnreachable,
-		DevUnavailable:             devUnavailable,
+		SubsActive:                 metrics.SubsActive,
+		DevReachable:               metrics.DevReachable,
+		DevUnreachable:             metrics.DevUnreachable,
+		DevUnavailable:             metrics.DevUnavailable,
 		JobDetails:                 mappedDetails,
 	}
 
@@ -319,35 +303,9 @@ func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryD
 		return nil, apperror.MapRepoError(err, constant.ErrFetchPhoneLiveDetail)
 	}
 
-	var (
-		subsActive         int64
-		devReachable       int64
-		phoneTypeMobile    int64
-		phoneTypeFixedLine int64
-	)
-
-	for _, raw := range data.JobDetails {
-		mapped, err := mapToJobDetail(raw)
-		if err != nil {
-			continue
-		}
-
-		switch strings.ToLower(mapped.SubscriberStatus) {
-		case "active":
-			subsActive++
-		}
-
-		switch strings.ToLower(mapped.DeviceStatus) {
-		case "reachable":
-			devReachable++
-		}
-
-		switch strings.ToLower(mapped.PhoneType) {
-		case "mobile":
-			phoneTypeMobile++
-		case "fixed_line":
-			phoneTypeFixedLine++
-		}
+	metrics, err := svc.repo.GetJobMetricsAPI(filter)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, constant.ErrFetchJobMetrics)
 	}
 
 	result := &jobsSummaryDTO{
@@ -355,10 +313,10 @@ func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryD
 		TotalDataPercentageSuccess: data.TotalDataPercentageSuccess,
 		TotalDataPercentageFail:    data.TotalDataPercentageFail,
 		TotalDataPercentageError:   data.TotalDataPercentageError,
-		SubsActive:                 subsActive,
-		DevReachable:               devReachable,
-		Mobile:                     phoneTypeMobile,
-		FixedLine:                  phoneTypeFixedLine,
+		SubsActive:                 metrics.SubsActive,
+		DevReachable:               metrics.DevReachable,
+		Mobile:                     metrics.Mobile,
+		FixedLine:                  metrics.FixedLine,
 	}
 
 	return result, nil

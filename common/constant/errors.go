@@ -77,6 +77,7 @@ const (
 
 	ErrCreatePhoneLiveJob       = "failed to create phone live status job"
 	ErrFetchPhoneLiveDetail     = "failed to fetch phone live status job detail"
+	ErrFetchJobMetrics          = "failed to fetch job metrics"
 	ErrMsgUpdatePhoneLiveJob    = "failed to update phone live status job"
 	ErrMsgUpdatePhoneLiveDetail = "failed to update phone live status job detail"
 )

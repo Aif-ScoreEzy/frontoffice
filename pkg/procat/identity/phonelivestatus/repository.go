@@ -38,6 +38,7 @@ type Repository interface {
 	GetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
 	GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error)
 	GetJobsSummaryAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error)
+	GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMetrics, error)
 }
 
 func (repo *repository) PhoneLiveStatusAPI(apiKey, jobId string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
@@ -174,6 +175,39 @@ func (repo *repository) GetJobsSummaryAPI(filter *phoneLiveStatusFilter) (*jobDe
 	defer resp.Body.Close()
 
 	apiResp, err := helper.ParseAifcoreAPIResponse[*jobDetailRaw](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, err
+}
+
+func (repo *repository) GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMetrics, error) {
+	url := fmt.Sprintf("%s/api/core/phone-live-status/job-metrics", repo.cfg.Env.AifcoreHost)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := req.URL.Query()
+	q.Add(constant.JobId, filter.JobId)
+	q.Add(constant.StartDate, filter.StartDate)
+	q.Add(constant.EndDate, filter.EndDate)
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobMetrics](resp)
 	if err != nil {
 		return nil, err
 	}

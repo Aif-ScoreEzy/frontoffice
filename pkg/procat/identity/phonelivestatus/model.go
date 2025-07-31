@@ -108,6 +108,15 @@ type jobDetailRaw struct {
 	JobDetails                 []*logTransProductCatalog `json:"job_details"`
 }
 
+type jobMetrics struct {
+	SubsActive     int64 `json:"subs_active"`
+	DevReachable   int64 `json:"dev_reachable"`
+	DevUnreachable int64 `json:"dev_unreachable"`
+	DevUnavailable int64 `json:"dev_unavailable"`
+	Mobile         int64 `json:"mobile"`
+	FixedLine      int64 `json:"fixed_line"`
+}
+
 type logTransProductCatalog struct {
 	MemberID               uint                   `json:"member_id"`
 	CompanyID              uint                   `json:"company_id"`
