@@ -179,7 +179,7 @@ func (repo *repository) GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIRes
 }
 
 func (repo *repository) GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
-	url := fmt.Sprintf("%s/api/core/product/%s/job-details", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs-summary", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

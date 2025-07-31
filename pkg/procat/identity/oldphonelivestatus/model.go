@@ -1,4 +1,4 @@
-package phonelivestatus
+package oldphonelivestatus
 
 import (
 	"front-office/pkg/core/company"
@@ -20,6 +20,7 @@ type mstPhoneLiveStatusJob struct {
 }
 
 type mstPhoneLiveStatusJobDetail struct {
+	Id               uint      `json:"id"`
 	MemberId         uint      `json:"member_id"`
 	CompanyId        uint      `json:"company_id"`
 	JobId            uint      `json:"job_id"`
@@ -35,11 +36,6 @@ type mstPhoneLiveStatusJobDetail struct {
 	PricingStrategy  string    `json:"pricing_strategy"`
 	TransactionId    string    `json:"transaction_id"`
 	CreatedAt        time.Time `json:"created_at"`
-	RefLogTrx        RefLogTrx `json:"ref_log_trx"`
-}
-
-type RefLogTrx struct {
-	PhoneNumber string `json:"phone_number"`
 }
 
 type phoneLiveStatusRequest struct {
@@ -60,17 +56,16 @@ type errorData struct {
 }
 
 type phoneLiveStatusFilter struct {
-	Page        string
-	Size        string
-	Offset      string
-	StartDate   string
-	EndDate     string
-	ProductSlug string
-	JobId       string
-	MemberId    string
-	CompanyId   string
-	TierLevel   string
-	Keyword     string
+	Page      string
+	Size      string
+	Offset    string
+	StartDate string
+	EndDate   string
+	JobId     string
+	MemberId  string
+	CompanyId string
+	TierLevel string
+	Keyword   string
 }
 
 type jobListRespData struct {
@@ -78,7 +73,7 @@ type jobListRespData struct {
 	TotalData int                      `json:"total_data"`
 }
 
-type jobDetailsDTO struct {
+type jobDetailRespData struct {
 	TotalData                  int64                          `json:"total_data"`
 	TotalDataPercentageSuccess int64                          `json:"total_data_percentage_success"`
 	TotalDataPercentageFail    int64                          `json:"total_data_percentage_fail"`
@@ -90,61 +85,47 @@ type jobDetailsDTO struct {
 	JobDetails                 []*mstPhoneLiveStatusJobDetail `json:"job_details"`
 }
 
-type jobsSummaryDTO struct {
-	TotalData                  int64 `json:"total_data"`
-	TotalDataPercentageSuccess int64 `json:"total_data_percentage_success"`
-	TotalDataPercentageFail    int64 `json:"total_data_percentage_fail"`
-	TotalDataPercentageError   int64 `json:"total_data_percentage_error"`
-	SubsActive                 int64 `json:"subs_active"`
-	DevReachable               int64 `json:"dev_reachable"`
-	Mobile                     int64 `json:"mobile"`
-	FixedLine                  int64 `json:"fixed_line"`
+type jobsSummaryRespData struct {
+	TotalData        int64 `json:"total_data"`
+	TotalDataSuccess int64 `json:"total_data_percentage_success"`
+	TotalDataFail    int64 `json:"total_data_percentage_fail"`
+	TotalDataError   int64 `json:"total_data_percentage_error"`
+	SubscriberActive int64 `json:"subs_active"`
+	DeviceReachable  int64 `json:"dev_reachable"`
+	Mobile           int64 `json:"mobile"`
+	FixedLine        int64 `json:"fixed_line"`
 }
 
-type jobDetailRaw struct {
-	TotalData                  int64                     `json:"total_data"`
-	TotalDataPercentageSuccess int64                     `json:"total_data_percentage_success"`
-	TotalDataPercentageFail    int64                     `json:"total_data_percentage_fail"`
-	TotalDataPercentageError   int64                     `json:"total_data_percentage_error"`
-	JobDetails                 []*logTransProductCatalog `json:"job_details"`
+type createJobRequest struct {
+	MemberId                string                    `json:"member_id"`
+	CompanyId               string                    `json:"company_id"`
+	PhoneLiveStatusRequests []*phoneLiveStatusRequest `json:"requests"`
 }
 
-type logTransProductCatalog struct {
-	MemberID               uint                   `json:"member_id"`
-	CompanyID              uint                   `json:"company_id"`
-	JobID                  uint                   `json:"job_id"`
-	ProductID              uint                   `json:"product_id"`
-	Status                 string                 `json:"status"`
-	Message                *string                `json:"message"`
-	Input                  *logTransInput         `json:"input"`
-	Data                   *logTransData          `json:"data"`
-	PricingStrategy        string                 `json:"pricing_strategy"`
-	TransactionId          string                 `json:"transaction_id"`
-	DateTime               string                 `json:"datetime"`
-	RefTransProductCatalog RefTransProductCatalog `json:"ref_trans_product_catalog"`
+type createJobRespData struct {
+	JobId uint `json:"job_id"`
 }
 
-type RefTransProductCatalog struct {
-	Input logTransInput `json:"input"`
+type getSuccessCountRespData struct {
+	SuccessCount uint `json:"success_count"`
 }
 
-type logTransData struct {
-	Operator   string `json:"operator"`
-	PhoneType  string `json:"phone_type"`
-	LiveStatus string `json:"live_status"`
+type updateJobRequest struct {
+	SuccessCount *int       `json:"success_count"`
+	Status       *string    `json:"status"`
+	EndAt        *time.Time `json:"end_at"`
 }
 
-type logTransInput struct {
-	PhoneNumber string `json:"phone_number,omitempty"`
-}
-
-type phoneLiveStatusContext struct {
-	APIKey         string                  `json:"api_key"`
-	JobIdStr       string                  `json:"job_id_str"`
-	MemberId       uint                    `json:"member_id"`
-	CompanyId      uint                    `json:"company_id"`
-	ProductId      uint                    `json:"product_id"`
-	ProductGroupId uint                    `json:"product_group_id"`
-	JobId          uint                    `json:"job_id"`
-	Request        *phoneLiveStatusRequest `json:"request"`
+type updateJobDetailRequest struct {
+	InProgress       *bool      `json:"in_progress"`
+	Sequence         *int       `json:"sequence"`
+	Status           *string    `json:"status"`
+	Message          *string    `json:"message"`
+	SubscriberStatus *string    `json:"subscriber_status"`
+	DeviceStatus     *string    `json:"device_status"`
+	PhoneType        *string    `json:"phone_type"`
+	Operator         *string    `json:"operator"`
+	PricingStrategy  *string    `json:"pricing_strategy"`
+	TransactionId    *string    `json:"transaction_id"`
+	EndAt            *time.Time `json:"end_time"`
 }

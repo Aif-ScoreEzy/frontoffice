@@ -5,6 +5,7 @@ import (
 	"front-office/internal/httpclient"
 	"front-office/pkg/procat/compliance/loanrecordchecker"
 	"front-office/pkg/procat/compliance/multipleloan"
+	"front-office/pkg/procat/identity/oldphonelivestatus"
 	"front-office/pkg/procat/identity/phonelivestatus"
 	taxcompliancestatus "front-office/pkg/procat/incometax/taxcompliencestatus"
 	"front-office/pkg/procat/incometax/taxscore"
@@ -31,4 +32,5 @@ func SetupInit(routeAPI fiber.Router, cfg *config.Config) {
 
 	identityGroupAPI := routeAPI.Group("identity")
 	phonelivestatus.SetupInit(identityGroupAPI, cfg, client)
+	oldphonelivestatus.SetupInit(identityGroupAPI, cfg, client)
 }

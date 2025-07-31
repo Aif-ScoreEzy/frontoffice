@@ -61,7 +61,9 @@ type UpdateJobRequest struct {
 }
 
 type createJobRespData struct {
-	JobId uint `json:"id"`
+	JobId     uint `json:"id"`
+	MemberId  uint `json:"member_id"`
+	CompanyId uint `json:"company_id"`
 }
 
 type logFilter struct {
