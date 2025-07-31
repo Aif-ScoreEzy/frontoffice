@@ -110,30 +110,9 @@ func (svc *service) exportJobDetailsToCSV(
 	fetchFunc func(*logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error),
 	includeDate bool,
 ) (string, error) {
-	var allDetails []*logTransProductCatalog
-	page := 1
-	pageSize := 100
-
-	for {
-		filter.Page = helper.ConvertUintToString(uint(page))
-		filter.Size = helper.ConvertUintToString(uint(pageSize))
-
-		resp, err := fetchFunc(filter)
-		if err != nil {
-			return "", apperror.MapRepoError(err, "failed to fetch job details")
-		}
-
-		if resp.Data == nil || len(resp.Data.JobDetails) == 0 {
-			break
-		}
-
-		allDetails = append(allDetails, resp.Data.JobDetails...)
-
-		if len(resp.Data.JobDetails) < pageSize {
-			break
-		}
-
-		page++
+	resp, err := fetchFunc(filter)
+	if err != nil {
+		return "", apperror.MapRepoError(err, "failed to fetch job details")
 	}
 
 	headers := []string{}
@@ -162,7 +141,7 @@ func (svc *service) exportJobDetailsToCSV(
 		mapper = withDateColumn(mapper)
 	}
 
-	err := writeToCSV[*logTransProductCatalog](buf, headers, allDetails, mapper)
+	err = writeToCSV[*logTransProductCatalog](buf, headers, resp.Data.JobDetails, mapper)
 	if err != nil {
 		return "", apperror.Internal("failed to write CSV", err)
 	}

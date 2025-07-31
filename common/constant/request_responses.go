@@ -8,6 +8,8 @@ const (
 	XCompanyId            = "X-Company-ID"
 	XTierLevel            = "X-Tier-Level"
 
+	SizeUnlimited = "-1"
+
 	Request   = "request"
 	APIKey    = "apiKey"
 	UserId    = "userId"

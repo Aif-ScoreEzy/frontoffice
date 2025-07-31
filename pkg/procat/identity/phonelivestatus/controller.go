@@ -127,6 +127,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
+		Size:        constant.SizeUnlimited,
 	}
 
 	var buf bytes.Buffer
@@ -150,6 +151,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
+		Size:        "-",
 	}
 
 	if filter.StartDate == "" || filter.EndDate == "" {
@@ -175,6 +177,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
+		Size:        constant.SizeUnlimited,
 	}
 
 	if filter.StartDate == "" || filter.EndDate == "" {

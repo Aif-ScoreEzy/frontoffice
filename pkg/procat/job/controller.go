@@ -126,6 +126,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		CompanyId:   strconv.FormatUint(uint64(companyId), 10),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
+		Size:        constant.SizeUnlimited,
 	}
 
 	var buf bytes.Buffer
@@ -161,6 +162,7 @@ func (ctrl *controller) ExportJobDetailsByDateRange(c *fiber.Ctx) error {
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,
+		Size:        constant.SizeUnlimited,
 	}
 
 	var buf bytes.Buffer

@@ -246,10 +246,13 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 
 	for _, raw := range data.JobDetails {
 		mapped, err := mapToJobDetail(raw)
+
+		fmt.Println("!!!!!", mapped, err)
 		if err != nil {
 			continue
 		}
 
+		fmt.Println("ookee")
 		switch strings.ToLower(mapped.SubscriberStatus) {
 		case "active":
 			subsActive++
@@ -266,6 +269,8 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 
 		mappedDetails = append(mappedDetails, mapped)
 	}
+
+	fmt.Println("disini")
 
 	result := &jobDetailsDTO{
 		TotalData:                  data.TotalData,
@@ -390,13 +395,18 @@ func (svc *service) ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.
 }
 
 func mapToJobDetail(raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, error) {
-	liveStatusParts := strings.Split(raw.Data.LiveStatus, ",")
-	var subscriberStatus, deviceStatus string
-	if len(liveStatusParts) >= 2 {
-		subscriberStatus = strings.TrimSpace(liveStatusParts[0])
-		deviceStatus = strings.TrimSpace(liveStatusParts[1])
-	} else if len(liveStatusParts) == 1 {
-		subscriberStatus = strings.TrimSpace(liveStatusParts[0])
+	var subscriberStatus, deviceStatus, phoneType, operator string
+	if raw.Data != nil {
+		liveStatusParts := strings.Split(raw.Data.LiveStatus, ",")
+		if len(liveStatusParts) >= 2 {
+			subscriberStatus = strings.TrimSpace(liveStatusParts[0])
+			deviceStatus = strings.TrimSpace(liveStatusParts[1])
+		} else if len(liveStatusParts) == 1 {
+			subscriberStatus = strings.TrimSpace(liveStatusParts[0])
+		}
+
+		phoneType = raw.Data.PhoneType
+		operator = raw.Data.Operator
 	}
 
 	createdAt, err := time.Parse("2006-01-02 15:04:05", raw.DateTime)
@@ -413,8 +423,8 @@ func mapToJobDetail(raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, 
 		Message:          raw.Message,
 		SubscriberStatus: subscriberStatus,
 		DeviceStatus:     deviceStatus,
-		PhoneType:        raw.Data.PhoneType,
-		Operator:         raw.Data.Operator,
+		PhoneType:        phoneType,
+		Operator:         operator,
 		PricingStrategy:  raw.PricingStrategy,
 		TransactionId:    raw.TransactionId,
 		CreatedAt:        createdAt,
