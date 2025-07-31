@@ -25,7 +25,6 @@ type mstPhoneLiveStatusJobDetail struct {
 	JobId            uint      `json:"job_id"`
 	PhoneNumber      string    `json:"phone_number" validate:"required~phone number is required, min(10)~phone number must be at least 10 characters, indophone~invalid number"`
 	InProgress       bool      `json:"in_progess"`
-	Sequence         int       `json:"sequence"`
 	Status           string    `json:"status"`
 	Message          *string   `json:"message"`
 	SubscriberStatus string    `json:"subscriber_status"`

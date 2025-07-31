@@ -247,12 +247,10 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 	for _, raw := range data.JobDetails {
 		mapped, err := mapToJobDetail(raw)
 
-		fmt.Println("!!!!!", mapped, err)
 		if err != nil {
 			continue
 		}
 
-		fmt.Println("ookee")
 		switch strings.ToLower(mapped.SubscriberStatus) {
 		case "active":
 			subsActive++
