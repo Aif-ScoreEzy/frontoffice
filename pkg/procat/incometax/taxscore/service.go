@@ -188,6 +188,7 @@ func (svc *service) processTaxScore(params *taxScoreContext) error {
 			Message:        err.Error(),
 			Status:         http.StatusBadRequest,
 			ResponseBody: &transaction.ResponseBody{
+				Input:    params.Request,
 				DateTime: time.Now().Format(constant.FormatDateAndTime),
 			},
 			Data:        nil,

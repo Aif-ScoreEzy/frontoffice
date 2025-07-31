@@ -71,14 +71,11 @@ type LogTransProCatRequest struct {
 }
 
 type ResponseBody struct {
-	Data            *RespData `json:"data"`
-	TransactionId   string    `json:"transaction_id"`
-	PricingStrategy string    `json:"pricing_strategy"`
-	DateTime        string    `json:"datetime"`
-}
-
-type RespData struct {
-	Input any `json:"input"`
+	Data            any    `json:"data"`
+	Input           any    `json:"input"`
+	TransactionId   string `json:"transaction_id"`
+	PricingStrategy string `json:"pricing_strategy"`
+	DateTime        string `json:"datetime"`
 }
 
 type scoreezyLogResponse struct {
