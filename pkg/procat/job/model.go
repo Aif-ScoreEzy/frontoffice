@@ -19,6 +19,19 @@ type logTransProductCatalog struct {
 	RefTransProductCatalog any            `json:"ref_trans_product_catalog"`
 }
 
+type refTransProductCatalog struct {
+	Data struct {
+		NPWP string `json:"npwp"`
+	}
+	Input struct {
+		Name        string `json:"name"`
+		NIK         string `json:"nik"`
+		PhoneNumber string `json:"phone_number"`
+		NPWP        string `json:"npwp"`
+		NPWPOrNIK   string `json:"npwp_or_nik"`
+	} `json:"input"`
+}
+
 type logTransData struct {
 	Remarks          *string `json:"remarks,omitempty"`
 	Status           *string `json:"status,omitempty"`
@@ -77,4 +90,5 @@ type logFilter struct {
 	MemberId    string
 	CompanyId   string
 	TierLevel   string
+	IsMasked    bool
 }

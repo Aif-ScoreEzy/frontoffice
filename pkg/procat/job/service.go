@@ -3,6 +3,7 @@ package job
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
@@ -121,19 +122,29 @@ func (svc *service) exportJobDetailsToCSV(
 	switch filter.ProductSlug {
 	case constant.SlugLoanRecordChecker:
 		headers = []string{"Name", "NIK", "Phone Number", "Remarks", "Data Status", "Status", "Description"}
-		mapper = mapLoanRecordCheckerRow
+		mapper = func(d *logTransProductCatalog) []string {
+			return mapLoanRecordCheckerRow(filter.IsMasked, d)
+		}
 	case constant.SlugMultipleLoan7Days, constant.SlugMultipleLoan30Days, constant.SlugMultipleLoan90Days:
 		headers = []string{"NIK", "Phone Number", "Query Count", "Status", "Description"}
-		mapper = mapMultipleLoanRow
+		mapper = func(d *logTransProductCatalog) []string {
+			return mapMultipleLoanRow(filter.IsMasked, d)
+		}
 	case constant.SlugTaxComplianceStatus:
 		headers = []string{"NPWP", "Nama", "Alamat", "Data Status", "Status", "Description"}
-		mapper = mapTaxComplianceRow
+		mapper = func(d *logTransProductCatalog) []string {
+			return mapTaxComplianceRow(filter.IsMasked, d)
+		}
 	case constant.SlugTaxScore:
 		headers = []string{"NPWP", "Nama", "Alamat", "Data Status", "Score", "Status", "Description"}
-		mapper = mapTaxScoreRow
+		mapper = func(d *logTransProductCatalog) []string {
+			return mapTaxScoreRow(filter.IsMasked, d)
+		}
 	case constant.SlugTaxVerificationDetail:
 		headers = []string{"NPWP Or NIK", "Nama", "Alamat", "NPWP", "NPWP Verification", "Data Status", "Tax Compliance", "Status", "Description"}
-		mapper = mapTaxVerificationRow
+		mapper = func(d *logTransProductCatalog) []string {
+			return mapTaxVerificationRow(filter.IsMasked, d)
+		}
 	}
 
 	if includeDate {
@@ -141,7 +152,7 @@ func (svc *service) exportJobDetailsToCSV(
 		mapper = withDateColumn(mapper)
 	}
 
-	err = writeToCSV[*logTransProductCatalog](buf, headers, resp.Data.JobDetails, mapper)
+	err = writeToCSV(buf, headers, resp.Data.JobDetails, mapper)
 	if err != nil {
 		return "", apperror.Internal("failed to write CSV", err)
 	}
@@ -225,59 +236,94 @@ func withDateColumn(mapper rowMapper) rowMapper {
 	}
 }
 
-func mapLoanRecordCheckerRow(d *logTransProductCatalog) []string {
-	desc := ""
+func mapLoanRecordCheckerRow(isMasked bool, d *logTransProductCatalog) []string {
+	var (
+		description string
+		remarks     string
+		status      string
+		phoneNumber string
+		nik         string
+	)
+
 	if d.Message != nil {
-		desc = *d.Message
+		description = *d.Message
 	}
 
-	remarks := ""
-	status := ""
 	if d.Data != nil {
 		remarks = *d.Data.Remarks
 		status = *d.Data.Status
 	}
 
+	var ref refTransProductCatalog
+	if raw, err := json.Marshal(d.RefTransProductCatalog); err == nil {
+		_ = json.Unmarshal(raw, &ref)
+	}
+
+	if isMasked {
+		nik = ref.Input.NIK
+		phoneNumber = ref.Input.PhoneNumber
+	} else {
+		phoneNumber = *d.Input.PhoneNumber
+		nik = *d.Input.NIK
+	}
+
 	return []string{
 		*d.Input.Name,
-		*d.Input.NIK,
-		*d.Input.PhoneNumber,
+		nik,
+		phoneNumber,
 		remarks,
 		status,
 		d.Status,
-		desc,
+		description,
 	}
 }
 
-func mapMultipleLoanRow(d *logTransProductCatalog) []string {
-	desc := ""
+func mapMultipleLoanRow(isMasked bool, d *logTransProductCatalog) []string {
+	var (
+		description string
+		queryCount  int
+		phoneNumber string
+		nik         string
+	)
+
 	if d.Message != nil {
-		desc = *d.Message
+		description = *d.Message
 	}
 
-	queryCount := 0
 	if d.Data != nil {
 		queryCount = *d.Data.QueryCount
 	}
 
+	var ref refTransProductCatalog
+	if raw, err := json.Marshal(d.RefTransProductCatalog); err == nil {
+		_ = json.Unmarshal(raw, &ref)
+	}
+
+	if isMasked {
+		nik = ref.Input.NIK
+		phoneNumber = ref.Input.PhoneNumber
+	} else {
+		phoneNumber = *d.Input.PhoneNumber
+		nik = *d.Input.NIK
+	}
+
 	return []string{
-		*d.Input.NIK,
-		*d.Input.PhoneNumber,
+		nik,
+		phoneNumber,
 		strconv.Itoa(queryCount),
 		d.Status,
-		desc,
+		description,
 	}
 }
 
-func mapTaxComplianceRow(d *logTransProductCatalog) []string {
-	desc := ""
-	if d.Message != nil {
-		desc = *d.Message
-	}
+func mapTaxComplianceRow(isMasked bool, d *logTransProductCatalog) []string {
+	var (
+		description, nama, alamat, status, npwp string
+	)
 
-	nama := ""
-	alamat := ""
-	status := ""
+	if d.Message != nil {
+		description = *d.Message
+	}
 
 	if d.Data != nil {
 		nama = *d.Data.Nama
@@ -285,26 +331,35 @@ func mapTaxComplianceRow(d *logTransProductCatalog) []string {
 		status = *d.Data.Status
 	}
 
+	var ref refTransProductCatalog
+	if raw, err := json.Marshal(d.RefTransProductCatalog); err == nil {
+		_ = json.Unmarshal(raw, &ref)
+	}
+
+	if isMasked {
+		npwp = ref.Input.NPWP
+	} else {
+		npwp = *d.Input.NPWP
+	}
+
 	return []string{
-		*d.Input.NPWP,
+		npwp,
 		nama,
 		alamat,
 		status,
 		d.Status,
-		desc,
+		description,
 	}
 }
 
-func mapTaxScoreRow(d *logTransProductCatalog) []string {
-	desc := ""
-	if d.Message != nil {
-		desc = *d.Message
-	}
+func mapTaxScoreRow(isMasked bool, d *logTransProductCatalog) []string {
+	var (
+		description, nama, alamat, status, score, npwp string
+	)
 
-	nama := ""
-	alamat := ""
-	status := ""
-	score := ""
+	if d.Message != nil {
+		description = *d.Message
+	}
 
 	if d.Data != nil {
 		nama = *d.Data.Nama
@@ -313,41 +368,63 @@ func mapTaxScoreRow(d *logTransProductCatalog) []string {
 		score = *d.Data.Score
 	}
 
+	var ref refTransProductCatalog
+	if raw, err := json.Marshal(d.RefTransProductCatalog); err == nil {
+		_ = json.Unmarshal(raw, &ref)
+	}
+
+	if isMasked {
+		npwp = ref.Input.NPWP
+	} else {
+		npwp = *d.Input.NPWP
+	}
+
 	return []string{
-		*d.Input.NPWP,
+		npwp,
 		nama,
 		alamat,
 		status,
 		score,
 		d.Status,
-		desc,
+		description,
 	}
 }
 
-func mapTaxVerificationRow(d *logTransProductCatalog) []string {
-	desc := ""
-	if d.Message != nil {
-		desc = *d.Message
-	}
+func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
+	var (
+		description, nama, alamat, status, npwp, npwpVerification, taxCompliance, npwpOrNIK string
+	)
 
-	nama := ""
-	alamat := ""
-	npwp := ""
-	npwpVerification := ""
-	status := ""
-	taxCompliance := ""
+	if d.Message != nil {
+		description = *d.Message
+	}
 
 	if d.Data != nil {
 		nama = *d.Data.Nama
 		alamat = *d.Data.Alamat
-		npwp = *d.Data.NPWP
 		npwpVerification = *d.Data.NPWPVerification
+		npwp = *d.Data.NPWP
 		status = *d.Data.Status
 		taxCompliance = *d.Data.TaxCompliance
 	}
 
+	var ref refTransProductCatalog
+	if raw, err := json.Marshal(d.RefTransProductCatalog); err == nil {
+		_ = json.Unmarshal(raw, &ref)
+	}
+
+	if isMasked {
+		if ref.Data.NPWP != "" {
+			npwp = ref.Data.NPWP
+		}
+
+		npwpOrNIK = ref.Input.NPWPOrNIK
+	} else {
+		npwp = *d.Input.NPWPOrNIK
+	}
+
 	return []string{
-		*d.Input.NPWPOrNIK,
+		npwpOrNIK,
 		nama,
 		alamat,
 		npwp,
@@ -355,6 +432,6 @@ func mapTaxVerificationRow(d *logTransProductCatalog) []string {
 		status,
 		taxCompliance,
 		d.Status,
-		desc,
+		description,
 	}
 }

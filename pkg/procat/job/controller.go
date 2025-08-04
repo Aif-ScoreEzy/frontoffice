@@ -115,6 +115,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	memberId := c.Locals(constant.UserId).(uint)
 	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
+	masked, _ := strconv.ParseBool(c.Query("masked"))
 
 	productSlug, err := mapProductSlug(slug)
 	if err != nil {
@@ -127,6 +128,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
 		Size:        constant.SizeUnlimited,
+		IsMasked:    masked,
 	}
 
 	var buf bytes.Buffer
