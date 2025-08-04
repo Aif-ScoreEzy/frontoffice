@@ -67,8 +67,9 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, ""),
 		Size:        c.Query(constant.Size, ""),
-		ProductSlug: productSlug,
+		Keyword:     c.Query("keyword"),
 		JobId:       c.Params("job_id"),
+		ProductSlug: productSlug,
 	}
 
 	result, err := ctrl.Svc.GetJobDetails(filter)
@@ -98,6 +99,7 @@ func (ctrl *controller) GetJobDetailsByDateRange(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, "1"),
 		Size:        c.Query(constant.Size, "10"),
+		Keyword:     c.Query("keyword"),
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,

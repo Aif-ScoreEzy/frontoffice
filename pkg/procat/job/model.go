@@ -91,4 +91,5 @@ type logFilter struct {
 	CompanyId   string
 	TierLevel   string
 	IsMasked    bool
+	Keyword     string
 }

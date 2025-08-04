@@ -20,6 +20,7 @@ const (
 	JobId     = "job_id"
 	StartDate = "start_date"
 	EndDate   = "end_date"
+	Keyword   = "keyword"
 
 	MockHost        = "http://mock-host"
 	MockInvalidHost = "http://[::1]:namedport"

@@ -89,7 +89,7 @@ func (svc *service) GetJobDetails(filter *logFilter) (*model.AifcoreAPIResponse[
 }
 
 func (svc *service) GetJobDetailsByDateRange(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
-	result, err := svc.repo.GetJobDetailsAPI(filter)
+	result, err := svc.repo.GetJobsSummaryAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch job detail")
 	}
@@ -102,7 +102,7 @@ func (svc *service) ExportJobDetails(filter *logFilter, buf *bytes.Buffer) (stri
 }
 
 func (svc *service) ExportJobDetailsByDateRange(filter *logFilter, buf *bytes.Buffer) (string, error) {
-	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobDetailsAPI, true)
+	return svc.exportJobDetailsToCSV(filter, buf, svc.repo.GetJobsSummaryAPI, true)
 }
 
 func (svc *service) exportJobDetailsToCSV(
