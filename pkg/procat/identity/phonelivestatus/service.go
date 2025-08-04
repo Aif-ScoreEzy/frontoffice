@@ -246,7 +246,7 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 	}
 
 	for _, raw := range data.JobDetails {
-		mapped, err := mapToJobDetail(raw)
+		mapped, err := mapToJobDetail(filter.Masked, raw)
 		if err != nil {
 			continue
 		}
@@ -280,7 +280,7 @@ func (svc *service) ExportJobDetails(filter *phoneLiveStatusFilter, buf *bytes.B
 	)
 
 	for _, raw := range data.JobDetails {
-		mapped, err := mapToJobDetail(raw)
+		mapped, err := mapToJobDetail(filter.Masked, raw)
 		if err != nil {
 			continue
 		}
@@ -333,7 +333,7 @@ func (svc *service) ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.
 	)
 
 	for _, raw := range data.JobDetails {
-		mapped, err := mapToJobDetail(raw)
+		mapped, err := mapToJobDetail(filter.Masked, raw)
 		if err != nil {
 			continue
 		}
@@ -350,8 +350,8 @@ func (svc *service) ExportJobsSummary(filter *phoneLiveStatusFilter, buf *bytes.
 	return filename, nil
 }
 
-func mapToJobDetail(raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, error) {
-	var subscriberStatus, deviceStatus, phoneType, operator string
+func mapToJobDetail(masked bool, raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, error) {
+	var subscriberStatus, deviceStatus, phoneType, operator, phoneNumber string
 	if raw.Data != nil {
 		liveStatusParts := strings.Split(raw.Data.LiveStatus, ",")
 		if len(liveStatusParts) >= 2 {
@@ -361,8 +361,8 @@ func mapToJobDetail(raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, 
 			subscriberStatus = strings.TrimSpace(liveStatusParts[0])
 		}
 
-		phoneType = raw.Data.PhoneType
 		operator = raw.Data.Operator
+		phoneType = raw.Data.PhoneType
 	}
 
 	createdAt, err := time.Parse("2006-01-02 15:04:05", raw.DateTime)
@@ -370,11 +370,17 @@ func mapToJobDetail(raw *logTransProductCatalog) (*mstPhoneLiveStatusJobDetail, 
 		return nil, fmt.Errorf("invalid datetime format: %v", err)
 	}
 
+	if masked {
+		phoneNumber = raw.RefTransProductCatalog.Input.PhoneNumber
+	} else {
+		phoneNumber = raw.Input.PhoneNumber
+	}
+
 	return &mstPhoneLiveStatusJobDetail{
 		MemberId:         raw.MemberID,
 		CompanyId:        raw.CompanyID,
 		JobId:            raw.JobID,
-		PhoneNumber:      raw.Input.PhoneNumber,
+		PhoneNumber:      phoneNumber,
 		Status:           raw.Status,
 		Message:          raw.Message,
 		SubscriberStatus: subscriberStatus,

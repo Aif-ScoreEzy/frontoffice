@@ -70,6 +70,7 @@ type phoneLiveStatusFilter struct {
 	CompanyId   string
 	TierLevel   string
 	Keyword     string
+	Masked      bool
 }
 
 type jobListRespData struct {

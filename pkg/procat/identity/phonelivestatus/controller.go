@@ -6,6 +6,7 @@ import (
 	"front-office/common/constant"
 	"front-office/helper"
 	"front-office/internal/apperror"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -119,6 +120,8 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+	masked, _ := strconv.ParseBool(c.Query("masked"))
+
 	filter := &phoneLiveStatusFilter{
 		JobId:       c.Params("id"),
 		ProductSlug: constant.SlugPhoneLiveStatus,
@@ -128,6 +131,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 		Size:        constant.SizeUnlimited,
+		Masked:      masked,
 	}
 
 	var buf bytes.Buffer
