@@ -121,7 +121,6 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 
 func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	masked, _ := strconv.ParseBool(c.Query("masked"))
-
 	filter := &phoneLiveStatusFilter{
 		JobId:       c.Params("id"),
 		ProductSlug: constant.SlugPhoneLiveStatus,
@@ -174,6 +173,7 @@ func (ctrl *controller) GetJobsSummary(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
+	masked, _ := strconv.ParseBool(c.Query("masked"))
 	filter := &phoneLiveStatusFilter{
 		ProductSlug: constant.SlugPhoneLiveStatus,
 		StartDate:   c.Query(constant.StartDate, ""),
@@ -182,6 +182,7 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		TierLevel:   fmt.Sprintf("%v", c.Locals(constant.RoleId)),
 		Size:        constant.SizeUnlimited,
+		Masked:      masked,
 	}
 
 	if filter.StartDate == "" || filter.EndDate == "" {
