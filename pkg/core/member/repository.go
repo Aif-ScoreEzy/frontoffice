@@ -119,8 +119,6 @@ func (repo *repository) GetMemberListAPI(filter *MemberFilter) ([]*MstMember, *m
 	q.Add(constant.Page, filter.Page)
 	q.Add(constant.Size, filter.Limit)
 	q.Add("keyword", filter.Keyword)
-	q.Add("status", filter.Status)
-	q.Add("role_id", filter.RoleID)
 	q.Add(constant.StartDate, filter.StartDate)
 	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
