@@ -217,6 +217,7 @@ func (svc *service) processMultipleLoan(params *multipleLoanContext) error {
 			Status:         http.StatusBadRequest,
 			Success:        false,
 			ResponseBody: &transaction.ResponseBody{
+				Input:    params.Request,
 				DateTime: time.Now().Format(constant.FormatDateAndTime),
 			},
 			Data:        nil,

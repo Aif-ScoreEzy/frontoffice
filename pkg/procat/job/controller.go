@@ -67,8 +67,9 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, ""),
 		Size:        c.Query(constant.Size, ""),
-		ProductSlug: productSlug,
+		Keyword:     c.Query("keyword"),
 		JobId:       c.Params("job_id"),
+		ProductSlug: productSlug,
 	}
 
 	result, err := ctrl.Svc.GetJobDetails(filter)
@@ -98,6 +99,7 @@ func (ctrl *controller) GetJobDetailsByDateRange(c *fiber.Ctx) error {
 		CompanyId:   fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
 		Page:        c.Query(constant.Page, "1"),
 		Size:        c.Query(constant.Size, "10"),
+		Keyword:     c.Query("keyword"),
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,
@@ -115,6 +117,7 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 	memberId := c.Locals(constant.UserId).(uint)
 	companyId := c.Locals(constant.CompanyId).(uint)
 	slug := c.Params("product_slug")
+	masked, _ := strconv.ParseBool(c.Query("masked"))
 
 	productSlug, err := mapProductSlug(slug)
 	if err != nil {
@@ -126,6 +129,8 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		CompanyId:   strconv.FormatUint(uint64(companyId), 10),
 		ProductSlug: productSlug,
 		JobId:       c.Params("job_id"),
+		Size:        constant.SizeUnlimited,
+		IsMasked:    masked,
 	}
 
 	var buf bytes.Buffer
@@ -161,6 +166,7 @@ func (ctrl *controller) ExportJobDetailsByDateRange(c *fiber.Ctx) error {
 		ProductSlug: productSlug,
 		StartDate:   startDate,
 		EndDate:     endDate,
+		Size:        constant.SizeUnlimited,
 	}
 
 	var buf bytes.Buffer

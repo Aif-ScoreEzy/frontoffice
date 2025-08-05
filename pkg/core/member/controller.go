@@ -81,8 +81,6 @@ func (ctrl *controller) GetList(c *fiber.Ctx) error {
 		Page:      c.Query(constant.Page, "1"),
 		Limit:     c.Query("limit", "10"),
 		Keyword:   c.Query("keyword", ""),
-		RoleName:  c.Query("role", ""),
-		Status:    c.Query("status", ""),
 		StartDate: c.Query("startDate", ""),
 		EndDate:   c.Query("endDate", ""),
 	}

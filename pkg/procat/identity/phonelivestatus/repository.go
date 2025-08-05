@@ -17,7 +17,7 @@ import (
 
 func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
 	if marshalFn == nil {
-		marshalFn = json.Marshal
+		marshalFn = json.Marshal // default behavior
 	}
 
 	return &repository{
@@ -34,20 +34,15 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateJobAPI(payload *createJobRequest) (*createJobRespData, error)
-	CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
-	GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error)
-	CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
-	CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error)
-	CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error)
-	CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error)
-	UpdateJobAPI(jobId string, req *updateJobRequest) error
-	CallUpdateJobDetail(jobId, jobDetailId string, req *updateJobDetailRequest) error
-	CallPhoneLiveStatusAPI(apiKey string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
+	PhoneLiveStatusAPI(apiKey, jobId string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error)
+	GetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error)
+	GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error)
+	GetJobsSummaryAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error)
+	GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMetrics, error)
 }
 
-func (repo *repository) CreateJobAPI(payload *createJobRequest) (*createJobRespData, error) {
-	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
+func (repo *repository) PhoneLiveStatusAPI(apiKey, jobId string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
+	url := fmt.Sprintf("%s/product/identity/phone-live-status", repo.cfg.Env.ProductCatalogHost)
 
 	bodyBytes, err := repo.marshalFn(payload)
 	if err != nil {
@@ -59,12 +54,15 @@ func (repo *repository) CreateJobAPI(payload *createJobRequest) (*createJobRespD
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XMemberId, payload.MemberId)
-	req.Header.Set(constant.XCompanyId, payload.CompanyId)
+	req.Header.Set(constant.XAPIKey, apiKey)
+
+	q := req.URL.Query()
+	q.Add("job_id", jobId)
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
 	if err != nil {
@@ -72,16 +70,11 @@ func (repo *repository) CreateJobAPI(payload *createJobRequest) (*createJobRespD
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[*createJobRespData](resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiResp.Data, err
+	return helper.ParseProCatAPIResponse[phoneLiveStatusRespData](resp)
 }
 
-func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error) {
-	url := fmt.Sprintf("%s/api/core/phone-live-status/jobs", repo.cfg.Env.AifcoreHost)
+func (repo *repository) GetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilter) (*jobListRespData, error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -117,15 +110,15 @@ func (repo *repository) CallGetPhoneLiveStatusJobAPI(filter *phoneLiveStatusFilt
 	return apiResp.Data, err
 }
 
-func (repo *repository) GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRespData, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details`, repo.cfg.Env.AifcoreHost, filter.JobId)
+func (repo *repository) GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs/%s", repo.cfg.Env.AifcoreHost, filter.ProductSlug, filter.JobId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
@@ -145,16 +138,16 @@ func (repo *repository) GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDet
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[*jobDetailRespData](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobDetailRaw](resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return apiResp.Data, err
+	return apiResp.Data, nil
 }
 
-func (repo *repository) CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, filter.JobId)
+func (repo *repository) GetJobsSummaryAPI(filter *phoneLiveStatusFilter) (*jobDetailRaw, error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs-summary", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -167,38 +160,10 @@ func (repo *repository) CallGetAllJobDetailsAPI(filter *phoneLiveStatusFilter) (
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	req.Header.Set(constant.XMemberId, filter.MemberId)
 	req.Header.Set(constant.XCompanyId, filter.CompanyId)
-
-	resp, err := repo.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-	defer resp.Body.Close()
-
-	apiResp, err := helper.ParseAifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail](resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiResp.Data, err
-}
-
-func (repo *repository) CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusFilter) ([]*mstPhoneLiveStatusJobDetail, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/job-details-by-range-date`, repo.cfg.Env.AifcoreHost)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XMemberId, filter.MemberId)
-	req.Header.Set(constant.XCompanyId, filter.CompanyId)
-	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
+	q.Add(constant.Page, filter.Page)
+	q.Add(constant.Size, filter.Size)
 	q.Add(constant.StartDate, filter.StartDate)
 	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
@@ -209,7 +174,7 @@ func (repo *repository) CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusF
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobDetailRaw](resp)
 	if err != nil {
 		return nil, err
 	}
@@ -217,8 +182,8 @@ func (repo *repository) CallGetJobDetailsByDateRangeAPI(filter *phoneLiveStatusF
 	return apiResp.Data, err
 }
 
-func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryRespData, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs-summary`, repo.cfg.Env.AifcoreHost)
+func (repo *repository) GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMetrics, error) {
+	url := fmt.Sprintf("%s/api/core/phone-live-status/job-metrics", repo.cfg.Env.AifcoreHost)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -229,11 +194,9 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XMemberId, filter.MemberId)
-	req.Header.Set(constant.XCompanyId, filter.CompanyId)
-	req.Header.Set(constant.XTierLevel, filter.TierLevel)
 
 	q := req.URL.Query()
+	q.Add(constant.JobId, filter.JobId)
 	q.Add(constant.StartDate, filter.StartDate)
 	q.Add(constant.EndDate, filter.EndDate)
 	req.URL.RawQuery = q.Encode()
@@ -244,134 +207,10 @@ func (repo *repository) CallGetJobsSummary(filter *phoneLiveStatusFilter) (*jobs
 	}
 	defer resp.Body.Close()
 
-	apiResp, err := helper.ParseAifcoreAPIResponse[*jobsSummaryRespData](resp)
+	apiResp, err := helper.ParseAifcoreAPIResponse[*jobMetrics](resp)
 	if err != nil {
 		return nil, err
 	}
 
 	return apiResp.Data, err
-}
-
-func (repo *repository) CallGetProcessedCountAPI(jobId string) (*getSuccessCountRespData, error) {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/processed_count`, repo.cfg.Env.AifcoreHost, jobId)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-
-	resp, err := repo.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-	defer resp.Body.Close()
-
-	apiResp, err := helper.ParseAifcoreAPIResponse[*getSuccessCountRespData](resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiResp.Data, err
-}
-
-func (repo *repository) UpdateJobAPI(jobId string, payload *updateJobRequest) error {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v`, repo.cfg.Env.AifcoreHost, jobId)
-
-	bodyBytes, err := repo.marshalFn(payload)
-	if err != nil {
-		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-
-	resp, err := repo.client.Do(req)
-	if err != nil {
-		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-	defer resp.Body.Close()
-
-	_, err = helper.ParseAifcoreAPIResponse[any](resp)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (repo *repository) CallUpdateJobDetail(jobId, jobDetailId string, payload *updateJobDetailRequest) error {
-	url := fmt.Sprintf(`%v/api/core/phone-live-status/jobs/%v/details/%v`, repo.cfg.Env.AifcoreHost, jobId, jobDetailId)
-
-	bodyBytes, err := repo.marshalFn(payload)
-	if err != nil {
-		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-
-	resp, err := repo.client.Do(req)
-	if err != nil {
-		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-	defer resp.Body.Close()
-
-	_, err = helper.ParseAifcoreAPIResponse[any](resp)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (repo *repository) CallPhoneLiveStatusAPI(apiKey string, payload *phoneLiveStatusRequest) (*model.ProCatAPIResponse[phoneLiveStatusRespData], error) {
-	url := repo.cfg.Env.ProductCatalogHost + "/product/identity/phone-live-status"
-
-	bodyBytes, err := repo.marshalFn(payload)
-	if err != nil {
-		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-
-	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XAPIKey, apiKey)
-
-	resp, err := repo.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
-	}
-	defer resp.Body.Close()
-
-	apiResp, err := helper.ParseProCatAPIResponse[phoneLiveStatusRespData](resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiResp, nil
 }
