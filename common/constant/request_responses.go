@@ -8,6 +8,8 @@ const (
 	XCompanyId            = "X-Company-ID"
 	XTierLevel            = "X-Tier-Level"
 
+	SizeUnlimited = "-1"
+
 	Request   = "request"
 	APIKey    = "apiKey"
 	UserId    = "userId"
@@ -15,8 +17,10 @@ const (
 	RoleId    = "roleId"
 	Page      = "page"
 	Size      = "size"
+	JobId     = "job_id"
 	StartDate = "start_date"
 	EndDate   = "end_date"
+	Keyword   = "keyword"
 
 	MockHost        = "http://mock-host"
 	MockInvalidHost = "http://[::1]:namedport"

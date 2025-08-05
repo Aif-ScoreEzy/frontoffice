@@ -38,7 +38,7 @@ type Repository interface {
 	UpdateJobAPI(jobId string, req map[string]interface{}) error
 	GetJobsAPI(filter *logFilter) (*model.AifcoreAPIResponse[any], error)
 	GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
-	GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
+	GetJobsSummaryAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error)
 }
 
 func (repo *repository) CreateJobAPI(payload *CreateJobRequest) (*createJobRespData, error) {
@@ -162,6 +162,7 @@ func (repo *repository) GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIRes
 	q := req.URL.Query()
 	q.Add(constant.Page, filter.Page)
 	q.Add(constant.Size, filter.Size)
+	q.Add(constant.Keyword, filter.Keyword)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -178,8 +179,8 @@ func (repo *repository) GetJobDetailAPI(filter *logFilter) (*model.AifcoreAPIRes
 	return apiResp, nil
 }
 
-func (repo *repository) GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
-	url := fmt.Sprintf("%s/api/core/product/%s/job-details", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
+func (repo *repository) GetJobsSummaryAPI(filter *logFilter) (*model.AifcoreAPIResponse[*jobDetailResponse], error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/jobs-summary", repo.cfg.Env.AifcoreHost, filter.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -194,6 +195,7 @@ func (repo *repository) GetJobDetailsAPI(filter *logFilter) (*model.AifcoreAPIRe
 	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	q := req.URL.Query()
+	q.Add(constant.Keyword, filter.Keyword)
 	q.Add(constant.Page, filter.Page)
 	q.Add(constant.Size, filter.Size)
 	q.Add(constant.StartDate, filter.StartDate)

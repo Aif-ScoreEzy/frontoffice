@@ -338,7 +338,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetJobDetailsAPI(&logFilter{})
+		result, err := repo.GetJobsSummaryAPI(&logFilter{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -352,7 +352,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
 		}, mockClient, nil)
 
-		_, err := repo.GetJobDetailsAPI(&logFilter{})
+		_, err := repo.GetJobsSummaryAPI(&logFilter{})
 
 		assert.Error(t, err)
 	})
@@ -362,7 +362,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		_, err := repo.GetJobDetailsAPI(&logFilter{})
+		_, err := repo.GetJobsSummaryAPI(&logFilter{})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -377,7 +377,7 @@ func TestCallGetProCatJobDetailsAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.GetJobDetailsAPI(&logFilter{})
+		result, err := repo.GetJobsSummaryAPI(&logFilter{})
 
 		assert.Nil(t, result)
 		assert.Error(t, err)

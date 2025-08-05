@@ -1,7 +1,6 @@
 package member
 
 import (
-	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
@@ -50,21 +49,6 @@ func (svc *service) GetMemberBy(query *FindUserQuery) (*MstMember, error) {
 }
 
 func (svc *service) GetMemberList(filter *MemberFilter) ([]*MstMember, *model.Meta, error) {
-	if filter.RoleName != "" {
-		roles, err := svc.roleRepo.GetRolesAPI(role.RoleFilter{
-			Name: filter.RoleName,
-		})
-		if err != nil {
-			return nil, nil, apperror.MapRepoError(err, "failed to fetch role")
-		}
-
-		if len(roles) == 0 {
-			return nil, nil, apperror.NotFound("role not found")
-		}
-
-		filter.RoleID = fmt.Sprintf("%v", roles[0].RoleId)
-	}
-
 	users, meta, err := svc.repo.GetMemberListAPI(filter)
 	if err != nil {
 		return nil, nil, err

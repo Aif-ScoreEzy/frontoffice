@@ -1,6 +1,8 @@
 package constant
 
 const (
+	SlugPhoneLiveStatus = "IDENTITY_phone_live_status"
+
 	SlugLoanRecordChecker  = "COMPLIANCE_loan_record_checker"
 	SlugMultipleLoan7Days  = "COMPLIANCE_7d_multiple_loan"
 	SlugMultipleLoan30Days = "COMPLIANCE_30d_multiple_loan"
