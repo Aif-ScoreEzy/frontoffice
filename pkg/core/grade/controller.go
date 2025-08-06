@@ -1,0 +1,48 @@
+package grade
+
+import (
+	"fmt"
+	"front-office/common/constant"
+	"front-office/helper"
+	"front-office/internal/apperror"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func NewController(service Service) Controller {
+	return &controller{Svc: service}
+}
+
+type controller struct {
+	Svc Service
+}
+
+type Controller interface {
+	CreateGrading(c *fiber.Ctx) error
+}
+
+func (ctrl *controller) CreateGrading(c *fiber.Ctx) error {
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+
+	reqBody, ok := c.Locals(constant.Request).(*createGradeRequest)
+	if !ok {
+		return apperror.BadRequest(constant.InvalidRequestFormat)
+	}
+
+	if err := ctrl.Svc.CreateGrading(&createGradePayload{
+		CompanyId:   companyId,
+		ProductSlug: constant.SlugGenRetailV3,
+		Request: createGradeRequest{
+			reqBody.Grades,
+		},
+	}); err != nil {
+		return err
+	}
+
+	res := helper.ResponseSuccess(
+		"succeed to create grades",
+		nil,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(res)
+}

@@ -1,6 +1,8 @@
 package constant
 
 const (
+	SlugGenRetailV3 = "SCOREEZY_genretail_v3"
+
 	SlugPhoneLiveStatus = "IDENTITY_phone_live_status"
 
 	SlugLoanRecordChecker  = "COMPLIANCE_loan_record_checker"
