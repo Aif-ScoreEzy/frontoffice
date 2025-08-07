@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
-	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"front-office/internal/jsonutil"
@@ -35,7 +34,7 @@ type repository struct {
 
 type Repository interface {
 	SaveGradingAPI(payload *createGradePayload) error
-	GetGradesAPI(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error)
+	GetGradesAPI(productSlug, companyId string) (*gradesResponseData, error)
 }
 
 func (repo *repository) SaveGradingAPI(payload *createGradePayload) error {
@@ -71,7 +70,7 @@ func (repo *repository) SaveGradingAPI(payload *createGradePayload) error {
 	return nil
 }
 
-func (repo *repository) GetGradesAPI(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error) {
+func (repo *repository) GetGradesAPI(productSlug, companyId string) (*gradesResponseData, error) {
 	url := fmt.Sprintf("%s/api/core/product/%s/grades", repo.cfg.Env.AifcoreHost, productSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -96,5 +95,5 @@ func (repo *repository) GetGradesAPI(productSlug, companyId string) (*model.Aifc
 		return nil, err
 	}
 
-	return apiResp, nil
+	return apiResp.Data, nil
 }

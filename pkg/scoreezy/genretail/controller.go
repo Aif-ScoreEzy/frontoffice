@@ -65,12 +65,12 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if result == nil || result.Data == nil {
+	if result == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if len(result.Data.Grades) < 1 {
+	if len(result.Grades) < 1 {
 		statusCode, resp := helper.GetError(constant.ParamSettingIsNotSet)
 		return c.Status(statusCode).JSON(resp)
 	}

@@ -52,10 +52,13 @@ func (ctrl *controller) GetGrades(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 	productSlug := constant.SlugGenRetailV3
 
-	result, err := ctrl.Svc.GetGrades(productSlug, companyId)
+	grades, err := ctrl.Svc.GetGrades(productSlug, companyId)
 	if err != nil {
 		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(result)
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"succeed to get grades",
+		grades,
+	))
 }
