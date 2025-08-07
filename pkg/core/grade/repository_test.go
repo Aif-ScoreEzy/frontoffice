@@ -102,3 +102,78 @@ func TestGetGradesAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestSaveGradingAPI(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+			Message: "Succeed to Request Data.",
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err = repo.SaveGradingAPI(&createGradePayload{})
+
+		assert.NoError(t, err)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("MarshalError", func(t *testing.T) {
+		fakeMarshal := func(v any) ([]byte, error) {
+			return nil, errors.New(constant.ErrFailedMarshalReq)
+		}
+
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockHost},
+		}, &MockClient{}, fakeMarshal)
+
+		err := repo.SaveGradingAPI(&createGradePayload{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
+	})
+
+	t.Run("NewRequestError", func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		err := repo.SaveGradingAPI(&createGradePayload{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run("HTTPRequestError", func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		err := repo.SaveGradingAPI(&createGradePayload{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("ParseError", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		err := repo.SaveGradingAPI(&createGradePayload{})
+
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
