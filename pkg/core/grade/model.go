@@ -41,3 +41,14 @@ type createGradePayload struct {
 	ProductSlug string             `json:"product_slug"`
 	Request     createGradeRequest `json:"grades"`
 }
+
+type refGrade struct {
+	SubscribedProductID uint    `json:"-"`
+	Grade               string  `json:"grade"`
+	Start               float64 `json:"start"`
+	End                 float64 `json:"end"`
+}
+
+type gradesResponseData struct {
+	Grades []refGrade `json:"grades"`
+}

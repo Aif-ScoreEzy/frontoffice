@@ -2,6 +2,7 @@ package grade
 
 import (
 	"fmt"
+	"front-office/common/model"
 	"front-office/internal/apperror"
 )
 
@@ -14,10 +15,11 @@ type service struct {
 }
 
 type Service interface {
-	CreateGrading(payload *createGradePayload) error
+	SaveGrading(payload *createGradePayload) error
+	GetGrades(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error)
 }
 
-func (svc *service) CreateGrading(payload *createGradePayload) error {
+func (svc *service) SaveGrading(payload *createGradePayload) error {
 	for i := 0; i < len(payload.Request.Grades); i++ {
 		for j := i + 1; j < len(payload.Request.Grades); j++ {
 			if payload.Request.Grades[i].Grade == payload.Request.Grades[j].Grade {
@@ -29,9 +31,18 @@ func (svc *service) CreateGrading(payload *createGradePayload) error {
 		}
 	}
 
-	if err := svc.Repo.CreateGradesAPI(payload); err != nil {
-		return apperror.MapRepoError(err, "failed to create grades")
+	if err := svc.Repo.SaveGradingAPI(payload); err != nil {
+		return apperror.MapRepoError(err, "failed to save grading")
 	}
 
 	return nil
+}
+
+func (svc *service) GetGrades(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error) {
+	result, err := svc.Repo.GetGradesAPI(productSlug, companyId)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to get grades")
+	}
+
+	return result, nil
 }

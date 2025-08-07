@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
+	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/httpclient"
 	"front-office/internal/jsonutil"
@@ -33,10 +34,11 @@ type repository struct {
 }
 
 type Repository interface {
-	CreateGradesAPI(payload *createGradePayload) error
+	SaveGradingAPI(payload *createGradePayload) error
+	GetGradesAPI(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error)
 }
 
-func (repo *repository) CreateGradesAPI(payload *createGradePayload) error {
+func (repo *repository) SaveGradingAPI(payload *createGradePayload) error {
 	url := fmt.Sprintf("%s/api/core/product/%s/grades", repo.cfg.Env.AifcoreHost, payload.ProductSlug)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -47,7 +49,7 @@ func (repo *repository) CreateGradesAPI(payload *createGradePayload) error {
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
@@ -67,4 +69,32 @@ func (repo *repository) CreateGradesAPI(payload *createGradePayload) error {
 	}
 
 	return nil
+}
+
+func (repo *repository) GetGradesAPI(productSlug, companyId string) (*model.AifcoreAPIResponse[*gradesResponseData], error) {
+	url := fmt.Sprintf("%s/api/core/product/%s/grades", repo.cfg.Env.AifcoreHost, productSlug)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.XCompanyId, companyId)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*gradesResponseData](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp, nil
 }

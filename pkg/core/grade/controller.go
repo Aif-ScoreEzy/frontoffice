@@ -18,10 +18,11 @@ type controller struct {
 }
 
 type Controller interface {
-	CreateGrading(c *fiber.Ctx) error
+	SaveGrading(c *fiber.Ctx) error
+	GetGrades(c *fiber.Ctx) error
 }
 
-func (ctrl *controller) CreateGrading(c *fiber.Ctx) error {
+func (ctrl *controller) SaveGrading(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	reqBody, ok := c.Locals(constant.Request).(*createGradeRequest)
@@ -29,7 +30,7 @@ func (ctrl *controller) CreateGrading(c *fiber.Ctx) error {
 		return apperror.BadRequest(constant.InvalidRequestFormat)
 	}
 
-	if err := ctrl.Svc.CreateGrading(&createGradePayload{
+	if err := ctrl.Svc.SaveGrading(&createGradePayload{
 		CompanyId:   companyId,
 		ProductSlug: constant.SlugGenRetailV3,
 		Request: createGradeRequest{
@@ -40,9 +41,21 @@ func (ctrl *controller) CreateGrading(c *fiber.Ctx) error {
 	}
 
 	res := helper.ResponseSuccess(
-		"succeed to create grades",
+		"succees to create grades",
 		nil,
 	)
 
-	return c.Status(fiber.StatusOK).JSON(res)
+	return c.Status(fiber.StatusCreated).JSON(res)
+}
+
+func (ctrl *controller) GetGrades(c *fiber.Ctx) error {
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+	productSlug := constant.SlugGenRetailV3
+
+	result, err := ctrl.Svc.GetGrades(productSlug, companyId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(result)
 }
