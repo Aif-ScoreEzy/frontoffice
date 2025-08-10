@@ -4,7 +4,7 @@ import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
 	"front-office/pkg/core/auth"
-	"front-office/pkg/core/grading"
+	"front-office/pkg/core/grade"
 	"front-office/pkg/core/log/operation"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/member"
@@ -27,8 +27,8 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	roleGroup := routeGroup.Group("roles")
 	role.SetupInit(roleGroup, cfg, client)
 
-	gradingGroup := routeGroup.Group("gradings")
-	grading.SetupInit(gradingGroup, cfg)
+	gradeGroup := routeGroup.Group("grades")
+	grade.SetupInit(gradeGroup, cfg, client)
 
 	genRetailGroup := routeGroup.Group("scores")
 	genretail.SetupInit(genRetailGroup, cfg)
