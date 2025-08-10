@@ -2,7 +2,6 @@ package multipleloan
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"front-office/app/config"
@@ -12,7 +11,6 @@ import (
 	"front-office/internal/httpclient"
 	"front-office/internal/jsonutil"
 	"net/http"
-	"time"
 )
 
 func NewRepository(cfg *config.Config, client httpclient.HTTPClient, marshalFn jsonutil.Marshaller) Repository {
@@ -47,10 +45,7 @@ func (repo *repository) CallMultipleLoan7Days(apiKey, jobId, memberId, companyId
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
@@ -86,10 +81,7 @@ func (repo *repository) CallMultipleLoan30Days(apiKey, jobId, memberId, companyI
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
@@ -125,10 +117,7 @@ func (repo *repository) CallMultipleLoan90Days(apiKey, jobId, memberId, companyI
 		return nil, fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
