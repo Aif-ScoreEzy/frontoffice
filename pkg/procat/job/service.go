@@ -420,7 +420,7 @@ func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
 
 		npwpOrNIK = ref.Input.NPWPOrNIK
 	} else {
-		npwp = *d.Input.NPWPOrNIK
+		npwpOrNIK = *d.Input.NPWPOrNIK
 	}
 
 	return []string{

@@ -4,7 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"front-office/helper"
-	"front-office/pkg/core/grading"
+	"front-office/pkg/core/grade"
 	"front-office/pkg/core/log/operation"
 	"io"
 	"log"
@@ -17,7 +17,7 @@ import (
 
 func NewController(
 	service Service,
-	svcGrading grading.Service,
+	svcGrading grade.Service,
 	svcLogOperation operation.Service,
 ) Controller {
 	return &controller{
@@ -29,7 +29,7 @@ func NewController(
 
 type controller struct {
 	Svc             Service
-	SvcGrading      grading.Service
+	SvcGrading      grade.Service
 	SvcLogOperation operation.Service
 }
 
@@ -58,18 +58,19 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	}
 
 	// make sure parameter settings are set
-	result, err := ctrl.SvcGrading.GetGradings(fmt.Sprintf("%v", companyId))
+	productSlug := constant.SlugGenRetailV3
+	result, err := ctrl.SvcGrading.GetGrades(productSlug, fmt.Sprintf("%v", companyId))
 	if err != nil {
 		statusCode, resp := helper.GetError(err.Error())
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if result == nil || result.Data == nil {
+	if result == nil {
 		statusCode, resp := helper.GetError(constant.DataNotFound)
 		return c.Status(statusCode).JSON(resp)
 	}
 
-	if len(result.Data.Grades) < 1 {
+	if len(result.Grades) < 1 {
 		statusCode, resp := helper.GetError(constant.ParamSettingIsNotSet)
 		return c.Status(statusCode).JSON(resp)
 	}
