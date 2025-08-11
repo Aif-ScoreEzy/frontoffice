@@ -49,7 +49,7 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 			ProbabilityToDefault: 0.12345,
 			Grade:                "A",
 			Identity:             "verified in more than 50% social media platform and registered on one of the telecommunication platforms",
-			Behaviour:            "This individual is not identified to have a history of loan applications and is not indicated to have defaulted on payments.",
+			Behavior:             "This individual is not identified to have a history of loan applications and is not indicated to have defaulted on payments.",
 			Date:                 time.Now().Format("2006-01-02 15:04:05"),
 		},
 	}
@@ -73,20 +73,10 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
 
-	result, errRequest := ctrl.Svc.GenRetailV3(memberId, companyId, apiKey, req)
-	if errRequest != nil {
+	result, err := ctrl.Svc.GenRetailV3(memberId, companyId, apiKey, req)
+	if err != nil {
 		return err
 	}
-
-	// if result.StatusCode >= 400 {
-	// 	dataReturn := GenRetailV3ClientReturnError{
-	// 		Message:      result.Message,
-	// 		ErrorMessage: result.ErrorMessage,
-	// 		Data:         result.Data,
-	// 	}
-
-	// 	return c.Status(genRetailResponse.StatusCode).JSON(dataReturn)
-	// }
 
 	addLogRequest := &operation.AddLogRequest{
 		MemberId:  currentUserId,
@@ -99,22 +89,8 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		log.Println("Failed to log operation for calculate score")
 	}
 
-	// resp := GenRetailV3ClientReturnSuccess{
-	// 	Message: genRetailResponse.Message,
-	// 	Success: true,
-	// 	Data:    genRetailResponse.Data,
-	// }
-
 	return c.Status(result.StatusCode).JSON(result)
 }
-
-// func (ctrl *controller) DownloadCSV(c *fiber.Ctx) error {
-// 	opsi := c.Params("opsi")
-
-// 	filePath := fmt.Sprintf("./public/bulk_template/%s.csv", opsi)
-
-// 	return c.SendFile(filePath)
-// }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
 // 	userId := fmt.Sprintf("%v", c.Locals(constant.UserId))

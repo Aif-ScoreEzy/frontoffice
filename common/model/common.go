@@ -37,7 +37,7 @@ type ProCatAPIResponse[T any] struct {
 
 type ScoreezyAPIResponse[T any] struct {
 	Success      bool   `json:"success"`
-	Data         T      `json:"data"`
+	Data         *T     `json:"data"`
 	Message      string `json:"message"`
 	ErrorMessage string `json:"error_message,omitempty"`
 	StatusCode   int    `json:"-"`

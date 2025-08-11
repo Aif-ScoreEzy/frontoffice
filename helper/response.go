@@ -162,12 +162,5 @@ func ParseScoreezyAPIResponse[T any](response *http.Response) (*model.ScoreezyAP
 
 	apiResp.StatusCode = response.StatusCode
 
-	if apiResp.StatusCode >= 400 || !apiResp.Success {
-		return nil, &apperror.ExternalAPIError{
-			StatusCode: apiResp.StatusCode,
-			Message:    apiResp.Message,
-		}
-	}
-
 	return &apiResp, nil
 }

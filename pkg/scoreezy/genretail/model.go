@@ -33,7 +33,7 @@ type dataGenRetailV3 struct {
 	ProbabilityToDefault float64 `json:"probability_to_default"` //5 digit dibelakang koma
 	Grade                string  `json:"grade"`
 	Identity             string  `json:"identity"`
-	Behaviour            string  `json:"behaviour"`
+	Behavior             string  `json:"behavior"`
 	Date                 string  `json:"date"` // 2022-03-22 12:30:22
 }
 
