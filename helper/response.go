@@ -144,3 +144,30 @@ func ParseProCatAPIResponse[T any](response *http.Response) (*model.ProCatAPIRes
 
 	return &apiResp, nil
 }
+
+func ParseScoreezyAPIResponse[T any](response *http.Response) (*model.ScoreezyAPIResponse[T], error) {
+	if response == nil {
+		return nil, errors.New("nil http response")
+	}
+
+	dataBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var apiResp model.ScoreezyAPIResponse[T]
+	if err := json.Unmarshal(dataBytes, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w; raw: %s", err, string(dataBytes))
+	}
+
+	apiResp.StatusCode = response.StatusCode
+
+	if apiResp.StatusCode >= 400 || !apiResp.Success {
+		return nil, &apperror.ExternalAPIError{
+			StatusCode: apiResp.StatusCode,
+			Message:    apiResp.Message,
+		}
+	}
+
+	return &apiResp, nil
+}

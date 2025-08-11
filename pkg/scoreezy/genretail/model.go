@@ -9,42 +9,44 @@ import (
 	"gorm.io/gorm"
 )
 
-type GenRetailRequest struct {
-	LoanNo   string `json:"loan_no"`
-	Name     string `json:"name"`
-	IdCardNo string `json:"id_card_no"`
-	PhoneNo  string `json:"phone_no"`
+type genRetailRequest struct {
+	Name     string `json:"name" validate:"required~Name cannot be empty."`
+	IdCardNo string `json:"id_card_no" validate:"required~ID Card No cannot be empty., numeric~ID Card No is only number, length(16)~ID Card No must be 16 digit number."`
+	PhoneNo  string `json:"phone_no" validate:"required~Phone number cannot be empty, phone~Phone No only allow number and (+)plus sign with minimum 10 maximum 15 digit.,bytelength(10|15)~Phone No only allow number and (+)plus sign with minimum 10 maximum 15 digit."`
+	LoanNo   string `json:"loan_no" validate:"required~Loan No cannot be empty."`
 }
 
 type GenRetailV3ModelResponse struct {
-	Message      string                 `json:"message"`
-	ErrorMessage string                 `json:"error_message"`
-	Success      bool                   `json:"success"`
-	Data         *GenRetailV3DataClient `json:"data"`
-	StatusCode   int                    `json:"status_code"`
+	Message      string           `json:"message"`
+	ErrorMessage string           `json:"error_message"`
+	Success      bool             `json:"success"`
+	Data         *dataGenRetailV3 `json:"data"`
+	StatusCode   int              `json:"status_code"`
 }
 
-type GenRetailV3DataClient struct {
+type dataGenRetailV3 struct {
 	TransactionId        string  `json:"transaction_id"`
 	Name                 string  `json:"name"`
 	IdCardNo             string  `json:"id_card_no"`
 	PhoneNo              string  `json:"phone_no"`
 	LoanNo               string  `json:"loan_no"`
-	ProbabilityToDefault float64 `json:"probability_to_default"`
+	ProbabilityToDefault float64 `json:"probability_to_default"` //5 digit dibelakang koma
 	Grade                string  `json:"grade"`
-	Date                 string  `json:"date"`
+	Identity             string  `json:"identity"`
+	Behaviour            string  `json:"behaviour"`
+	Date                 string  `json:"date"` // 2022-03-22 12:30:22
 }
 
 type GenRetailV3ClientReturnSuccess struct {
-	Message string                 `json:"message"`
-	Success bool                   `json:"success"`
-	Data    *GenRetailV3DataClient `json:"data"`
+	Message string           `json:"message"`
+	Success bool             `json:"success"`
+	Data    *dataGenRetailV3 `json:"data"`
 }
 
 type GenRetailV3ClientReturnError struct {
-	Message      string                 `json:"message"`
-	ErrorMessage string                 `json:"error_message"`
-	Data         *GenRetailV3DataClient `json:"data"`
+	Message      string           `json:"message"`
+	ErrorMessage string           `json:"error_message"`
+	Data         *dataGenRetailV3 `json:"data"`
 }
 
 type UploadScoringRequest struct {

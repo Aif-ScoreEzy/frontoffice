@@ -30,8 +30,8 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	gradeGroup := routeGroup.Group("grades")
 	grade.SetupInit(gradeGroup, cfg, client)
 
-	genRetailGroup := routeGroup.Group("scores")
-	genretail.SetupInit(genRetailGroup, cfg)
+	genRetailGroup := routeGroup.Group("scoreezy")
+	genretail.SetupInit(genRetailGroup, cfg, client)
 
 	logGroup := routeGroup.Group("logs")
 	transaction.SetupInit(logGroup, cfg, client)
