@@ -6,6 +6,7 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/operation"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -28,15 +29,38 @@ type controller struct {
 }
 
 type Controller interface {
+	DummyRequestScore(c *fiber.Ctx) error
 	RequestScore(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
 	// UploadCSV(c *fiber.Ctx) error
 	// GetBulkSearch(c *fiber.Ctx) error
 }
 
+func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
+	response := GenRetailV3ClientReturnSuccess{
+		Message: "Succeed to Request Scores",
+		Success: true,
+		Data: &dataGenRetailV3{
+			TransactionId:        "TRX123456789",
+			Name:                 "John Doe",
+			IdCardNo:             "1234567890123456",
+			PhoneNo:              "081234567890",
+			LoanNo:               "LN987654321",
+			ProbabilityToDefault: 0.12345,
+			Grade:                "A",
+			Identity:             "verified in more than 50% social media platform and registered on one of the telecommunication platforms",
+			Behaviour:            "This individual is not identified to have a history of loan applications and is not indicated to have defaulted on payments.",
+			Date:                 time.Now().Format("2006-01-02 15:04:05"),
+		},
+	}
+
+	return c.Status(200).JSON(response)
+}
+
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals(constant.Request).(*genRetailRequest)
 	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
+	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
 	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
 	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
@@ -49,10 +73,9 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
 
-	result, errRequest := ctrl.Svc.GenRetailV3(companyId, apiKey, req)
+	result, errRequest := ctrl.Svc.GenRetailV3(memberId, companyId, apiKey, req)
 	if errRequest != nil {
-		statusCode, resp := helper.GetError(errRequest.Error())
-		return c.Status(statusCode).JSON(resp)
+		return err
 	}
 
 	// if result.StatusCode >= 400 {

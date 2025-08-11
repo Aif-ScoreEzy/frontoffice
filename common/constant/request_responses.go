@@ -4,6 +4,7 @@ const (
 	HeaderContentType     = "Content-Type"
 	HeaderApplicationJSON = "application/json"
 	XAPIKey               = "X-API-KEY"
+	XUIDKey               = "X-UID-KEY"
 	XMemberId             = "X-Member-ID"
 	XCompanyId            = "X-Company-ID"
 	XTierLevel            = "X-Tier-Level"

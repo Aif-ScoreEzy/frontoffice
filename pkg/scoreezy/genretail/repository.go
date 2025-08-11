@@ -32,13 +32,13 @@ type repository struct {
 }
 
 type Repository interface {
-	GenRetailV3API(apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GenRetailV3API(uidKey, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
 }
 
-func (repo *repository) GenRetailV3API(apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
+func (repo *repository) GenRetailV3API(uidKey, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
 	url := fmt.Sprintf("%s/api/score/genretail/v3", repo.cfg.Env.ScoreezyHost)
 
 	bodyBytes, err := repo.marshalFn(payload)
@@ -53,6 +53,7 @@ func (repo *repository) GenRetailV3API(apiKey string, payload *genRetailRequest)
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 	req.Header.Set(constant.XAPIKey, apiKey)
+	req.Header.Set(constant.XUIDKey, uidKey)
 
 	res, err := repo.client.Do(req)
 	if err != nil {

@@ -21,6 +21,7 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 	controller := NewController(service, logOpService)
 
 	genRetailGroup := apiGroup.Group("gen-retail")
+	genRetailGroup.Post("/dummy-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(genRetailRequest{}), controller.DummyRequestScore)
 	genRetailGroup.Post("/single-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), middleware.IsRequestValid(genRetailRequest{}), controller.RequestScore)
 	// genRetailAPI.Get("/download-csv/:opsi", middleware.GetJWTPayloadFromCookie(), controller.DownloadCSV)
 	// genRetailAPI.Put("/upload-scoring-template", middleware.Auth(), middleware.IsRequestValid(UploadScoringRequest{}), middleware.GetJWTPayloadFromCookie(), middleware.DocUpload(), controller.UploadCSV)
