@@ -59,7 +59,6 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 
 func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 	req := c.Locals(constant.Request).(*genRetailRequest)
-	apiKey := fmt.Sprintf("%v", c.Locals(constant.APIKey))
 	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
 	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
 
@@ -73,7 +72,7 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
 
-	result, err := ctrl.Svc.GenRetailV3(memberId, companyId, apiKey, req)
+	result, err := ctrl.Svc.GenRetailV3(memberId, companyId, req)
 	if err != nil {
 		return err
 	}

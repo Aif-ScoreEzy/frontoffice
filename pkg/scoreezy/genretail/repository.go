@@ -32,13 +32,13 @@ type repository struct {
 }
 
 type Repository interface {
-	GenRetailV3API(uidKey, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
 }
 
-func (repo *repository) GenRetailV3API(uidKey, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
+func (repo *repository) GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
 	url := fmt.Sprintf("%s/api/score/genretail/v3", repo.cfg.Env.ScoreezyHost)
 
 	bodyBytes, err := repo.marshalFn(payload)
@@ -52,8 +52,7 @@ func (repo *repository) GenRetailV3API(uidKey, apiKey string, payload *genRetail
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XAPIKey, apiKey)
-	req.Header.Set(constant.XUIDKey, uidKey)
+	req.Header.Set(constant.XUIDKey, memberId)
 
 	res, err := repo.client.Do(req)
 	if err != nil {
@@ -62,6 +61,30 @@ func (repo *repository) GenRetailV3API(uidKey, apiKey string, payload *genRetail
 	defer res.Body.Close()
 
 	return helper.ParseScoreezyAPIResponse[dataGenRetailV3](res)
+}
+
+func (repo *repository) GetLogsScoreezyAPI() ([]*logTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[[]*logTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 // func (repo *repository) StoreImportData(newData []*BulkSearch, userId string) error {

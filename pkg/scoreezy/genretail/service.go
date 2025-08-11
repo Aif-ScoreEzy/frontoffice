@@ -18,13 +18,13 @@ type service struct {
 }
 
 type Service interface {
-	GenRetailV3(memberId, companyId, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
 	// GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
 }
 
-func (svc *service) GenRetailV3(memberId, companyId, apiKey string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
+func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
 	// make sure parameter settings are set
 	productSlug := constant.SlugGenRetailV3
 	grade, err := svc.gradeRepo.GetGradesAPI(productSlug, fmt.Sprintf("%v", companyId))
@@ -36,7 +36,7 @@ func (svc *service) GenRetailV3(memberId, companyId, apiKey string, payload *gen
 		return nil, apperror.BadRequest(constant.ParamSettingIsNotSet)
 	}
 
-	result, err := svc.repo.GenRetailV3API(memberId, apiKey, payload)
+	result, err := svc.repo.GenRetailV3API(memberId, payload)
 	if err != nil {
 		apperror.MapRepoError(err, "failed to process gen retail v3")
 	}
