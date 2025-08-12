@@ -58,6 +58,8 @@ func getTemplateDescription(product string) string {
 		return "Tax score template"
 	case constant.TaxVerificationTemplates:
 		return "Tax verification detail template"
+	case constant.GenRetailTemplates:
+		return "Gen Retail v3 template"
 	default:
 		return "Common template"
 	}

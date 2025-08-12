@@ -28,12 +28,13 @@ type Environment struct {
 	JwtVerificationExpiresMinutes  string
 	JwtActivationExpiresMinutes    string
 	JwtResetPasswordExpiresMinutes string
+	XModuleKey                     string
 	PartnerServiceHost             string
 	ProductCatalogHost             string
 	AifcoreHost                    string
+	ScoreezyHost                   string
 	GenretailV3                    string
 	AllowingDomains                string
-	XModuleKey                     string
 }
 
 func GetEnvironment(key string) string {
@@ -77,6 +78,7 @@ func LoadEnvironment() *Environment {
 		PartnerServiceHost:             GetEnvironment("PARTNER_SERVICE_HOST"),
 		ProductCatalogHost:             GetEnvironment("PRODUCT_CATALOG_HOST"),
 		AifcoreHost:                    GetEnvironment("AIFCORE_HOST"),
+		ScoreezyHost:                   GetEnvironment("SCOREEZY_HOST"),
 		AllowingDomains:                GetEnvironment("ALLOWING_DOMAINS"),
 		XModuleKey:                     GetEnvironment("X_MODULE_KEY"),
 	}
