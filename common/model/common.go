@@ -34,3 +34,11 @@ type ProCatAPIResponse[T any] struct {
 	TransactionId   string      `json:"transaction_id"`
 	Date            string      `json:"datetime"`
 }
+
+type ScoreezyAPIResponse[T any] struct {
+	Success      bool   `json:"success"`
+	Data         *T     `json:"data"`
+	Message      string `json:"message"`
+	ErrorMessage string `json:"error_message,omitempty"`
+	StatusCode   int    `json:"-"`
+}

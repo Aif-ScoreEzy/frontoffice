@@ -10,4 +10,5 @@ const (
 	TaxComplianceStatusTemplates = "taxcompliancestatus"
 	TaxScoreTemplates            = "taxscore"
 	TaxVerificationTemplates     = "taxverificationdetail"
+	GenRetailTemplates           = "genretail"
 )
