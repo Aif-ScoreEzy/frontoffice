@@ -33,6 +33,7 @@ type repository struct {
 
 type Repository interface {
 	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GetLogsScoreezyAPI(companyId string) ([]*logTransScoreezy, error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
@@ -63,7 +64,7 @@ func (repo *repository) GenRetailV3API(memberId string, payload *genRetailReques
 	return helper.ParseScoreezyAPIResponse[dataGenRetailV3](res)
 }
 
-func (repo *repository) GetLogsScoreezyAPI() ([]*logTransScoreezy, error) {
+func (repo *repository) GetLogsScoreezyAPI(companyId string) ([]*logTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -72,6 +73,10 @@ func (repo *repository) GetLogsScoreezyAPI() ([]*logTransScoreezy, error) {
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	q := req.URL.Query()
+	q.Add("company_id", companyId)
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
 	if err != nil {

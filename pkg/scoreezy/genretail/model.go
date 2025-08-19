@@ -46,11 +46,7 @@ type GenRetailV3ClientReturnSuccess struct {
 type logTransScoreezy struct {
 	LogTrxId             uint                  `json:"log_trx_id" gorm:"primaryKey;autoIncrement"`
 	TrxId                string                `json:"trx_id"`
-	MemberId             uint                  `json:"user_id"`
-	Member               member.MstMember      `json:"user"`
 	CompanyId            uint                  `json:"company_id"`
-	IpClient             string                `json:"ip_client"`
-	ProductId            uint                  `json:"product_id"`
 	Status               string                `json:"status"`  // Free or Pay
 	Success              bool                  `json:"success"` // true or false
 	Message              string                `json:"message"`
@@ -58,7 +54,6 @@ type logTransScoreezy struct {
 	Grade                string                `json:"grade"`
 	LoanNo               string                `json:"loan_no"`
 	Data                 *dataLogTransScoreezy `json:"data" swaggertype:"object"`
-	Duration             time.Duration         `json:"duration" format:"duration" example:"2h30m"`
 	CreatedAt            time.Time             `json:"created_at" format:"date-time"`
 }
 

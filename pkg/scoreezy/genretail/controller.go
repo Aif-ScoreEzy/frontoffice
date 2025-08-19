@@ -15,22 +15,23 @@ import (
 
 func NewController(
 	service Service,
-	svcLogOperation operation.Service,
+	logOpService operation.Service,
 ) Controller {
 	return &controller{
-		Svc:             service,
-		SvcLogOperation: svcLogOperation,
+		service,
+		logOpService,
 	}
 }
 
 type controller struct {
-	Svc             Service
-	SvcLogOperation operation.Service
+	service      Service
+	logOpService operation.Service
 }
 
 type Controller interface {
 	DummyRequestScore(c *fiber.Ctx) error
 	RequestScore(c *fiber.Ctx) error
+	GetLogsScoreezy(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
 	// UploadCSV(c *fiber.Ctx) error
 	// GetBulkSearch(c *fiber.Ctx) error
@@ -72,7 +73,7 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return apperror.Unauthorized(constant.InvalidCompanySession)
 	}
 
-	result, err := ctrl.Svc.GenRetailV3(memberId, companyId, req)
+	result, err := ctrl.service.GenRetailV3(memberId, companyId, req)
 	if err != nil {
 		return err
 	}
@@ -83,12 +84,26 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		Action:    constant.EventCalculateScore,
 	}
 
-	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
+	err = ctrl.logOpService.AddLogOperation(addLogRequest)
 	if err != nil {
 		log.Println("Failed to log operation for calculate score")
 	}
 
 	return c.Status(result.StatusCode).JSON(result)
+}
+
+func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {
+	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+
+	result, err := ctrl.service.GetLogsScoreezy(companyId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		constant.Success,
+		result,
+	))
 }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {

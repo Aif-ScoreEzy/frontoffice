@@ -19,6 +19,7 @@ type service struct {
 
 type Service interface {
 	GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GetLogsScoreezy(companyId string) ([]*logTransScoreezy, error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
 	// GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
@@ -42,6 +43,15 @@ func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRe
 	}
 
 	return result, err
+}
+
+func (svc *service) GetLogsScoreezy(companyId string) ([]*logTransScoreezy, error) {
+	result, err := svc.repo.GetLogsScoreezyAPI(companyId)
+	if err != nil {
+		return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
+	}
+
+	return result, nil
 }
 
 // func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error {
