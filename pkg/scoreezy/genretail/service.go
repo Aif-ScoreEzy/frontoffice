@@ -20,7 +20,7 @@ type service struct {
 
 type Service interface {
 	GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
-	GetLogsScoreezy(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
+	GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
 	// GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
@@ -46,12 +46,12 @@ func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRe
 	return result, err
 }
 
-func (svc *service) GetLogsScoreezy(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+func (svc *service) GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
 	var result *model.AifcoreAPIResponse[[]*logTransScoreezy]
 	var err error
 
-	if startDate == "" && endDate == "" {
-		result, err = svc.repo.GetLogsScoreezyAPI(companyId)
+	if filter.StartDate == "" && filter.EndDate == "" {
+		result, err = svc.repo.GetLogsScoreezyAPI(filter.CompanyId)
 		if err != nil {
 			return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
 		}
@@ -59,18 +59,18 @@ func (svc *service) GetLogsScoreezy(companyId, startDate, endDate string) (*mode
 		return result, nil
 	}
 
-	if startDate != "" && endDate == "" {
-		endDate = startDate
+	if filter.StartDate != "" && filter.EndDate == "" {
+		filter.EndDate = filter.StartDate
 	}
 
-	if _, err := time.Parse(constant.FormatYYYYMMDD, startDate); err != nil {
+	if _, err := time.Parse(constant.FormatYYYYMMDD, filter.StartDate); err != nil {
 		return nil, apperror.BadRequest("invalid start_date format, use YYYY-MM-DD")
 	}
-	if _, err := time.Parse(constant.FormatYYYYMMDD, endDate); err != nil {
+	if _, err := time.Parse(constant.FormatYYYYMMDD, filter.EndDate); err != nil {
 		return nil, apperror.BadRequest("invalid end_date format, use YYYY-MM-DD")
 	}
 
-	result, err = svc.repo.GetLogsByRangeDateAPI(companyId, startDate, endDate)
+	result, err = svc.repo.GetLogsByRangeDateAPI(filter)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
 	}

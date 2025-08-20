@@ -34,7 +34,7 @@ type repository struct {
 type Repository interface {
 	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
 	GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
-	GetLogsByRangeDateAPI(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
+	GetLogsByRangeDateAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
@@ -98,11 +98,12 @@ func (repo *repository) GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIR
 	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/list", map[string]string{"company_id": companyId})
 }
 
-func (repo *repository) GetLogsByRangeDateAPI(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+func (repo *repository) GetLogsByRangeDateAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
 	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/range", map[string]string{
-		"company_id": companyId,
-		"date_start": startDate,
-		"date_end":   endDate,
+		"company_id": filter.CompanyId,
+		"date_start": filter.StartDate,
+		"date_end":   filter.EndDate,
+		"grade":      filter.Grade,
 	})
 }
 

@@ -93,11 +93,14 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 }
 
 func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {
-	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
-	startDate := c.Query(constant.StartDate)
-	endDate := c.Query(constant.EndDate)
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		StartDate: c.Query(constant.StartDate),
+		EndDate:   c.Query(constant.EndDate),
+		Grade:     c.Query("grade"),
+	}
 
-	result, err := ctrl.service.GetLogsScoreezy(companyId, startDate, endDate)
+	result, err := ctrl.service.GetLogsScoreezy(filter)
 	if err != nil {
 		return err
 	}

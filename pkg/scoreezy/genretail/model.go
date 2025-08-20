@@ -41,6 +41,13 @@ type gradesResponseData struct {
 	Logs []*logTransScoreezy `json:"logs"`
 }
 
+type filterLogs struct {
+	StartDate string
+	EndDate   string
+	CompanyId string
+	Grade     string
+}
+
 type GenRetailV3ClientReturnSuccess struct {
 	Message string           `json:"message"`
 	Success bool             `json:"success"`
