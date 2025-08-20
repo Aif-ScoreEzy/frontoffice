@@ -8,6 +8,9 @@ const (
 	JobStatusError      = "error"
 
 	FormatDateAndTime = "2006-01-02 15:04:05"
+	FormatYYYYMMDD    = "2006-01-02"
 
 	SucceedGetLogTrans = "succeed to get list of log transaction"
+
+	Success = "success"
 )

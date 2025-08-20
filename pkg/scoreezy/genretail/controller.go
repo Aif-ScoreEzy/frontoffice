@@ -94,16 +94,19 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 
 func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {
 	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
+	startDate := c.Query(constant.StartDate)
+	endDate := c.Query(constant.EndDate)
 
-	result, err := ctrl.service.GetLogsScoreezy(companyId)
+	result, err := ctrl.service.GetLogsScoreezy(companyId, startDate, endDate)
 	if err != nil {
 		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
-		constant.Success,
-		result,
-	))
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": constant.Success,
+		"data":    gradesResponseData{Logs: result.Data},
+		"meta":    result.Meta,
+	})
 }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {

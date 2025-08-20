@@ -37,6 +37,10 @@ type dataGenRetailV3 struct {
 	Date                 string  `json:"date"` // 2022-03-22 12:30:22
 }
 
+type gradesResponseData struct {
+	Logs []*logTransScoreezy `json:"logs"`
+}
+
 type GenRetailV3ClientReturnSuccess struct {
 	Message string           `json:"message"`
 	Success bool             `json:"success"`

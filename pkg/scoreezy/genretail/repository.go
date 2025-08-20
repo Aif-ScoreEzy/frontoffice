@@ -33,7 +33,8 @@ type repository struct {
 
 type Repository interface {
 	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
-	GetLogsScoreezyAPI(companyId string) ([]*logTransScoreezy, error)
+	GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
+	GetLogsByRangeDateAPI(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
@@ -64,18 +65,19 @@ func (repo *repository) GenRetailV3API(memberId string, payload *genRetailReques
 	return helper.ParseScoreezyAPIResponse[dataGenRetailV3](res)
 }
 
-func (repo *repository) GetLogsScoreezyAPI(companyId string) ([]*logTransScoreezy, error) {
-	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)
+func (repo *repository) fetchLogsAPI(path string, query map[string]string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+	url := fmt.Sprintf("%s%s", repo.cfg.Env.AifcoreHost, path)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
-
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
 
 	q := req.URL.Query()
-	q.Add("company_id", companyId)
+	for k, v := range query {
+		q.Add(k, v)
+	}
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -89,7 +91,19 @@ func (repo *repository) GetLogsScoreezyAPI(companyId string) ([]*logTransScoreez
 		return nil, err
 	}
 
-	return apiResp.Data, nil
+	return apiResp, nil
+}
+
+func (repo *repository) GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/list", map[string]string{"company_id": companyId})
+}
+
+func (repo *repository) GetLogsByRangeDateAPI(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/range", map[string]string{
+		"company_id": companyId,
+		"date_start": startDate,
+		"date_end":   endDate,
+	})
 }
 
 // func (repo *repository) StoreImportData(newData []*BulkSearch, userId string) error {

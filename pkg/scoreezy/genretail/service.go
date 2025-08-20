@@ -6,6 +6,7 @@ import (
 	"front-office/common/model"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/grade"
+	"time"
 )
 
 func NewService(repo Repository, gradeRepo grade.Repository) Service {
@@ -19,7 +20,7 @@ type service struct {
 
 type Service interface {
 	GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
-	GetLogsScoreezy(companyId string) ([]*logTransScoreezy, error)
+	GetLogsScoreezy(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
 	// GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
@@ -45,8 +46,31 @@ func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRe
 	return result, err
 }
 
-func (svc *service) GetLogsScoreezy(companyId string) ([]*logTransScoreezy, error) {
-	result, err := svc.repo.GetLogsScoreezyAPI(companyId)
+func (svc *service) GetLogsScoreezy(companyId, startDate, endDate string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+	var result *model.AifcoreAPIResponse[[]*logTransScoreezy]
+	var err error
+
+	if startDate == "" && endDate == "" {
+		result, err = svc.repo.GetLogsScoreezyAPI(companyId)
+		if err != nil {
+			return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
+		}
+
+		return result, nil
+	}
+
+	if startDate != "" && endDate == "" {
+		endDate = startDate
+	}
+
+	if _, err := time.Parse(constant.FormatYYYYMMDD, startDate); err != nil {
+		return nil, apperror.BadRequest("invalid start_date format, use YYYY-MM-DD")
+	}
+	if _, err := time.Parse(constant.FormatYYYYMMDD, endDate); err != nil {
+		return nil, apperror.BadRequest("invalid end_date format, use YYYY-MM-DD")
+	}
+
+	result, err = svc.repo.GetLogsByRangeDateAPI(companyId, startDate, endDate)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
 	}
