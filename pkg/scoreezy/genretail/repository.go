@@ -35,6 +35,7 @@ type Repository interface {
 	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
 	GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	GetLogsByRangeDateAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
+	GetLogByTrxIdAPI(filter *filterLogs) (*logTransScoreezy, error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
 	// GetAllBulkSearch(tierLevel uint, userId, companyId string) ([]*BulkSearch, error)
 	// CountData(tierLevel uint, userId, companyId string) (int64, error)
@@ -105,6 +106,30 @@ func (repo *repository) GetLogsByRangeDateAPI(filter *filterLogs) (*model.Aifcor
 		"date_end":   filter.EndDate,
 		"grade":      filter.Grade,
 	})
+}
+
+func (repo *repository) GetLogByTrxIdAPI(filter *filterLogs) (*logTransScoreezy, error) {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/%s", repo.cfg.Env.AifcoreHost, filter.TrxId)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+	defer resp.Body.Close()
+
+	apiResp, err := helper.ParseAifcoreAPIResponse[*logTransScoreezy](resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiResp.Data, nil
 }
 
 // func (repo *repository) StoreImportData(newData []*BulkSearch, userId string) error {

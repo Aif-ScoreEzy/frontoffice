@@ -42,6 +42,7 @@ type gradesResponseData struct {
 }
 
 type filterLogs struct {
+	TrxId     string
 	StartDate string
 	EndDate   string
 	CompanyId string

@@ -32,6 +32,7 @@ type Controller interface {
 	DummyRequestScore(c *fiber.Ctx) error
 	RequestScore(c *fiber.Ctx) error
 	GetLogsScoreezy(c *fiber.Ctx) error
+	GetLogScoreezy(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
 	// UploadCSV(c *fiber.Ctx) error
 	// GetBulkSearch(c *fiber.Ctx) error
@@ -49,7 +50,7 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 			LoanNo:               "LN987654321",
 			ProbabilityToDefault: 0.12345,
 			Grade:                "A",
-			Identity:             "verified in more than 50% social media platform and registered on one of the telecommunication platforms",
+			Identity:             "Verified in more than 50% social media platform and registered on one of the telecommunication platforms",
 			Behavior:             "This individual is not identified to have a history of loan applications and is not indicated to have defaulted on payments.",
 			Date:                 time.Now().Format("2006-01-02 15:04:05"),
 		},
@@ -110,6 +111,20 @@ func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {
 		"data":    gradesResponseData{Logs: result.Data},
 		"meta":    result.Meta,
 	})
+}
+
+func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TrxId:     c.Params("trx_id"),
+	}
+
+	result, err := ctrl.service.GetLogScoreezy(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(constant.Success, result))
 }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {
