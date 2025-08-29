@@ -97,6 +97,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
 		Page:        c.Query(constant.Page, "1"),
 		Size:        c.Query(constant.Size, "10"),
+		Keyword:     c.Query(constant.Keyword),
 		JobId:       c.Params("id"),
 		ProductSlug: constant.SlugPhoneLiveStatus,
 		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
