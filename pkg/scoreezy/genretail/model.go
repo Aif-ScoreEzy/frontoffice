@@ -76,6 +76,13 @@ type dataLogTransScoreezy struct {
 	LoanNo      string `json:"loan_no"`
 }
 
+type genRetailContext struct {
+	MemberId  uint              `json:"member_id"`
+	CompanyId uint              `json:"company_id"`
+	ProductId uint              `json:"product_id"`
+	Request   *genRetailRequest `json:"request"`
+}
+
 type UploadScoringRequest struct {
 	Files []byte `json:"files"`
 }

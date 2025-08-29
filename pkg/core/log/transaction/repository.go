@@ -27,6 +27,7 @@ type repository struct {
 
 type Repository interface {
 	// scoreezy
+	CreateLogScoreezyAPI(req *LogTransScoreezy) error
 	GetLogsScoreezyAPI() ([]*LogTransScoreezy, error)
 	GetLogsScoreezyByDateAPI(companyId, date string) ([]*LogTransScoreezy, error)
 	GetLogsScoreezyByDateRangeAPI(companyId, startDate, endDate string) ([]*LogTransScoreezy, error)

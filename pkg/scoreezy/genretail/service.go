@@ -1,25 +1,45 @@
 package genretail
 
 import (
-	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
+	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/grade"
+	"front-office/pkg/core/log/operation"
+	"front-office/pkg/core/log/transaction"
+	"front-office/pkg/core/product"
+	"log"
+	"mime/multipart"
+	"strconv"
+	"sync"
 	"time"
+
+	logger "github.com/rs/zerolog/log"
+	"github.com/usepzaka/validator"
 )
 
-func NewService(repo Repository, gradeRepo grade.Repository) Service {
-	return &service{repo, gradeRepo}
+func NewService(
+	repo Repository,
+	gradeRepo grade.Repository,
+	transRepo transaction.Repository,
+	productRepo product.Repository,
+	logRepo operation.Repository,
+) Service {
+	return &service{repo, gradeRepo, transRepo, productRepo, logRepo}
 }
 
 type service struct {
-	repo      Repository
-	gradeRepo grade.Repository
+	repo        Repository
+	gradeRepo   grade.Repository
+	transRepo   transaction.Repository
+	productRepo product.Repository
+	logRepo     operation.Repository
 }
 
 type Service interface {
-	GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	GenRetailV3(memberId, companyId uint, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
+	BulkGenRetailV3(memberId, companyId uint, file *multipart.FileHeader) error
 	GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	GetLogScoreezy(filter *filterLogs) (*logTransScoreezy, error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
@@ -27,10 +47,10 @@ type Service interface {
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
 }
 
-func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
+func (svc *service) GenRetailV3(memberId, companyId uint, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error) {
 	// make sure parameter settings are set
 	productSlug := constant.SlugGenRetailV3
-	grade, err := svc.gradeRepo.GetGradesAPI(productSlug, fmt.Sprintf("%v", companyId))
+	grade, err := svc.gradeRepo.GetGradesAPI(productSlug, strconv.FormatUint(uint64(companyId), 10))
 	if err != nil {
 		return nil, apperror.MapRepoError(err, "failed to get grades")
 	}
@@ -39,12 +59,106 @@ func (svc *service) GenRetailV3(memberId, companyId string, payload *genRetailRe
 		return nil, apperror.BadRequest(constant.ParamSettingIsNotSet)
 	}
 
-	result, err := svc.repo.GenRetailV3API(memberId, payload)
+	result, err := svc.repo.GenRetailV3API(strconv.FormatUint(uint64(memberId), 10), payload)
 	if err != nil {
-		apperror.MapRepoError(err, "failed to process gen retail v3")
+		return nil, apperror.MapRepoError(err, "failed to process gen retail v3")
+	}
+
+	addLogRequest := &operation.AddLogRequest{
+		MemberId:  memberId,
+		CompanyId: companyId,
+		Action:    constant.EventCalculateScore,
+	}
+
+	err = svc.logRepo.AddLogOperation(addLogRequest)
+	if err != nil {
+		log.Println("Failed to log operation for calculate score")
 	}
 
 	return result, err
+}
+
+func (svc *service) BulkGenRetailV3(memberId, companyId uint, file *multipart.FileHeader) error {
+	// make sure parameter settings are set
+	productSlug := constant.SlugGenRetailV3
+	grade, err := svc.gradeRepo.GetGradesAPI(productSlug, strconv.FormatUint(uint64(companyId), 10))
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to get grades")
+	}
+
+	if len(grade.Grades) < 1 {
+		return apperror.BadRequest(constant.ParamSettingIsNotSet)
+	}
+
+	product, err := svc.productRepo.GetProductAPI(productSlug)
+	if err != nil {
+		return apperror.MapRepoError(err, constant.FailedFetchProduct)
+	}
+
+	if product.ProductId == 0 {
+		return apperror.NotFound(constant.ProductNotFound)
+	}
+
+	if err := helper.ValidateUploadedFile(file, 30*1024*1024, []string{".csv"}); err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	records, err := helper.ParseCSVFile(file, []string{"name", "id_card_no", "phone_no", "loan_no"})
+	if err != nil {
+		return apperror.Internal(constant.FailedParseCSV, err)
+	}
+
+	var reqs []*genRetailRequest
+	for i, rec := range records {
+		if i == 0 { // skip header
+			continue
+		}
+
+		reqs = append(reqs, &genRetailRequest{
+			Name:     rec[0],
+			IdCardNo: rec[1],
+			PhoneNo:  rec[2],
+			LoanNo:   rec[3],
+		})
+	}
+
+	var (
+		wg         sync.WaitGroup
+		errChan    = make(chan error, len(reqs))
+		batchCount = 0
+	)
+
+	for _, req := range reqs {
+		wg.Add(1)
+
+		go func(req *genRetailRequest) {
+			defer wg.Done()
+
+			if err := svc.processSingleGenRetail(&genRetailContext{
+				MemberId:  memberId,
+				CompanyId: companyId,
+				ProductId: product.ProductId,
+				Request:   req,
+			}); err != nil {
+				errChan <- err
+			}
+		}(req)
+
+		batchCount++
+		if batchCount == 100 {
+			time.Sleep(time.Second)
+			batchCount = 0
+		}
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		logger.Error().Err(err).Msg("error during bulk gen retail processing")
+	}
+
+	return nil
 }
 
 func (svc *service) GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
@@ -90,6 +204,28 @@ func (svc *service) GetLogScoreezy(filter *filterLogs) (*logTransScoreezy, error
 	}
 
 	return result, nil
+}
+
+func (svc *service) processSingleGenRetail(params *genRetailContext) error {
+	if err := validator.ValidateStruct(params.Request); err != nil {
+		_ = svc.transRepo.CreateLogScoreezyAPI(&transaction.LogTransScoreezy{
+			MemberId:  params.MemberId,
+			CompanyId: params.CompanyId,
+			ProductId: params.ProductId,
+			Message:   err.Error(),
+			Status:    "FREE",
+			Success:   false,
+		})
+
+		return apperror.BadRequest(err.Error())
+	}
+
+	_, err := svc.repo.GenRetailV3API(strconv.FormatUint(uint64(params.MemberId), 10), params.Request)
+	if err != nil {
+		return apperror.MapRepoError(err, "failed to process gen retail v3")
+	}
+
+	return nil
 }
 
 // func (svc *service) BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error {

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"front-office/helper"
 	"front-office/internal/apperror"
-	"front-office/pkg/core/log/operation"
-	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,22 +13,20 @@ import (
 
 func NewController(
 	service Service,
-	logOpService operation.Service,
 ) Controller {
 	return &controller{
 		service,
-		logOpService,
 	}
 }
 
 type controller struct {
-	service      Service
-	logOpService operation.Service
+	service Service
 }
 
 type Controller interface {
 	DummyRequestScore(c *fiber.Ctx) error
-	RequestScore(c *fiber.Ctx) error
+	SingleRequest(c *fiber.Ctx) error
+	BulkRequest(c *fiber.Ctx) error
 	GetLogsScoreezy(c *fiber.Ctx) error
 	GetLogScoreezy(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
@@ -59,19 +55,16 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
-func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
+func (ctrl *controller) SingleRequest(c *fiber.Ctx) error {
 	req := c.Locals(constant.Request).(*genRetailRequest)
-	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
-	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
-
-	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyIdUint, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
-		return apperror.Unauthorized(constant.InvalidCompanySession)
+		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
 	result, err := ctrl.service.GenRetailV3(memberId, companyId, req)
@@ -79,18 +72,33 @@ func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
 		return err
 	}
 
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  currentUserId,
-		CompanyId: companyIdUint,
-		Action:    constant.EventCalculateScore,
-	}
-
-	err = ctrl.logOpService.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for calculate score")
-	}
-
 	return c.Status(result.StatusCode).JSON(result)
+}
+
+func (ctrl *controller) BulkRequest(c *fiber.Ctx) error {
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	if err := ctrl.service.BulkGenRetailV3(memberId, companyId, file); err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"success",
+		nil,
+	))
 }
 
 func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {

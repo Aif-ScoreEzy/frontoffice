@@ -18,10 +18,7 @@ func (repo *repository) CreateLogTransAPI(payload *LogTransProCatRequest) error 
 		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
