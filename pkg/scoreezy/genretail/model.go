@@ -47,6 +47,7 @@ type filterLogs struct {
 	EndDate   string
 	CompanyId string
 	Grade     string
+	Size      string
 }
 
 type GenRetailV3ClientReturnSuccess struct {

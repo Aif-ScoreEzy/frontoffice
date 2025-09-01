@@ -1,6 +1,7 @@
 package genretail
 
 import (
+	"bytes"
 	"fmt"
 	"front-office/helper"
 	"front-office/internal/apperror"
@@ -29,6 +30,7 @@ type Controller interface {
 	BulkRequest(c *fiber.Ctx) error
 	GetLogsScoreezy(c *fiber.Ctx) error
 	GetLogScoreezy(c *fiber.Ctx) error
+	ExportJobDetails(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
 	// UploadCSV(c *fiber.Ctx) error
 	// GetBulkSearch(c *fiber.Ctx) error
@@ -133,6 +135,30 @@ func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(constant.Success, result))
+}
+
+func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		StartDate: c.Query(constant.StartDate),
+		EndDate:   c.Query(constant.EndDate),
+		Size:      constant.SizeUnlimited,
+	}
+
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
+	}
+
+	var buf bytes.Buffer
+	filename, err := ctrl.service.ExportJobDetails(filter, &buf)
+	if err != nil {
+		return err
+	}
+
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {

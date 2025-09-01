@@ -1,6 +1,9 @@
 package genretail
 
 import (
+	"bytes"
+	"encoding/csv"
+	"fmt"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
@@ -15,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	logger "github.com/rs/zerolog/log"
 	"github.com/usepzaka/validator"
 )
@@ -42,6 +46,7 @@ type Service interface {
 	BulkGenRetailV3(memberId, companyId uint, file *multipart.FileHeader) error
 	GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	GetLogScoreezy(filter *filterLogs) (*logTransScoreezy, error)
+	ExportJobDetails(filter *filterLogs, buf *bytes.Buffer) (string, error)
 	// BulkSearchUploadSvc(req []BulkSearchRequest, tempType, apiKey, userId, companyId string) error
 	// GetBulkSearchSvc(tierLevel uint, userId, companyId string) ([]BulkSearchResponse, error)
 	// GetTotalDataBulk(tierLevel uint, userId, companyId string) (int64, error)
@@ -166,7 +171,7 @@ func (svc *service) GetLogsScoreezy(filter *filterLogs) (*model.AifcoreAPIRespon
 	var err error
 
 	if filter.StartDate == "" && filter.EndDate == "" {
-		result, err = svc.repo.GetLogsScoreezyAPI(filter.CompanyId)
+		result, err = svc.repo.GetLogsScoreezyAPI(filter)
 		if err != nil {
 			return nil, apperror.MapRepoError(err, "failed to fetch logs scoreezy")
 		}
@@ -206,9 +211,62 @@ func (svc *service) GetLogScoreezy(filter *filterLogs) (*logTransScoreezy, error
 	return result, nil
 }
 
+func (svc *service) ExportJobDetails(filter *filterLogs, buf *bytes.Buffer) (string, error) {
+	if _, err := time.Parse(constant.FormatYYYYMMDD, filter.StartDate); err != nil {
+		return "", apperror.BadRequest("invalid start_date format, use YYYY-MM-DD")
+	}
+	if _, err := time.Parse(constant.FormatYYYYMMDD, filter.EndDate); err != nil {
+		return "", apperror.BadRequest("invalid end_date format, use YYYY-MM-DD")
+	}
+
+	result, err := svc.repo.GetLogsByRangeDateAPI(filter)
+	if err != nil {
+		return "", apperror.MapRepoError(err, "failed to fetch logs scoreezy")
+	}
+
+	var mappedDetails []*logTransScoreezy
+	mappedDetails = append(mappedDetails, result.Data...)
+
+	if err := writeToCSV(buf, mappedDetails); err != nil {
+		return "", apperror.Internal("failed to write CSV", err)
+	}
+
+	filename := formatCSVFileName("job_summary", filter.StartDate, filter.EndDate)
+
+	return filename, nil
+}
+
+func writeToCSV(buf *bytes.Buffer, logs []*logTransScoreezy) error {
+	w := csv.NewWriter(buf)
+	headers := []string{"Transaction ID", "Name", "NIK", "Phone Number", "Loan Number", "Probability To Default", "Grade", "Description"}
+
+	if err := w.Write(headers); err != nil {
+		return err
+	}
+
+	for _, log := range logs {
+		row := []string{log.TrxId, log.Data.Name, log.Data.IdCardNo, log.Data.PhoneNumber, log.LoanNo, log.ProbabilityToDefault, log.Grade, log.Message}
+		if err := w.Write(row); err != nil {
+			return err
+		}
+	}
+
+	w.Flush()
+	return w.Error()
+}
+
+func formatCSVFileName(base, startDate, endDate string) string {
+	if endDate != "" && endDate != startDate {
+		return fmt.Sprintf("%s_%s_until_%s.csv", base, startDate, endDate)
+	}
+
+	return fmt.Sprintf("%s_%s.csv", base, startDate)
+}
+
 func (svc *service) processSingleGenRetail(params *genRetailContext) error {
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transRepo.CreateLogScoreezyAPI(&transaction.LogTransScoreezy{
+			TrxId:     uuid.NewString(),
 			MemberId:  params.MemberId,
 			CompanyId: params.CompanyId,
 			ProductId: params.ProductId,

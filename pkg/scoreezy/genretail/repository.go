@@ -33,7 +33,7 @@ type repository struct {
 
 type Repository interface {
 	GenRetailV3API(memberId string, payload *genRetailRequest) (*model.ScoreezyAPIResponse[dataGenRetailV3], error)
-	GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
+	GetLogsScoreezyAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	GetLogsByRangeDateAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error)
 	GetLogByTrxIdAPI(filter *filterLogs) (*logTransScoreezy, error)
 	// StoreImportData(newData []*BulkSearch, userId string) error
@@ -95,17 +95,22 @@ func (repo *repository) fetchLogsAPI(path string, query map[string]string) (*mod
 	return apiResp, nil
 }
 
-func (repo *repository) GetLogsScoreezyAPI(companyId string) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
-	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/list", map[string]string{"company_id": companyId})
+func (repo *repository) GetLogsScoreezyAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
+	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/list",
+		map[string]string{
+			"company_id": filter.CompanyId,
+			"size":       filter.Size,
+		})
 }
 
 func (repo *repository) GetLogsByRangeDateAPI(filter *filterLogs) (*model.AifcoreAPIResponse[[]*logTransScoreezy], error) {
-	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/range", map[string]string{
-		"company_id": filter.CompanyId,
-		"date_start": filter.StartDate,
-		"date_end":   filter.EndDate,
-		"grade":      filter.Grade,
-	})
+	return repo.fetchLogsAPI("/api/core/logging/transaction/scoreezy/range",
+		map[string]string{
+			"company_id": filter.CompanyId,
+			"date_start": filter.StartDate,
+			"date_end":   filter.EndDate,
+			"grade":      filter.Grade,
+		})
 }
 
 func (repo *repository) GetLogByTrxIdAPI(filter *filterLogs) (*logTransScoreezy, error) {
