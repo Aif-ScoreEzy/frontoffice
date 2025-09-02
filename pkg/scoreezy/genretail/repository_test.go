@@ -219,3 +219,65 @@ func TestGetLogsScoreezyAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 }
+
+func TestGetLogsByRangeDateAPI(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
+		mockData := model.AifcoreAPIResponse[any]{
+			Success: true,
+		}
+		body, err := json.Marshal(mockData)
+		require.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(body)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetLogsByRangeDateAPI(&filterLogs{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
+		mockClient := new(MockClient)
+		repo := NewRepository(&config.Config{
+			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
+		}, mockClient, nil)
+
+		_, err := repo.GetLogsByRangeDateAPI(&filterLogs{})
+
+		assert.Error(t, err)
+	})
+
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
+		expectedErr := errors.New(constant.ErrHTTPReqFailed)
+
+		repo, mockClient := setupMockRepo(t, nil, expectedErr)
+
+		_, err := repo.GetLogsByRangeDateAPI(&filterLogs{})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
+		}
+
+		repo, mockClient := setupMockRepo(t, resp, nil)
+
+		result, err := repo.GetLogsByRangeDateAPI(&filterLogs{})
+
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		mockClient.AssertExpectations(t)
+	})
+}
