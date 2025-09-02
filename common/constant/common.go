@@ -19,4 +19,5 @@ const (
 	TestCaseNewRequestError  = "NewRequestError"
 	TestCaseHTTPRequestError = "HTTPRequestError"
 	TestCaseParseError       = "ParseError"
+	InvalidJSON              = `{invalid-json`
 )

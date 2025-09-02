@@ -106,7 +106,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -172,7 +172,7 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -238,7 +238,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -304,7 +304,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -370,7 +370,7 @@ func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -436,7 +436,7 @@ func TestCallGetJobsSummary(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -502,7 +502,7 @@ func TestCallGetProcessedCount(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -583,7 +583,7 @@ func TestCallUpdateJob(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -663,7 +663,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -747,7 +747,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

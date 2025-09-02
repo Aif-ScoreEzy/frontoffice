@@ -102,7 +102,7 @@ func TestCreatePasswordResetTokenAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -165,7 +165,7 @@ func TestGetPasswordResetTokenAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -225,7 +225,7 @@ func TestDeletePasswordResetTokenAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

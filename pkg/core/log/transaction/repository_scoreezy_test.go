@@ -67,7 +67,7 @@ func TestGetLogsScoreezyByDateAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -131,7 +131,7 @@ func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -195,7 +195,7 @@ func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -259,7 +259,7 @@ func TestGetLogsScoreezyAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

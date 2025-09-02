@@ -104,7 +104,7 @@ func TestVerifyMemberAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -180,7 +180,7 @@ func TestPasswordResetAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -257,7 +257,7 @@ func TestChangePasswordAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -344,7 +344,7 @@ func TestAuthMemberAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

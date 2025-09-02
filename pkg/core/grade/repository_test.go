@@ -90,7 +90,7 @@ func TestGetGradesAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -166,7 +166,7 @@ func TestSaveGradingAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
