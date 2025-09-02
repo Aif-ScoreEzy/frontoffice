@@ -1,4 +1,4 @@
-package loanrecordchecker
+package genretail
 
 import (
 	"bytes"
@@ -23,6 +23,7 @@ type MockClient struct {
 
 func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
 	args := m.Called(req)
+
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
@@ -33,18 +34,20 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 	mockClient.On("Do", mock.Anything).Return(response, err)
 
 	repo := NewRepository(&config.Config{
-		Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+		Env: &config.Environment{
+			ProductCatalogHost: constant.MockHost,
+			ScoreezyHost:       constant.MockHost,
+		},
 	}, mockClient, nil)
 
 	return repo, mockClient
 }
 
-func TestCallLoanRecordCheckerAPI(t *testing.T) {
+func TestGenRetailV3API(t *testing.T) {
 	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
-		mockData := model.ProCatAPIResponse[dataLoanRecord]{
+		mockData := model.ScoreezyAPIResponse[dataGenRetailV3]{
 			Success: true,
-			Message: "success",
-			Data:    dataLoanRecord{Remarks: "-", Status: "-"},
+			Data:    &dataGenRetailV3{Grade: "A"},
 		}
 		body, err := json.Marshal(mockData)
 		require.NoError(t, err)
@@ -56,13 +59,20 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.GenRetailV3API(
+			constant.DummyMemberId,
+			&genRetailRequest{
+				Name:     constant.DummyName,
+				IdCardNo: constant.DummyNIK,
+				PhoneNo:  constant.DummyPhoneNumber,
+				LoanNo:   constant.DummyId,
+			},
+		)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
-		assert.Equal(t, "-", result.Data.Status)
-		assert.Equal(t, "-", result.Data.Remarks)
+		assert.Equal(t, "A", result.Data.Grade)
 		mockClient.AssertExpectations(t)
 	})
 
@@ -72,10 +82,21 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 		}
 
 		repo := NewRepository(&config.Config{
-			Env: &config.Environment{ProductCatalogHost: constant.MockHost},
+			Env: &config.Environment{
+				ScoreezyHost: constant.MockHost,
+			},
 		}, &MockClient{}, fakeMarshal)
 
-		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.GenRetailV3API(
+			constant.DummyMemberId,
+			&genRetailRequest{
+				Name:     constant.DummyName,
+				IdCardNo: constant.DummyNIK,
+				PhoneNo:  constant.DummyPhoneNumber,
+				LoanNo:   constant.DummyId,
+			},
+		)
+
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
@@ -83,11 +104,23 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 
 	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
-		repo := NewRepository(&config.Config{
-			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
-		}, mockClient, nil)
+		repo := NewRepository(
+			&config.Config{
+				Env: &config.Environment{
+					ScoreezyHost: constant.MockInvalidHost,
+				},
+			}, mockClient, nil)
 
-		_, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		_, err := repo.GenRetailV3API(
+			constant.DummyMemberId,
+			&genRetailRequest{
+				Name:     constant.DummyName,
+				IdCardNo: constant.DummyNIK,
+				PhoneNo:  constant.DummyPhoneNumber,
+				LoanNo:   constant.DummyId,
+			},
+		)
+
 		assert.Error(t, err)
 	})
 
@@ -96,8 +129,10 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
 
-		req := &loanRecordCheckerRequest{}
-		_, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, req)
+		_, err := repo.GenRetailV3API(
+			constant.DummyMemberId,
+			&genRetailRequest{},
+		)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), constant.ErrHTTPReqFailed)
@@ -107,12 +142,16 @@ func TestCallLoanRecordCheckerAPI(t *testing.T) {
 	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(`{invalid-json}`)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
-		result, err := repo.LoanRecordCheckerAPI(constant.DummyAPIKey, constant.DummyJobId, constant.DummyMemberId, constant.DummyCompanyId, &loanRecordCheckerRequest{})
+		result, err := repo.GenRetailV3API(
+			constant.DummyMemberId,
+			&genRetailRequest{},
+		)
+
 		assert.Nil(t, result)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)

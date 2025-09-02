@@ -13,4 +13,10 @@ const (
 	SucceedGetLogTrans = "succeed to get list of log transaction"
 
 	Success = "success"
+
+	TestCaseSuccess          = "Success"
+	TestCaseMarshalError     = "MarshalError"
+	TestCaseNewRequestError  = "NewRequestError"
+	TestCaseHTTPRequestError = "HTTPRequestError"
+	TestCaseParseError       = "ParseError"
 )
