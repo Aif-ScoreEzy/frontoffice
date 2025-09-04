@@ -108,7 +108,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"name", "nik", "phone_number"})
+	records, err := helper.ParseCSVFile(file, []string{"Name", "ID Card Number", "Phone Number"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
