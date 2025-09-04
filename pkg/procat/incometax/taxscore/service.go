@@ -102,7 +102,7 @@ func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"npwp"})
+	records, err := helper.ParseCSVFile(file, []string{"NPWP"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
