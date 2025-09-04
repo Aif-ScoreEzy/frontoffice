@@ -111,7 +111,7 @@ func (svc *service) BulkPhoneLiveStatus(apiKey, memberId, companyId string, file
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"phone_number"})
+	records, err := helper.ParseCSVFile(file, []string{"Phone Number"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
