@@ -108,7 +108,7 @@ func (svc *service) BulkGenRetailV3(memberId, companyId uint, file *multipart.Fi
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"name", "id_card_no", "phone_no", "loan_no"})
+	records, err := helper.ParseCSVFile(file, []string{"Name", "Loan Number", "ID Card Number", "Phone Number"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
@@ -121,9 +121,9 @@ func (svc *service) BulkGenRetailV3(memberId, companyId uint, file *multipart.Fi
 
 		reqs = append(reqs, &genRetailRequest{
 			Name:     rec[0],
-			IdCardNo: rec[1],
-			PhoneNo:  rec[2],
-			LoanNo:   rec[3],
+			LoanNo:   rec[1],
+			IdCardNo: rec[2],
+			PhoneNo:  rec[3],
 		})
 	}
 
@@ -238,14 +238,14 @@ func (svc *service) ExportJobDetails(filter *filterLogs, buf *bytes.Buffer) (str
 
 func writeToCSV(buf *bytes.Buffer, logs []*logTransScoreezy) error {
 	w := csv.NewWriter(buf)
-	headers := []string{"Transaction ID", "Name", "NIK", "Phone Number", "Loan Number", "Probability To Default", "Grade", "Description"}
+	headers := []string{"Date Created", "Name", "Loan ID", "ID Card Number", "Phone Number", "Probability To Default", "Grade", "Description"}
 
 	if err := w.Write(headers); err != nil {
 		return err
 	}
 
 	for _, log := range logs {
-		row := []string{log.TrxId, log.Data.Name, log.Data.IdCardNo, log.Data.PhoneNumber, log.LoanNo, log.ProbabilityToDefault, log.Grade, log.Message}
+		row := []string{log.CreatedAt.Format(constant.FormatDateAndTime), log.Data.Name, log.Data.LoanNo, log.Data.IdCardNo, log.Data.PhoneNumber, log.ProbabilityToDefault, log.Grade, log.Message}
 		if err := w.Write(row); err != nil {
 			return err
 		}
@@ -264,6 +264,7 @@ func formatCSVFileName(base, startDate, endDate string) string {
 }
 
 func (svc *service) processSingleGenRetail(params *genRetailContext) error {
+	fmt.Println("???", params.Request.Name, params.Request.LoanNo, params.Request.IdCardNo, params.Request.PhoneNo)
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transRepo.CreateLogScoreezyAPI(&transaction.LogTransScoreezy{
 			TrxId:     uuid.NewString(),
@@ -275,8 +276,12 @@ func (svc *service) processSingleGenRetail(params *genRetailContext) error {
 			Success:   false,
 		})
 
+		fmt.Println("opopoo")
+
 		return apperror.BadRequest(err.Error())
 	}
+
+	fmt.Println("masuuk")
 
 	_, err := svc.repo.GenRetailV3API(strconv.FormatUint(uint64(params.MemberId), 10), params.Request)
 	if err != nil {

@@ -55,7 +55,7 @@ func (repo *repository) GenRetailV3API(memberId string, payload *genRetailReques
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XUIDKey, memberId)
+	req.Header.Set(constant.XUIDKey, "13")
 
 	res, err := repo.client.Do(req)
 	if err != nil {
