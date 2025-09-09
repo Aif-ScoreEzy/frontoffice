@@ -131,7 +131,7 @@ func (svc *service) BulkMultipleLoan(apiKey, slug string, memberId, companyId ui
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"nik", "phone_number"})
+	records, err := helper.ParseCSVFile(file, []string{"ID Card Number", "Phone Number"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}

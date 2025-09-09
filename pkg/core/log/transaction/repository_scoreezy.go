@@ -1,11 +1,41 @@
 package transaction
 
 import (
+	"bytes"
 	"fmt"
 	"front-office/common/constant"
 	"front-office/helper"
 	"net/http"
 )
+
+func (repo *repository) CreateLogScoreezyAPI(payload *LogTransScoreezy) error {
+	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy", repo.cfg.Env.AifcoreHost)
+
+	bodyBytes, err := repo.marshalFn(payload)
+	if err != nil {
+		return fmt.Errorf(constant.ErrMsgMarshalReqBody, err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+
+	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+
+	resp, err := repo.client.Do(req)
+	if err != nil {
+		return fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
+	}
+	defer resp.Body.Close()
+
+	_, err = helper.ParseAifcoreAPIResponse[any](resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (repo *repository) GetLogsScoreezyAPI() ([]*LogTransScoreezy, error) {
 	url := fmt.Sprintf("%s/api/core/logging/transaction/scoreezy/list", repo.cfg.Env.AifcoreHost)

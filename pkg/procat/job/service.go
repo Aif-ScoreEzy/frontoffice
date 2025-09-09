@@ -141,7 +141,7 @@ func (svc *service) exportJobDetailsToCSV(
 			return mapTaxScoreRow(filter.IsMasked, d)
 		}
 	case constant.SlugTaxVerificationDetail:
-		headers = []string{"NPWP Or NIK", "Nama", "Alamat", "NPWP", "NPWP Verification", "Data Status", "Tax Compliance", "Status", "Description"}
+		headers = []string{"Nama", "Alamat", "NPWP", "NPWP Verification", "Data Status", "Tax Compliance", "Status", "Description"}
 		mapper = func(d *logTransProductCatalog) []string {
 			return mapTaxVerificationRow(filter.IsMasked, d)
 		}
@@ -392,7 +392,7 @@ func mapTaxScoreRow(isMasked bool, d *logTransProductCatalog) []string {
 
 func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
 	var (
-		description, nama, alamat, status, npwp, npwpVerification, taxCompliance, npwpOrNIK string
+		description, nama, alamat, status, npwpVerification, taxCompliance, npwpOrNIK string
 	)
 
 	if d.Message != nil {
@@ -403,7 +403,7 @@ func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
 		nama = *d.Data.Nama
 		alamat = *d.Data.Alamat
 		npwpVerification = *d.Data.NPWPVerification
-		npwp = *d.Data.NPWP
+		// npwp = *d.Data.NPWP
 		status = *d.Data.Status
 		taxCompliance = *d.Data.TaxCompliance
 	}
@@ -414,9 +414,9 @@ func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
 	}
 
 	if isMasked {
-		if ref.Data.NPWP != "" {
-			npwp = ref.Data.NPWP
-		}
+		// if ref.Data.NPWP != "" {
+		// 	npwp = ref.Data.NPWP
+		// }
 
 		npwpOrNIK = ref.Input.NPWPOrNIK
 	} else {
@@ -424,10 +424,10 @@ func mapTaxVerificationRow(isMasked bool, d *logTransProductCatalog) []string {
 	}
 
 	return []string{
-		npwpOrNIK,
 		nama,
 		alamat,
-		npwp,
+		npwpOrNIK,
+		// npwp,
 		npwpVerification,
 		status,
 		taxCompliance,

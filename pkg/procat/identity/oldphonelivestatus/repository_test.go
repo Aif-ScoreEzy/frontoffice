@@ -43,7 +43,7 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 }
 
 func TestCallCreateJobAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[createJobRespData]{
 			Success: true,
 			Data:    createJobRespData{},
@@ -65,7 +65,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -80,7 +80,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -91,7 +91,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -103,10 +103,10 @@ func TestCallCreateJobAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -120,7 +120,7 @@ func TestCallCreateJobAPI(t *testing.T) {
 }
 
 func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[jobListRespData]{
 			Success: true,
 			Data:    jobListRespData{},
@@ -146,7 +146,7 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -157,7 +157,7 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -169,10 +169,10 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -186,7 +186,7 @@ func TestCallGetPhoneLiveStatusJobAPI(t *testing.T) {
 }
 
 func TestCallGetJobDetailsAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[jobDetailRespData]{
 			Success: true,
 			Data:    jobDetailRespData{},
@@ -212,7 +212,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -223,7 +223,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -235,10 +235,10 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -252,7 +252,7 @@ func TestCallGetJobDetailsAPI(t *testing.T) {
 }
 
 func TestCallGetAllJobDetailsAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
 			Success: true,
 			Data:    []*mstPhoneLiveStatusJobDetail{},
@@ -278,7 +278,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -289,7 +289,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -301,10 +301,10 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -318,7 +318,7 @@ func TestCallGetAllJobDetailsAPI(t *testing.T) {
 }
 
 func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*mstPhoneLiveStatusJobDetail]{
 			Success: true,
 			Data:    []*mstPhoneLiveStatusJobDetail{},
@@ -344,7 +344,7 @@ func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -355,7 +355,7 @@ func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -367,10 +367,10 @@ func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -384,7 +384,7 @@ func TestCallGetJobDetailsByDateRangeAPI(t *testing.T) {
 }
 
 func TestCallGetJobsSummary(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[jobsSummaryRespData]{
 			Success: true,
 			Data:    jobsSummaryRespData{},
@@ -410,7 +410,7 @@ func TestCallGetJobsSummary(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -421,7 +421,7 @@ func TestCallGetJobsSummary(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -433,10 +433,10 @@ func TestCallGetJobsSummary(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -450,7 +450,7 @@ func TestCallGetJobsSummary(t *testing.T) {
 }
 
 func TestCallGetProcessedCount(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[jobsSummaryRespData]{
 			Success: true,
 			Data:    jobsSummaryRespData{},
@@ -476,7 +476,7 @@ func TestCallGetProcessedCount(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -487,7 +487,7 @@ func TestCallGetProcessedCount(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -499,10 +499,10 @@ func TestCallGetProcessedCount(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -516,7 +516,7 @@ func TestCallGetProcessedCount(t *testing.T) {
 }
 
 func TestCallUpdateJob(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 			Data:    nil,
@@ -542,7 +542,7 @@ func TestCallUpdateJob(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -557,7 +557,7 @@ func TestCallUpdateJob(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -568,7 +568,7 @@ func TestCallUpdateJob(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -580,10 +580,10 @@ func TestCallUpdateJob(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -596,7 +596,7 @@ func TestCallUpdateJob(t *testing.T) {
 }
 
 func TestCallUpdateJobDetail(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 			Data:    nil,
@@ -622,7 +622,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -637,7 +637,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -648,7 +648,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -660,10 +660,10 @@ func TestCallUpdateJobDetail(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -676,7 +676,7 @@ func TestCallUpdateJobDetail(t *testing.T) {
 }
 
 func TestCallPhoneLiveStatusAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.ProCatAPIResponse[phoneLiveStatusRespData]{
 			Success: true,
 			Message: "Succeed to Request Data.",
@@ -706,7 +706,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -721,7 +721,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{ProductCatalogHost: constant.MockInvalidHost},
@@ -731,7 +731,7 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -744,10 +744,10 @@ func TestCallPhoneLiveStatusAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

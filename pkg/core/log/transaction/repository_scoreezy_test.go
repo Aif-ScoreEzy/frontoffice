@@ -17,7 +17,7 @@ import (
 )
 
 func TestGetLogsScoreezyByDateAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*LogTransScoreezy]{
 			Success: true,
 			Data:    []*LogTransScoreezy{},
@@ -39,7 +39,7 @@ func TestGetLogsScoreezyByDateAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -51,7 +51,7 @@ func TestGetLogsScoreezyByDateAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -64,10 +64,10 @@ func TestGetLogsScoreezyByDateAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -81,7 +81,7 @@ func TestGetLogsScoreezyByDateAPI(t *testing.T) {
 }
 
 func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*LogTransScoreezy]{
 			Success: true,
 			Data:    []*LogTransScoreezy{},
@@ -103,7 +103,7 @@ func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -115,7 +115,7 @@ func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -128,10 +128,10 @@ func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -145,7 +145,7 @@ func TestGetLogsScoreezyByMonthAPI(t *testing.T) {
 }
 
 func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*LogTransScoreezy]{
 			Success: true,
 			Data:    []*LogTransScoreezy{},
@@ -167,7 +167,7 @@ func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -179,7 +179,7 @@ func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -192,10 +192,10 @@ func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -209,7 +209,7 @@ func TestGetLogsScoreezyByDateRangeAPI(t *testing.T) {
 }
 
 func TestGetLogsScoreezyAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*LogTransScoreezy]{
 			Success: true,
 			Data:    []*LogTransScoreezy{},
@@ -231,7 +231,7 @@ func TestGetLogsScoreezyAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -243,7 +243,7 @@ func TestGetLogsScoreezyAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -256,10 +256,10 @@ func TestGetLogsScoreezyAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

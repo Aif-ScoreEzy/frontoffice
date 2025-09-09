@@ -126,7 +126,7 @@ func (repo *repository) GetJobDetailsAPI(filter *phoneLiveStatusFilter) (*jobDet
 	q := req.URL.Query()
 	q.Add(constant.Page, filter.Page)
 	q.Add(constant.Size, filter.Size)
-	q.Add("keyword", filter.Keyword)
+	q.Add(constant.Keyword, filter.Keyword)
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := repo.client.Do(req)
@@ -191,6 +191,8 @@ func (repo *repository) GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMet
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	q := req.URL.Query()
 	q.Add(constant.JobId, filter.JobId)
