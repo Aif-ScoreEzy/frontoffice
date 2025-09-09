@@ -191,6 +191,8 @@ func (repo *repository) GetJobMetricsAPI(filter *phoneLiveStatusFilter) (*jobMet
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
+	req.Header.Set(constant.XMemberId, filter.MemberId)
+	req.Header.Set(constant.XCompanyId, filter.CompanyId)
 
 	q := req.URL.Query()
 	q.Add(constant.JobId, filter.JobId)
