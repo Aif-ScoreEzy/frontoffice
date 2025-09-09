@@ -97,6 +97,7 @@ func (ctrl *controller) GetJobDetails(c *fiber.Ctx) error {
 	filter := &phoneLiveStatusFilter{
 		Page:        c.Query(constant.Page, "1"),
 		Size:        c.Query(constant.Size, "10"),
+		Keyword:     c.Query(constant.Keyword),
 		JobId:       c.Params("id"),
 		ProductSlug: constant.SlugPhoneLiveStatus,
 		MemberId:    fmt.Sprintf("%v", c.Locals(constant.UserId)),
@@ -140,8 +141,8 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Set("Content-Type", "text/csv")
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
 
 	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
@@ -195,8 +196,8 @@ func (ctrl *controller) ExportJobsSummary(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Set("Content-Type", "text/csv")
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
 
 	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }

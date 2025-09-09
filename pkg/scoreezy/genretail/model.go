@@ -37,6 +37,19 @@ type dataGenRetailV3 struct {
 	Date                 string  `json:"date"` // 2022-03-22 12:30:22
 }
 
+type gradesResponseData struct {
+	Logs []*logTransScoreezy `json:"logs"`
+}
+
+type filterLogs struct {
+	TrxId     string
+	StartDate string
+	EndDate   string
+	CompanyId string
+	Grade     string
+	Size      string
+}
+
 type GenRetailV3ClientReturnSuccess struct {
 	Message string           `json:"message"`
 	Success bool             `json:"success"`
@@ -46,11 +59,7 @@ type GenRetailV3ClientReturnSuccess struct {
 type logTransScoreezy struct {
 	LogTrxId             uint                  `json:"log_trx_id" gorm:"primaryKey;autoIncrement"`
 	TrxId                string                `json:"trx_id"`
-	MemberId             uint                  `json:"user_id"`
-	Member               member.MstMember      `json:"user"`
 	CompanyId            uint                  `json:"company_id"`
-	IpClient             string                `json:"ip_client"`
-	ProductId            uint                  `json:"product_id"`
 	Status               string                `json:"status"`  // Free or Pay
 	Success              bool                  `json:"success"` // true or false
 	Message              string                `json:"message"`
@@ -58,7 +67,6 @@ type logTransScoreezy struct {
 	Grade                string                `json:"grade"`
 	LoanNo               string                `json:"loan_no"`
 	Data                 *dataLogTransScoreezy `json:"data" swaggertype:"object"`
-	Duration             time.Duration         `json:"duration" format:"duration" example:"2h30m"`
 	CreatedAt            time.Time             `json:"created_at" format:"date-time"`
 }
 
@@ -67,6 +75,13 @@ type dataLogTransScoreezy struct {
 	PhoneNumber string `json:"phone_no"`
 	IdCardNo    string `json:"id_card_no"`
 	LoanNo      string `json:"loan_no"`
+}
+
+type genRetailContext struct {
+	MemberId  uint              `json:"member_id"`
+	CompanyId uint              `json:"company_id"`
+	ProductId uint              `json:"product_id"`
+	Request   *genRetailRequest `json:"request"`
 }
 
 type UploadScoringRequest struct {

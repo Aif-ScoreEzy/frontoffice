@@ -17,7 +17,7 @@ import (
 )
 
 func TestGetLogTransByJobIdAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*LogTransProductCatalog]{
 			Success: true,
 			Data:    []*LogTransProductCatalog{},
@@ -39,7 +39,7 @@ func TestGetLogTransByJobIdAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -51,7 +51,7 @@ func TestGetLogTransByJobIdAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -64,10 +64,10 @@ func TestGetLogTransByJobIdAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -81,7 +81,7 @@ func TestGetLogTransByJobIdAPI(t *testing.T) {
 }
 
 func TestProcessedLogCountAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[*getProcessedCountResp]{
 			Success: true,
 			Data: &getProcessedCountResp{
@@ -106,7 +106,7 @@ func TestProcessedLogCountAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -118,7 +118,7 @@ func TestProcessedLogCountAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -131,10 +131,10 @@ func TestProcessedLogCountAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -150,7 +150,7 @@ func TestProcessedLogCountAPI(t *testing.T) {
 func TestCreateLogTransAPI(t *testing.T) {
 	addLogReq := &LogTransProCatRequest{}
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 		}
@@ -170,7 +170,7 @@ func TestCreateLogTransAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -185,7 +185,7 @@ func TestCreateLogTransAPI(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -196,7 +196,7 @@ func TestCreateLogTransAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -208,10 +208,10 @@ func TestCreateLogTransAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -226,7 +226,7 @@ func TestCreateLogTransAPI(t *testing.T) {
 func TestUpdateLogTransAPI(t *testing.T) {
 	updateLogReq := map[string]interface{}{}
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[any]{
 			Success: true,
 		}
@@ -246,7 +246,7 @@ func TestUpdateLogTransAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("MarshalError", func(t *testing.T) {
+	t.Run(constant.TestCaseMarshalError, func(t *testing.T) {
 		fakeMarshal := func(v any) ([]byte, error) {
 			return nil, errors.New(constant.ErrFailedMarshalReq)
 		}
@@ -261,7 +261,7 @@ func TestUpdateLogTransAPI(t *testing.T) {
 		assert.Contains(t, err.Error(), constant.ErrFailedMarshalReq)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -272,7 +272,7 @@ func TestUpdateLogTransAPI(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -284,10 +284,10 @@ func TestUpdateLogTransAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

@@ -1,11 +1,10 @@
 package genretail
 
 import (
+	"bytes"
 	"fmt"
 	"front-office/helper"
 	"front-office/internal/apperror"
-	"front-office/pkg/core/log/operation"
-	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,22 +14,23 @@ import (
 
 func NewController(
 	service Service,
-	svcLogOperation operation.Service,
 ) Controller {
 	return &controller{
-		Svc:             service,
-		SvcLogOperation: svcLogOperation,
+		service,
 	}
 }
 
 type controller struct {
-	Svc             Service
-	SvcLogOperation operation.Service
+	service Service
 }
 
 type Controller interface {
 	DummyRequestScore(c *fiber.Ctx) error
-	RequestScore(c *fiber.Ctx) error
+	SingleRequest(c *fiber.Ctx) error
+	BulkRequest(c *fiber.Ctx) error
+	GetLogsScoreezy(c *fiber.Ctx) error
+	GetLogScoreezy(c *fiber.Ctx) error
+	ExportJobDetails(c *fiber.Ctx) error
 	// DownloadCSV(c *fiber.Ctx) error
 	// UploadCSV(c *fiber.Ctx) error
 	// GetBulkSearch(c *fiber.Ctx) error
@@ -48,7 +48,7 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 			LoanNo:               "LN987654321",
 			ProbabilityToDefault: 0.12345,
 			Grade:                "A",
-			Identity:             "verified in more than 50% social media platform and registered on one of the telecommunication platforms",
+			Identity:             "Verified in more than 50% social media platform and registered on one of the telecommunication platforms",
 			Behavior:             "This individual is not identified to have a history of loan applications and is not indicated to have defaulted on payments.",
 			Date:                 time.Now().Format("2006-01-02 15:04:05"),
 		},
@@ -57,38 +57,108 @@ func (ctrl *controller) DummyRequestScore(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
-func (ctrl *controller) RequestScore(c *fiber.Ctx) error {
+func (ctrl *controller) SingleRequest(c *fiber.Ctx) error {
 	req := c.Locals(constant.Request).(*genRetailRequest)
-	memberId := fmt.Sprintf("%v", c.Locals(constant.UserId))
-	companyId := fmt.Sprintf("%v", c.Locals(constant.CompanyId))
-
-	currentUserId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
 	if err != nil {
 		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	companyIdUint, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
 	if err != nil {
-		return apperror.Unauthorized(constant.InvalidCompanySession)
+		return apperror.Unauthorized(constant.InvalidUserSession)
 	}
 
-	result, err := ctrl.Svc.GenRetailV3(memberId, companyId, req)
+	result, err := ctrl.service.GenRetailV3(memberId, companyId, req)
 	if err != nil {
 		return err
 	}
 
-	addLogRequest := &operation.AddLogRequest{
-		MemberId:  currentUserId,
-		CompanyId: companyIdUint,
-		Action:    constant.EventCalculateScore,
-	}
-
-	err = ctrl.SvcLogOperation.AddLogOperation(addLogRequest)
-	if err != nil {
-		log.Println("Failed to log operation for calculate score")
-	}
-
 	return c.Status(result.StatusCode).JSON(result)
+}
+
+func (ctrl *controller) BulkRequest(c *fiber.Ctx) error {
+	memberId, err := helper.InterfaceToUint(c.Locals(constant.UserId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	companyId, err := helper.InterfaceToUint(c.Locals(constant.CompanyId))
+	if err != nil {
+		return apperror.Unauthorized(constant.InvalidUserSession)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		return apperror.BadRequest(err.Error())
+	}
+
+	if err := ctrl.service.BulkGenRetailV3(memberId, companyId, file); err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(
+		"success",
+		nil,
+	))
+}
+
+func (ctrl *controller) GetLogsScoreezy(c *fiber.Ctx) error {
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		StartDate: c.Query(constant.StartDate),
+		EndDate:   c.Query(constant.EndDate),
+		Grade:     c.Query("grade"),
+	}
+
+	result, err := ctrl.service.GetLogsScoreezy(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": constant.Success,
+		"data":    gradesResponseData{Logs: result.Data},
+		"meta":    result.Meta,
+	})
+}
+
+func (ctrl *controller) GetLogScoreezy(c *fiber.Ctx) error {
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		TrxId:     c.Params("trx_id"),
+	}
+
+	result, err := ctrl.service.GetLogScoreezy(filter)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(helper.ResponseSuccess(constant.Success, result))
+}
+
+func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
+	filter := &filterLogs{
+		CompanyId: fmt.Sprintf("%v", c.Locals(constant.CompanyId)),
+		StartDate: c.Query(constant.StartDate),
+		EndDate:   c.Query(constant.EndDate),
+		Size:      constant.SizeUnlimited,
+	}
+
+	if filter.StartDate == "" || filter.EndDate == "" {
+		return apperror.BadRequest("start_date and end_date are required")
+	}
+
+	var buf bytes.Buffer
+	filename, err := ctrl.service.ExportJobDetails(filter, &buf)
+	if err != nil {
+		return err
+	}
+
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
+
+	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
 // func (ctrl *controller) UploadCSV(c *fiber.Ctx) error {

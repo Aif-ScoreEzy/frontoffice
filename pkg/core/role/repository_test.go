@@ -40,7 +40,7 @@ func setupMockRepo(t *testing.T, response *http.Response, err error) (Repository
 }
 
 func TestGetRoleByIdAPI(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[*MstRole]{
 			Success: true,
 			Data: &MstRole{
@@ -65,7 +65,7 @@ func TestGetRoleByIdAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -77,7 +77,7 @@ func TestGetRoleByIdAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -90,10 +90,10 @@ func TestGetRoleByIdAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)
@@ -109,7 +109,7 @@ func TestGetRoleByIdAPI(t *testing.T) {
 func TestGetRolesAPI(t *testing.T) {
 	filter := RoleFilter{}
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		mockData := model.AifcoreAPIResponse[[]*MstRole]{
 			Success: true,
 			Data:    []*MstRole{},
@@ -131,7 +131,7 @@ func TestGetRolesAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("NewRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseNewRequestError, func(t *testing.T) {
 		mockClient := new(MockClient)
 		repo := NewRepository(&config.Config{
 			Env: &config.Environment{AifcoreHost: constant.MockInvalidHost},
@@ -143,7 +143,7 @@ func TestGetRolesAPI(t *testing.T) {
 		assert.Nil(t, result)
 	})
 
-	t.Run("HTTPRequestError", func(t *testing.T) {
+	t.Run(constant.TestCaseHTTPRequestError, func(t *testing.T) {
 		expectedErr := errors.New(constant.ErrHTTPReqFailed)
 
 		repo, mockClient := setupMockRepo(t, nil, expectedErr)
@@ -156,10 +156,10 @@ func TestGetRolesAPI(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("ParseError", func(t *testing.T) {
+	t.Run(constant.TestCaseParseError, func(t *testing.T) {
 		resp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(`{invalid-json`)),
+			Body:       io.NopCloser(strings.NewReader(constant.InvalidJSON)),
 		}
 
 		repo, mockClient := setupMockRepo(t, resp, nil)

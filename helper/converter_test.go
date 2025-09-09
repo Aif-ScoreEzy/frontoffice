@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"front-office/common/constant"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ func TestConvertUintToString(t *testing.T) {
 }
 
 func TestInterfaceToUint(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run(constant.TestCaseSuccess, func(t *testing.T) {
 		val, err := InterfaceToUint(uint(42))
 		assert.NoError(t, err)
 		assert.Equal(t, uint(42), val)

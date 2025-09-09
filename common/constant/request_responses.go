@@ -1,13 +1,15 @@
 package constant
 
 const (
-	HeaderContentType     = "Content-Type"
-	HeaderApplicationJSON = "application/json"
-	XAPIKey               = "X-API-KEY"
-	XUIDKey               = "X-UID-KEY"
-	XMemberId             = "X-Member-ID"
-	XCompanyId            = "X-Company-ID"
-	XTierLevel            = "X-Tier-Level"
+	HeaderContentType        = "Content-Type"
+	HeaderContentDisposition = "Content-Disposition"
+	HeaderApplicationJSON    = "application/json"
+	XAPIKey                  = "X-API-KEY"
+	XUIDKey                  = "X-UID-KEY"
+	XMemberId                = "X-Member-ID"
+	XCompanyId               = "X-Company-ID"
+	XTierLevel               = "X-Tier-Level"
+	TextOrCSVContentType     = "text/csv"
 
 	SizeUnlimited = "-1"
 

@@ -139,8 +139,8 @@ func (ctrl *controller) ExportJobDetails(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Set("Content-Type", "text/csv")
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
 	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
@@ -177,8 +177,8 @@ func (ctrl *controller) ExportJobDetailsByDateRange(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Set("Content-Type", "text/csv")
-	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Set(constant.HeaderContentType, constant.TextOrCSVContentType)
+	c.Set(constant.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
 	return c.SendStream(bytes.NewReader(buf.Bytes()))
 }
 
