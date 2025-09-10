@@ -55,9 +55,11 @@ func (repo *repository) GenRetailV3API(memberId string, payload *genRetailReques
 	}
 
 	req.Header.Set(constant.HeaderContentType, constant.HeaderApplicationJSON)
-	req.Header.Set(constant.XUIDKey, "13")
+	req.Header.Set(constant.XUIDKey, memberId)
 
 	res, err := repo.client.Do(req)
+	fmt.Println("request gen retail ===> ", req, "response gen retail ====>", res, err)
+
 	if err != nil {
 		return nil, fmt.Errorf(constant.ErrMsgHTTPReqFailed, err)
 	}
