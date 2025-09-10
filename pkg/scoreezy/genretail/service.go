@@ -264,7 +264,6 @@ func formatCSVFileName(base, startDate, endDate string) string {
 }
 
 func (svc *service) processSingleGenRetail(params *genRetailContext) error {
-	fmt.Println("???", params.Request.Name, params.Request.LoanNo, params.Request.IdCardNo, params.Request.PhoneNo)
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transRepo.CreateLogScoreezyAPI(&transaction.LogTransScoreezy{
 			TrxId:     uuid.NewString(),
@@ -276,12 +275,8 @@ func (svc *service) processSingleGenRetail(params *genRetailContext) error {
 			Success:   false,
 		})
 
-		fmt.Println("opopoo")
-
 		return apperror.BadRequest(err.Error())
 	}
-
-	fmt.Println("masuuk")
 
 	_, err := svc.repo.GenRetailV3API(strconv.FormatUint(uint64(params.MemberId), 10), params.Request)
 	if err != nil {
