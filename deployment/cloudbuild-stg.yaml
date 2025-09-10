@@ -10,3 +10,5 @@ steps:
   - --image=asia.gcr.io/$PROJECT_ID/frontoffice-be:$TAG_NAME
   - --location=asia-southeast2-a
   - --cluster=staging
+  options:
+  logging: CLOUD_LOGGING_ONLY

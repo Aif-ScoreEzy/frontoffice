@@ -8,8 +8,8 @@ metadata:
     service: frontoffice-be-svc
 spec:
   ports:
-  - port: 3001
-    targetPort: 3001
+  - port: 3002
+    targetPort: 3002
     name: tcp
   selector:
     app: frontoffice-be
