@@ -208,6 +208,11 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: X_MODULE_KEY
+          - name: SCOREEZY_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: SCOREEZY_HOST
 
 ---
 apiVersion: autoscaling/v1

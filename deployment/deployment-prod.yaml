@@ -183,16 +183,6 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: GEN_RETAIL_V3
-          - name: GEN_RETAIL_V3
-            valueFrom:
-              configMapKeyRef:
-                name: frontoffice-be-config
-                key: GEN_RETAIL_V3
-          - name: PARTNER_SERVICE_HOST
-            valueFrom:
-              configMapKeyRef:
-                name: frontoffice-be-config
-                key: PARTNER_SERVICE_HOST
           - name: PRODUCT_CATALOG_HOST
             valueFrom:
               configMapKeyRef:
@@ -208,6 +198,11 @@ spec:
               configMapKeyRef:
                 name: frontoffice-be-config
                 key: X_MODULE_KEY
+          - name: SCOREEZY_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: frontoffice-be-config
+                key: SCOREEZY_HOST
 
 ---
 apiVersion: autoscaling/v1
