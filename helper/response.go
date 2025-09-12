@@ -136,7 +136,7 @@ func ParseProCatAPIResponse[T any](response *http.Response) (*model.ProCatAPIRes
 	apiResp.StatusCode = response.StatusCode
 
 	if apiResp.StatusCode >= 400 || !apiResp.Success {
-		return nil, &apperror.ExternalAPIError{
+		return &apiResp, &apperror.ExternalAPIError{
 			StatusCode: apiResp.StatusCode,
 			Message:    apiResp.Message,
 		}

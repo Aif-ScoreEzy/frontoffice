@@ -191,8 +191,10 @@ func (svc *service) processSingle(params *phoneLiveStatusContext) error {
 				Input:    params.Request,
 				DateTime: time.Now().Format(constant.FormatDateAndTime),
 			},
-			Data:        nil,
-			RequestBody: params.Request,
+			Data:         nil,
+			RequestBody:  params.Request,
+			RequestTime:  time.Now(),
+			ResponseTime: time.Now(),
 		})
 
 		return apperror.BadRequest(err.Error())
@@ -200,6 +202,27 @@ func (svc *service) processSingle(params *phoneLiveStatusContext) error {
 
 	result, err := svc.repo.PhoneLiveStatusAPI(params.APIKey, params.JobIdStr, params.Request)
 	if err != nil {
+		if err := svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
+			MemberID:       params.MemberId,
+			CompanyID:      params.CompanyId,
+			ProductID:      params.ProductId,
+			ProductGroupID: params.ProductGroupId,
+			JobID:          params.JobId,
+			Message:        result.Message,
+			Status:         result.StatusCode,
+			Success:        false,
+			ResponseBody: &transaction.ResponseBody{
+				Input:    params.Request,
+				DateTime: time.Now().Format(constant.FormatDateAndTime),
+			},
+			Data:         nil,
+			RequestBody:  params.Request,
+			RequestTime:  time.Now(),
+			ResponseTime: time.Now(),
+		}); err != nil {
+			return err
+		}
+
 		if err := svc.jobService.FinalizeFailedJob(params.JobIdStr); err != nil {
 			return err
 		}

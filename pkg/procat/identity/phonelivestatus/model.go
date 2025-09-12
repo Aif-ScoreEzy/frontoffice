@@ -15,8 +15,8 @@ type mstPhoneLiveStatusJob struct {
 	Member       member.MstMember   `json:"-"`
 	CompanyId    uint               `json:"company_id"`
 	Company      company.MstCompany `json:"-"`
-	CreatedAt    time.Time          `json:"start_time"`
-	EndAt        *time.Time         `json:"end_time"`
+	CreatedAt    string             `json:"start_time"`
+	EndAt        string             `json:"end_time"`
 }
 
 type mstPhoneLiveStatusJobDetail struct {
