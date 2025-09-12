@@ -283,6 +283,7 @@ func (svc *service) GetJobDetails(filter *phoneLiveStatusFilter) (*jobDetailsDTO
 		TotalDataPercentageFail:    data.TotalDataPercentageFail,
 		TotalDataPercentageError:   data.TotalDataPercentageError,
 		SubsActive:                 metrics.SubsActive,
+		SubsDisconnected:           metrics.SubsDisconnected,
 		DevReachable:               metrics.DevReachable,
 		DevUnreachable:             metrics.DevUnreachable,
 		DevUnavailable:             metrics.DevUnavailable,
