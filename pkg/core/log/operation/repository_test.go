@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"front-office/app/config"
 	"front-office/common/constant"
 	"front-office/common/model"
@@ -125,8 +124,6 @@ func TestGetLogsByRangeAPI(t *testing.T) {
 		repo, mockClient := setupMockRepo(t, resp, nil)
 
 		result, err := repo.GetLogsByRangeAPI(&filter)
-
-		fmt.Println("***", result.Data)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)

@@ -338,7 +338,10 @@ func (svc *service) GetJobsSummary(filter *phoneLiveStatusFilter) (*jobsSummaryD
 		TotalDataPercentageFail:    data.TotalDataPercentageFail,
 		TotalDataPercentageError:   data.TotalDataPercentageError,
 		SubsActive:                 metrics.SubsActive,
+		SubsDisconnected:           metrics.SubsDisconnected,
 		DevReachable:               metrics.DevReachable,
+		DevUnreachable:             metrics.DevUnreachable,
+		DevUnavailable:             metrics.DevUnavailable,
 		Mobile:                     metrics.Mobile,
 		FixedLine:                  metrics.FixedLine,
 	}
