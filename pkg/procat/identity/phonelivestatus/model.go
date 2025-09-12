@@ -84,6 +84,7 @@ type jobDetailsDTO struct {
 	TotalDataPercentageFail    int64                          `json:"total_data_percentage_fail"`
 	TotalDataPercentageError   int64                          `json:"total_data_percentage_error"`
 	SubsActive                 int64                          `json:"subs_active"`
+	SubsDisconnected           int64                          `json:"subs_disconnected"`
 	DevReachable               int64                          `json:"dev_reachable"`
 	DevUnreachable             int64                          `json:"dev_unreachable"`
 	DevUnavailable             int64                          `json:"dev_unavailable"`
@@ -110,12 +111,13 @@ type jobDetailRaw struct {
 }
 
 type jobMetrics struct {
-	SubsActive     int64 `json:"subs_active"`
-	DevReachable   int64 `json:"dev_reachable"`
-	DevUnreachable int64 `json:"dev_unreachable"`
-	DevUnavailable int64 `json:"dev_unavailable"`
-	Mobile         int64 `json:"mobile"`
-	FixedLine      int64 `json:"fixed_line"`
+	SubsActive       int64 `json:"subs_active"`
+	SubsDisconnected int64 `json:"subs_disconnected"`
+	DevReachable     int64 `json:"dev_reachable"`
+	DevUnreachable   int64 `json:"dev_unreachable"`
+	DevUnavailable   int64 `json:"dev_unavailable"`
+	Mobile           int64 `json:"mobile"`
+	FixedLine        int64 `json:"fixed_line"`
 }
 
 type logTransProductCatalog struct {
