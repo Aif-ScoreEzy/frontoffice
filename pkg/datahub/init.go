@@ -1,16 +1,17 @@
-package procat
+package datahub
 
 import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
-	"front-office/pkg/procat/compliance/loanrecordchecker"
-	"front-office/pkg/procat/compliance/multipleloan"
-	"front-office/pkg/procat/identity/oldphonelivestatus"
-	"front-office/pkg/procat/identity/phonelivestatus"
-	taxcompliancestatus "front-office/pkg/procat/incometax/taxcompliencestatus"
-	"front-office/pkg/procat/incometax/taxscore"
-	"front-office/pkg/procat/incometax/taxverificationdetail"
-	"front-office/pkg/procat/job"
+	"front-office/pkg/datahub/compliance/loanrecordchecker"
+	"front-office/pkg/datahub/compliance/multipleloan"
+	"front-office/pkg/datahub/identity/oldphonelivestatus"
+	"front-office/pkg/datahub/identity/phonelivestatus"
+	"front-office/pkg/datahub/incometax/taxcompliancestatus"
+	"front-office/pkg/datahub/incometax/taxscore"
+	"front-office/pkg/datahub/incometax/taxverificationdetail"
+	"front-office/pkg/datahub/job"
+
 	"time"
 
 	"github.com/gofiber/fiber/v2"

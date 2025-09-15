@@ -5,8 +5,8 @@ import (
 	"front-office/internal/httpclient"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
+	"front-office/pkg/datahub/job"
 	"front-office/pkg/middleware"
-	"front-office/pkg/procat/job"
 
 	"github.com/gofiber/fiber/v2"
 )

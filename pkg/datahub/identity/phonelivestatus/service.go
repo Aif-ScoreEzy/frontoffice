@@ -10,7 +10,7 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/job"
+	"front-office/pkg/datahub/job"
 	"mime/multipart"
 	"net/http"
 	"strings"
