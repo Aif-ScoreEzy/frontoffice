@@ -1,12 +1,12 @@
-package taxverificationdetail
+package loanrecordchecker
 
 import (
 	"front-office/app/config"
 	"front-office/internal/httpclient"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
+	"front-office/pkg/datahub/job"
 	"front-office/pkg/middleware"
-	"front-office/pkg/procat/job"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -22,7 +22,7 @@ func SetupInit(apiGroup fiber.Router, cfg *config.Config, client httpclient.HTTP
 
 	controller := NewController(service)
 
-	taxComplianceGroup := apiGroup.Group("tax-verification-detail")
-	taxComplianceGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(taxVerificationRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
-	taxComplianceGroup.Post("/bulk-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
+	loanRecordCheckerGroup := apiGroup.Group("loan-record-checker")
+	loanRecordCheckerGroup.Post("/single-request", middleware.Auth(), middleware.IsRequestValid(loanRecordCheckerRequest{}), middleware.GetJWTPayloadFromCookie(), controller.SingleSearch)
+	loanRecordCheckerGroup.Post("/bulk-request", middleware.Auth(), middleware.GetJWTPayloadFromCookie(), controller.BulkSearch)
 }

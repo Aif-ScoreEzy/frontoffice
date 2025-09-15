@@ -1,4 +1,4 @@
-package taxscore
+package taxverificationdetail
 
 import (
 	"front-office/common/constant"
@@ -7,7 +7,7 @@ import (
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/job"
+	"front-office/pkg/datahub/job"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -43,12 +43,12 @@ type service struct {
 }
 
 type Service interface {
-	TaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error)
-	BulkTaxScore(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error
+	CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error)
+	BulkTaxVerification(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error
 }
 
-func (svc *service) TaxScore(apiKey, memberId, companyId string, request *taxScoreRequest) (*model.ProCatAPIResponse[taxScoreRespData], error) {
-	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxScore)
+func (svc *service) CallTaxVerification(apiKey, memberId, companyId string, request *taxVerificationRequest) (*model.ProCatAPIResponse[taxVerificationRespData], error) {
+	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxVerificationDetail)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
@@ -67,7 +67,7 @@ func (svc *service) TaxScore(apiKey, memberId, companyId string, request *taxSco
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
-	result, err := svc.repo.TaxScoreAPI(apiKey, jobIdStr, request)
+	result, err := svc.repo.TaxVerificationAPI(apiKey, jobIdStr, request)
 	if err != nil {
 		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
@@ -89,8 +89,8 @@ func (svc *service) TaxScore(apiKey, memberId, companyId string, request *taxSco
 	return result, nil
 }
 
-func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error {
-	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxScore)
+func (svc *service) BulkTaxVerification(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error {
+	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxVerificationDetail)
 	if err != nil {
 		return apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
@@ -102,7 +102,7 @@ func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"NPWP"})
+	records, err := helper.ParseCSVFile(file, []string{"ID Card Number"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
@@ -120,14 +120,14 @@ func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
-	var taxScoreReqs []*taxScoreRequest
+	var taxScoreReqs []*taxVerificationRequest
 	for i, record := range records {
 		if i == 0 {
 			continue
 		}
 
-		taxScoreReqs = append(taxScoreReqs, &taxScoreRequest{
-			Npwp: record[0],
+		taxScoreReqs = append(taxScoreReqs, &taxVerificationRequest{
+			NpwpOrNik: record[0],
 		})
 	}
 
@@ -140,10 +140,10 @@ func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *
 	for _, req := range taxScoreReqs {
 		wg.Add(1)
 
-		go func(taxScoreReq *taxScoreRequest) {
+		go func(taxScoreReq *taxVerificationRequest) {
 			defer wg.Done()
 
-			if err := svc.processTaxScore(&taxScoreContext{
+			if err := svc.processTaxVerification(&taxVerificationContext{
 				APIKey:         apiKey,
 				JobIdStr:       jobIdStr,
 				MemberIdStr:    memberIdStr,
@@ -176,7 +176,7 @@ func (svc *service) BulkTaxScore(apiKey string, memberId, companyId uint, file *
 	return svc.jobService.FinalizeJob(jobIdStr)
 }
 
-func (svc *service) processTaxScore(params *taxScoreContext) error {
+func (svc *service) processTaxVerification(params *taxVerificationContext) error {
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
@@ -198,11 +198,12 @@ func (svc *service) processTaxScore(params *taxScoreContext) error {
 		return apperror.BadRequest(err.Error())
 	}
 
-	result, err := svc.repo.TaxScoreAPI(
+	result, err := svc.repo.TaxVerificationAPI(
 		params.APIKey,
 		params.JobIdStr,
 		params.Request,
 	)
+
 	if err != nil {
 		if err := svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
@@ -226,7 +227,6 @@ func (svc *service) processTaxScore(params *taxScoreContext) error {
 		}
 
 		if err := svc.jobService.FinalizeFailedJob(params.JobIdStr); err != nil {
-
 			return err
 		}
 

@@ -1,21 +1,20 @@
-package loanrecordchecker
+package taxcompliancestatus
 
 import (
-	"errors"
 	"front-office/common/constant"
 	"front-office/common/model"
 	"front-office/helper"
 	"front-office/internal/apperror"
 	"front-office/pkg/core/log/transaction"
 	"front-office/pkg/core/product"
-	"front-office/pkg/procat/job"
+	"front-office/pkg/datahub/job"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
-	logger "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/log"
 	"github.com/usepzaka/validator"
 )
 
@@ -44,12 +43,12 @@ type service struct {
 }
 
 type Service interface {
-	LoanRecordChecker(apiKey, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error)
-	BulkLoanRecordChecker(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error
+	TaxComplianceStatus(apiKey, memberId, companyId string, reqBody *taxComplianceStatusRequest) (*model.ProCatAPIResponse[taxComplianceRespData], error)
+	BulkTaxComplianceStatus(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error
 }
 
-func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBody *loanRecordCheckerRequest) (*model.ProCatAPIResponse[dataLoanRecord], error) {
-	product, err := svc.productRepo.GetProductAPI(constant.SlugLoanRecordChecker)
+func (svc *service) TaxComplianceStatus(apiKey, memberId, companyId string, reqBody *taxComplianceStatusRequest) (*model.ProCatAPIResponse[taxComplianceRespData], error) {
+	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxComplianceStatus)
 	if err != nil {
 		return nil, apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
@@ -68,18 +67,13 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
-	result, err := svc.repo.LoanRecordCheckerAPI(apiKey, jobIdStr, memberId, companyId, reqBody)
+	result, err := svc.repo.TaxComplianceStatusAPI(apiKey, jobIdStr, reqBody)
 	if err != nil {
 		if err := svc.jobService.FinalizeFailedJob(jobIdStr); err != nil {
 			return nil, err
 		}
 
-		var apiErr *apperror.ExternalAPIError
-		if errors.As(err, &apiErr) {
-			return nil, apperror.MapLoanError(apiErr)
-		}
-
-		return nil, apperror.Internal("failed to process loan record checker", err)
+		return nil, apperror.MapRepoError(err, "failed to process tax compliance status")
 	}
 
 	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{
@@ -95,8 +89,8 @@ func (svc *service) LoanRecordChecker(apiKey, memberId, companyId string, reqBod
 	return result, nil
 }
 
-func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error {
-	product, err := svc.productRepo.GetProductAPI(constant.SlugLoanRecordChecker)
+func (svc *service) BulkTaxComplianceStatus(apiKey string, memberId, companyId uint, file *multipart.FileHeader) error {
+	product, err := svc.productRepo.GetProductAPI(constant.SlugTaxComplianceStatus)
 	if err != nil {
 		return apperror.MapRepoError(err, constant.FailedFetchProduct)
 	}
@@ -108,7 +102,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 		return apperror.BadRequest(err.Error())
 	}
 
-	records, err := helper.ParseCSVFile(file, []string{"Name", "ID Card Number", "Phone Number"})
+	records, err := helper.ParseCSVFile(file, []string{"NPWP"})
 	if err != nil {
 		return apperror.Internal(constant.FailedParseCSV, err)
 	}
@@ -126,29 +120,30 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 	}
 	jobIdStr := helper.ConvertUintToString(jobRes.JobId)
 
-	var loanCheckerReqs []*loanRecordCheckerRequest
-	for i, rec := range records {
+	var taxComplianceReqs []*taxComplianceStatusRequest
+	for i, record := range records {
 		if i == 0 {
 			continue
-		} // skip header
-		loanCheckerReqs = append(loanCheckerReqs, &loanRecordCheckerRequest{
-			Name: rec[0], Nik: rec[1], Phone: rec[2],
+		}
+
+		taxComplianceReqs = append(taxComplianceReqs, &taxComplianceStatusRequest{
+			Npwp: record[0],
 		})
 	}
 
 	var (
 		wg         sync.WaitGroup
-		errChan    = make(chan error, len(loanCheckerReqs))
+		errChan    = make(chan error, len(taxComplianceReqs))
 		batchCount = 0
 	)
 
-	for _, req := range loanCheckerReqs {
+	for _, req := range taxComplianceReqs {
 		wg.Add(1)
 
-		go func(loanCheckerReq *loanRecordCheckerRequest) {
+		go func(taxComplianceReq *taxComplianceStatusRequest) {
 			defer wg.Done()
 
-			if err := svc.processSingleLoanRecord(&loanCheckerContext{
+			if err := svc.processTaxComplianceStatus(&taxComplianceContext{
 				APIKey:         apiKey,
 				JobIdStr:       jobIdStr,
 				MemberIdStr:    memberIdStr,
@@ -158,7 +153,7 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 				ProductId:      product.ProductId,
 				ProductGroupId: product.ProductGroupId,
 				JobId:          jobRes.JobId,
-				Request:        loanCheckerReq,
+				Request:        taxComplianceReq,
 			}); err != nil {
 				errChan <- err
 			}
@@ -175,13 +170,13 @@ func (svc *service) BulkLoanRecordChecker(apiKey string, memberId, companyId uin
 	close(errChan)
 
 	for err := range errChan {
-		logger.Error().Err(err).Msg("error during bulk loan record checker processing")
+		log.Error().Err(err).Msg("error during bulk tax compliance status prrocessing")
 	}
 
 	return svc.jobService.FinalizeJob(jobIdStr)
 }
 
-func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
+func (svc *service) processTaxComplianceStatus(params *taxComplianceContext) error {
 	if err := validator.ValidateStruct(params.Request); err != nil {
 		_ = svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
@@ -189,9 +184,9 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 			ProductID:      params.ProductId,
 			ProductGroupID: params.ProductGroupId,
 			JobID:          params.JobId,
+			Success:        false,
 			Message:        err.Error(),
 			Status:         http.StatusBadRequest,
-			Success:        false,
 			ResponseBody: &transaction.ResponseBody{
 				Input:    params.Request,
 				DateTime: time.Now().Format(constant.FormatDateAndTime),
@@ -203,7 +198,11 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 		return apperror.BadRequest(err.Error())
 	}
 
-	result, err := svc.repo.LoanRecordCheckerAPI(params.APIKey, params.JobIdStr, params.MemberIdStr, params.CompanyIdStr, params.Request)
+	result, err := svc.repo.TaxComplianceStatusAPI(
+		params.APIKey,
+		params.JobIdStr,
+		params.Request,
+	)
 	if err != nil {
 		if err := svc.transactionRepo.CreateLogTransAPI(&transaction.LogTransProCatRequest{
 			MemberID:       params.MemberId,
@@ -227,15 +226,11 @@ func (svc *service) processSingleLoanRecord(params *loanCheckerContext) error {
 		}
 
 		if err := svc.jobService.FinalizeFailedJob(params.JobIdStr); err != nil {
+
 			return err
 		}
 
-		var apiErr *apperror.ExternalAPIError
-		if errors.As(err, &apiErr) {
-			return apperror.MapLoanError(apiErr)
-		}
-
-		return apperror.Internal("failed to process loan record checker", err)
+		return apperror.Internal("failed to process tax compliance status", err)
 	}
 
 	if err := svc.transactionRepo.UpdateLogTransAPI(result.TransactionId, map[string]interface{}{

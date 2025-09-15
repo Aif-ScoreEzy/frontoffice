@@ -10,7 +10,7 @@ import (
 	"front-office/pkg/core/member"
 	"front-office/pkg/core/role"
 	"front-office/pkg/core/template"
-	"front-office/pkg/procat"
+	"front-office/pkg/datahub"
 	"front-office/pkg/scoreezy/genretail"
 	"time"
 
@@ -38,7 +38,7 @@ func SetupInit(routeGroup fiber.Router, cfg *config.Config) {
 	operation.SetupInit(logGroup, cfg, client)
 
 	productGroup := routeGroup.Group("products")
-	procat.SetupInit(productGroup, cfg)
+	datahub.SetupInit(productGroup, cfg)
 
 	templateGroup := routeGroup.Group("templates")
 	template.SetupInit(templateGroup)
