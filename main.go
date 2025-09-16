@@ -1,9 +1,8 @@
 package main
 
 import (
-	"front-office/app/config"
-
-	"front-office/app/server"
+	"front-office/configs/application"
+	"front-office/configs/server"
 	"time"
 )
 
@@ -11,7 +10,7 @@ func main() {
 	loc := time.FixedZone("Asia/Jakarta", 25200)
 	time.Local = loc
 
-	cfg := config.GetConfig()
+	cfg := application.GetConfig()
 
 	// migrate.PostgreDB(db)
 
